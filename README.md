@@ -51,6 +51,24 @@ Use the `cec --help` command to know about the available commands. There are cur
 - `cec ls` : list files and folders on the server, when no path is passed, it lists the workspaces that use has access to. 
 - `cec cp` : Upload / Download file to/from a remote server.
 
+Here are some examples for using the `cp` command : 
+
+**1/ Uploading a file to server**
+
+```
+$ ./cec cp ./README.md cells://common-files/
+Copying ./README.md to cells://common-files/
+ ## Waiting for file to be indexed...
+ ## File correctly indexed
+```
+**2/ Download a file from server**
+
+```
+$ ./cec cp cells://personal-files/IMG_9723.JPG ./
+Copying cells://personal-files/IMG_9723.JPG to ./
+Written 822601 bytes to file
+```
+
 
 ## License
 
