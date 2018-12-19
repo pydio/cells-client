@@ -48,12 +48,50 @@ You will be prompted with the following informations :
 
 Use the `cec --help` command to know about the available commands. There are currently two interesting commands for manipulating files : 
 
-- `cec ls` : list files and folders on the server, when no path is passed, it lists the workspaces that use has access to. 
+- `cec ls` : list files and folders on the server, when no path is passed, it lists the workspaces that use has access to.
+
 - `cec cp` : Upload / Download file to/from a remote server.
 
-Here are some examples for using the `cp` command : 
+Other commands are available for listing datasources, users, roles, etc... but it is still a WIP.
 
-**1/ Uploading a file to server**
+## Examples
+
+**1/ Listing the content of the personal-files workspace**
+
+```
+$ ./cec ls personal-files
++--------+--------------------------+
+|  TYPE  |           NAME           |
++--------+--------------------------+
+| Folder | personal-files           |
+| File   | Huge Photo-1.jpg         |
+| File   | Huge Photo.jpg           |
+| File   | IMG_9723.JPG             |
+| File   | P5021040.jpg             |
+| Folder | UPLOAD                   |
+| File   | anothercopy              |
+| File   | cec22                    |
+| Folder | recycle_bin              |
+| File   | test_crud-1545206681.txt |
+| File   | test_crud-1545206846.txt |
+| File   | test_file2.txt           |
++--------+--------------------------+
+```
+
+**2/ Showing details about a file**
+
+```
+$ ./cec ls personal-files/P5021040.jpg -d
+Listing: 1 results for personal-files/P5021040.jpg
++------+--------------------------------------+-----------------------------+--------+------------+
+| TYPE |                 UUID                 |            NAME             |  SIZE  |  MODIFIED  |
++------+--------------------------------------+-----------------------------+--------+------------+
+| File | 98bbd86c-acb9-4b56-a6f3-837609155ba6 | personal-files/P5021040.jpg | 3.1 MB | 5 days ago |
++------+--------------------------------------+-----------------------------+--------+------------+
+
+```
+
+**3/ Uploading a file to server**
 
 ```
 $ ./cec cp ./README.md cells://common-files/
@@ -61,7 +99,7 @@ Copying ./README.md to cells://common-files/
  ## Waiting for file to be indexed...
  ## File correctly indexed
 ```
-**2/ Download a file from server**
+**4/ Download a file from server**
 
 ```
 $ ./cec cp cells://personal-files/IMG_9723.JPG ./
