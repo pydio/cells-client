@@ -1,6 +1,6 @@
 # cells-client
 
-This command line client allows interacting with an Pydio Cells server via the command line. It uses the REST API under the hood.
+This command line client allows interacting with a [Pydio Cells](https://github.com/pydio/cells) server via the command line. It uses the [Cells-sdk-go](https://github.com/pydio/cells-sdk-go) and the REST API under the hood.
 
 ## Installation
 
