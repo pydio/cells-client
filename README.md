@@ -4,9 +4,8 @@
 [Issue-Tracker](https://github.com/pydio/cells-client/issues)
 
 [![License Badge](https://img.shields.io/badge/License-Apache2-blue.svg)](LICENSE)
-[![GoDoc](https://godoc.org/github.com/pydio/cells-client?status.svg)](https://godoc.org/github.com/pydio/cells-client)
 [![Build Status](https://travis-ci.org/pydio/cells-client.svg?branch=master)](https://travis-ci.org/pydio/cells-client)
-[![Go Report Card](https://goreportcard.com/badge/github.com/pydio/cells-client?rand=2)](https://goreportcard.com/report/github.com/pydio/cells)
+[![Go Report Card](https://goreportcard.com/badge/github.com/pydio/cells-client?rand=2)](https://goreportcard.com/report/github.com/pydio/cells-client)
 
 
 This command line client allows interacting with a [Pydio Cells](https://github.com/pydio/cells) server via the command line. It uses the [Cells-sdk-go](https://github.com/pydio/cells-sdk-go) and the REST API under the hood.
