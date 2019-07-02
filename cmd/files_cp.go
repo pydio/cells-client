@@ -2,18 +2,17 @@ package cmd
 
 import (
 	"fmt"
-
+	"io"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 
-	"io"
-
 	"github.com/micro/go-log"
+	"github.com/spf13/cobra"
+
 	"github.com/pydio/cells-client/rest"
 	"github.com/pydio/cells-sdk-go/models"
-	"github.com/spf13/cobra"
 )
 
 var cpFiles = &cobra.Command{
@@ -21,7 +20,7 @@ var cpFiles = &cobra.Command{
 	Short: `Copy files from/to Cells`,
 	Long: `Copy files between local server and remote Cells server
 
-Prefix remote paths with cells:// to differentiate local from remote. Currently, copy can only be perform both different ends.
+Prefix remote paths with cells:// to differentiate local from remote. Currently, copy can only be performed with both different ends.
 For example:
 
 1/ Uploading a file to server

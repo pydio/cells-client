@@ -1,18 +1,17 @@
 package cmd
 
 import (
-	"fmt"
-
-	"net/url"
-
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"net/url"
 
 	"github.com/manifoldco/promptui"
 	"github.com/micro/go-log"
-	"github.com/pydio/cells-client/rest"
-	"github.com/pydio/cells-sdk-go"
 	"github.com/spf13/cobra"
+
+	"github.com/pydio/cells-client/rest"
+	cells_sdk "github.com/pydio/cells-sdk-go"
 )
 
 var (

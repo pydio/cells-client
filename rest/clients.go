@@ -1,24 +1,22 @@
 package rest
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
-	"strconv"
-
-	"context"
-
-	"log"
 	"runtime"
-
+	"strconv"
 	"time"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/pydio/cells-sdk-go"
+	"github.com/shibukawa/configdir"
+
+	cells_sdk "github.com/pydio/cells-sdk-go"
 	"github.com/pydio/cells-sdk-go/client"
 	"github.com/pydio/cells-sdk-go/transport"
-	"github.com/shibukawa/configdir"
 )
 
 var (
@@ -28,7 +26,7 @@ var (
 	// Keys to retrieve configuration via environment variables
 	KeyURL, KeyClientKey, KeyClientSecret, KeyUser, KeyPassword, KeySkipVerify = "TARGET_URL", "TARGET_CLIENT_KEY", "TARGET_CLIENT_SECRET", "TARGET_USER", "TARGET_PASSWORD", "TARGET_SKIP_VERIFY"
 
-	// Keys to retrieve environment variables to configure connection to Pydio Cells S3 API
+	// Keys to retrieve environment variables to configure a connection to Pydio Cells S3 API
 	KeyS3Endpoint, KeyS3Region, KeyS3Bucket, KeyS3ApiKey, KeyS3ApiSecret, KeyS3UsePydioSpecificHeader, KeyS3IsDebug = "TARGET_S3_ENDPOINT", "TARGET_S3_REGION", "TARGET_S3_BUCKET", "TARGET_S3_API_KEY", "TARGET_S3_API_SECRET", "TARGET_S3_USE_PYDIO_SPECIFIC_HEADER", "TARGET_S3_IS_DEBUG"
 )
 
@@ -52,12 +50,11 @@ func DefaultConfigFilePath() string {
 	f = filepath.Join(f, "config.json")
 
 	return f
-
 }
 
-// GetPreparedApiClient connects to the Pydio Cells server defined by this config, by sending an authentication
+// GetApiClient connects to the Pydio Cells server defined by this config, by sending an authentication
 // request to the OIDC service to get a valid JWT (or taking the JWT from cache).
-// Also returns a context to be used in subsequent requests.
+// It also returns a context to be used in subsequent requests.
 func GetApiClient(anonymous ...bool) (context.Context, *client.PydioCellsRest, error) {
 
 	anon := false
@@ -98,7 +95,7 @@ func SetUpEnvironment(configFilePath string, s3ConfigFilePath ...string) error {
 		}
 	}
 
-	// Stores the retrieved parameters in a public static singleton
+	// Store the retrieved parameters in a public static singleton
 	DefaultConfig = &c
 
 	cs3, err := getS3ConfigFromEnv()
@@ -118,7 +115,7 @@ func SetUpEnvironment(configFilePath string, s3ConfigFilePath ...string) error {
 		cs3 = getS3ConfigFromSdkConfig(c)
 	}
 
-	// Stores the retrieved parameters in a public static singleton
+	// Store the retrieved parameters in a public static singleton
 	DefaultS3Config = &cs3
 
 	return nil
@@ -128,7 +125,7 @@ func getSdkConfigFromEnv() (cells_sdk.SdkConfig, error) {
 
 	var c cells_sdk.SdkConfig
 
-	// check presence of Env variable
+	// Check presence of environment variables
 	url := os.Getenv(KeyURL)
 	clientKey := os.Getenv(KeyClientKey)
 	clientSecret := os.Getenv(KeyClientSecret)

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/s3"
+
 	"github.com/pydio/cells-sdk-go/client/tree_service"
 	"github.com/pydio/cells-sdk-go/models"
 	"github.com/pydio/cells-sdk-go/transport"
@@ -79,9 +80,8 @@ func PutFile(pathToFile string, content io.ReadSeeker, checkExists bool) (*s3.Pu
 		}, 3, 3*time.Second)
 		if e != nil {
 			return nil, e
-		} else {
-			fmt.Println(" ## File correctly indexed")
 		}
+		fmt.Println(" ## File correctly indexed")
 	}
 	return obj, nil
 
