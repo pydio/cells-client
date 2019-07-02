@@ -105,6 +105,7 @@ func targetToFullPath(to string, from string) (string, bool, error) {
 	var toPath string
 	var isDir bool
 	var isRemote bool
+	var e error
 	if strings.HasPrefix(to, "cells://") {
 		// This is remote
 		isRemote = true
@@ -117,7 +118,7 @@ func targetToFullPath(to string, from string) (string, bool, error) {
 		isDir = target.Type == models.TreeNodeTypeCOLLECTION
 	} else {
 		// This is local
-		toPath, e := filepath.Abs(to)
+		toPath, e = filepath.Abs(to)
 		if e != nil {
 			return "", false, e
 		}
