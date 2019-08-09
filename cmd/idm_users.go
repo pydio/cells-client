@@ -45,5 +45,5 @@ var listUsers = &cobra.Command{
 }
 
 func init() {
-	IdmCmd.AddCommand(listUsers)
+	idmCmd.AddCommand(listUsers)
 }

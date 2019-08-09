@@ -42,7 +42,7 @@ func validUrl(input string) error {
 	return nil
 }
 
-var ConfigureCmd = &cobra.Command{
+var configureCmd = &cobra.Command{
 	Use:  "configure",
 	Long: `DataSources / Workspaces`,
 	Run: func(cm *cobra.Command, args []string) {
@@ -117,7 +117,7 @@ var ConfigureCmd = &cobra.Command{
 
 func init() {
 
-	flags := ConfigureCmd.PersistentFlags()
+	flags := configureCmd.PersistentFlags()
 
 	flags.StringVarP(&configHost, "url", "u", "", "HTTP URL to server")
 	flags.StringVarP(&configKey, "apiKey", "k", "", "OIDC Client ID")
@@ -126,5 +126,5 @@ func init() {
 	flags.StringVarP(&configPwd, "password", "p", "", "User password")
 	flags.BoolVar(&configSkipVerify, "skipVerify", false, "Skip SSL certificate verification (not recommended)")
 
-	RootCmd.AddCommand(ConfigureCmd)
+	RootCmd.AddCommand(configureCmd)
 }

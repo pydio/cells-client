@@ -4,14 +4,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var StorageCmd = &cobra.Command{
-	Use:  "idm",
-	Long: `Users / Groups / Roles commands`,
+var storageCmd = &cobra.Command{
+	Use:  "storage",
+	Long: `DataSources / Workspaces`,
 	Run: func(cm *cobra.Command, args []string) {
 		cm.Usage()
 	},
 }
 
 func init() {
-	RootCmd.AddCommand(StorageCmd)
+	RootCmd.AddCommand(storageCmd)
 }

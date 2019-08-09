@@ -47,5 +47,5 @@ var listWorkspaces = &cobra.Command{
 }
 
 func init() {
-	IdmCmd.AddCommand(listWorkspaces)
+	idmCmd.AddCommand(listWorkspaces)
 }

@@ -51,5 +51,5 @@ var listRoles = &cobra.Command{
 }
 
 func init() {
-	IdmCmd.AddCommand(listRoles)
+	idmCmd.AddCommand(listRoles)
 }

@@ -45,5 +45,5 @@ var listDatasources = &cobra.Command{
 }
 
 func init() {
-	StorageCmd.AddCommand(listDatasources)
+	storageCmd.AddCommand(listDatasources)
 }

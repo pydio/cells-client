@@ -42,5 +42,5 @@ var listGroups = &cobra.Command{
 }
 
 func init() {
-	IdmCmd.AddCommand(listGroups)
+	idmCmd.AddCommand(listGroups)
 }
