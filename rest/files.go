@@ -9,7 +9,7 @@ import (
 
 	"github.com/pydio/cells-sdk-go/client/tree_service"
 	"github.com/pydio/cells-sdk-go/models"
-	"github.com/pydio/cells-sdk-go/transport"
+	"github.com/pydio/cells-sdk-go/transport/aws"
 )
 
 func GetS3Client() (*s3.S3, string, error) {
