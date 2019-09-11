@@ -9,13 +9,13 @@ import (
 
 	"github.com/pydio/cells-sdk-go/client/tree_service"
 	"github.com/pydio/cells-sdk-go/models"
-	"github.com/pydio/cells-sdk-go/transport"
+	awstransport "github.com/pydio/cells-sdk-go/transport/aws"
 )
 
 func GetS3Client() (*s3.S3, string, error) {
 	s3Config := getS3ConfigFromSdkConfig(*DefaultConfig)
 	bucketName := s3Config.Bucket
-	s3Client, e := transport.GetS3CLient(DefaultConfig, &s3Config)
+	s3Client, e := awstransport.GetS3CLient(DefaultConfig, &s3Config)
 	return s3Client, bucketName, e
 }
 
