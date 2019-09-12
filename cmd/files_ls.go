@@ -20,16 +20,19 @@ import (
 )
 
 var (
-	lsDetails bool
+	lsDetails, lsRaw, lsExists bool
 )
 
 var listFiles = &cobra.Command{
 	Use:   "ls",
 	Short: "List files on pydio cells",
-	Long: `List files on pydio cells
+	Long: `List files on Pydio Cells
 
 Use as a normal ls, with additional path to list sub-folders or read info about a node.
-You can use the optional -d (--details) flag to display more information
+You can use the optional -d (--details) flag to display more information, -r (--raw) flag 
+to only list found file (& folder) paths or -f (--exists) flag to only check if given path
+exists on the server.
+Note that you can only use *one* of the three above flags at a time.
 
 # Examples
 
@@ -65,8 +68,47 @@ Listing: 1 results for personal-files/P5021040.jpg
 
 
 Will show the metadata for this node (uuid, size, modification date)
+
+3/ Only listing files and folders, one per line.
+
+$ ./cec ls personal-files/P5021040.jpg -r
+personal-files/P5021040.jpg
+
+$ ./cec ls personal-files -r
+personal-files
+Huge Photo-1.jpg
+Huge Photo.jpg
+IMG_9723.JPG
+(...)
+
+4/ Check path existance.
+
+$ ./cec ls personal-files/P5021040.jpg -f
+true
+
+$ ./cec ls personal-files/P5021040-not-here -f
+false
+...
+
+
 `,
 	Run: func(cmd *cobra.Command, args []string) {
+
+		// Check that we do not have multiple flags
+		nb := 0
+		if lsDetails {
+			nb++
+		}
+		if lsExists {
+			nb++
+		}
+		if lsRaw {
+			nb++
+		}
+
+		if nb > 1 {
+			log.Fatal("please use at most *one* modifier flag")
+		}
 
 		//connects to the pydio api via the sdkConfig
 		ctx, apiClient, err := rest.GetApiClient()
@@ -78,12 +120,18 @@ Will show the metadata for this node (uuid, size, modification date)
 		if len(args) > 0 {
 			lsPath = args[0]
 		}
+		p := strings.Trim(lsPath, "/")
+
+		if lsExists { // check existence and returns
+			_, exists := rest.StatNode(p)
+			cmd.Println(exists)
+			return
+		}
 
 		/*
 			GetBulkMetaParams contains all the parameters to send to the API endpoint
 			for the get bulk meta operation typically these are written to a http.Request
 		*/
-		p := strings.Trim(lsPath, "/")
 		params := &meta_service.GetBulkMetaParams{
 			Body: &models.RestGetBulkMetaRequest{NodePaths: []string{
 				//the workspaces from whom the files are listed
@@ -101,6 +149,19 @@ Will show the metadata for this node (uuid, size, modification date)
 
 		//prints the path therefore the name of the files listed
 		if len(result.Payload.Nodes) > 0 {
+			if lsRaw {
+				for _, node := range result.Payload.Nodes {
+					if path.Base(node.Path) == common.PYDIO_SYNC_HIDDEN_FILE_META {
+						continue
+					}
+					// if strings.Trim(node.Path, "/") == p {
+					// 	continue
+					// }
+					cmd.Println(node.Path)
+				}
+				return
+			}
+
 			fmt.Printf("Listing: %d results for %s\n", len(result.Payload.Nodes), p)
 			if !lsDetails {
 				fmt.Println("Get more info by adding the -d (details) flag")
@@ -118,6 +179,9 @@ Will show the metadata for this node (uuid, size, modification date)
 				t := "File"
 				if node.Type == models.TreeNodeTypeCOLLECTION {
 					t = "Folder"
+					// The below does not work, we should rather use strings.Trim(node.Path, "/")
+					// but then the number of nodes count is false.
+					// TODO specify and enhance.
 					if node.Path == p {
 						continue
 					}
@@ -138,6 +202,8 @@ func init() {
 
 	flags := listFiles.PersistentFlags()
 	flags.BoolVarP(&lsDetails, "details", "d", false, "Show more information about files")
+	flags.BoolVarP(&lsRaw, "raw", "r", false, "List only found paths (one per line) with no further info to be able to use returned results in later commands")
+	flags.BoolVarP(&lsExists, "exists", "f", false, "Only check if the passed path exists on the server")
 
 	RootCmd.AddCommand(listFiles)
 }
