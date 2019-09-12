@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"path"
 	"strings"
 	"time"
 
@@ -32,16 +33,29 @@ Use path including workspace slug
 			log.Fatal("Please provide at least a workspace segment in the path")
 		}
 
-		fmt.Printf("Creating folder %s\n", dir)
 		//connects to the pydio api via the sdkConfig
 		ctx, apiClient, err := rest.GetApiClient()
 		if err != nil {
 			log.Fatal(err)
 		}
+		var dirs []*models.TreeNode
+		var paths []string
+		var crt = parts[0]
+		for i := 1; i < len(parts); i++ {
+			crt = path.Join(crt, parts[i])
+			if _, e := apiClient.TreeService.HeadNode(&tree_service.HeadNodeParams{Node: crt, Context: ctx}); e != nil {
+				dirs = append(dirs, &models.TreeNode{Path: crt})
+				paths = append(paths, crt)
+			}
+		}
+		if len(dirs) == 0 {
+			log.Log("All dirs already exist, exiting")
+			return
+		}
+		fmt.Printf("Creating folder(s) %s\n", strings.Join(paths, ","))
 		_, err = apiClient.TreeService.CreateNodes(&tree_service.CreateNodesParams{
 			Body: &models.RestCreateNodesRequest{
-				Nodes:     []*models.TreeNode{{Path: dir}},
-				Recursive: true,
+				Nodes: dirs,
 			},
 			Context: ctx,
 		})
