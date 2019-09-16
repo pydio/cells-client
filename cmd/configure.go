@@ -144,7 +144,7 @@ var configureCmd = &cobra.Command{
 		if err != nil {
 			fmt.Println(promptui.IconBad + " Cannot save configuration file! " + err.Error())
 		} else {
-			fmt.Println(promptui.IconGood + " Configuration saved, you can now use the client!")
+			fmt.Printf("%s Configuration saved, you can now use the client to interract with %s.\n", promptui.IconGood, newConf.Url)
 		}
 	},
 }
