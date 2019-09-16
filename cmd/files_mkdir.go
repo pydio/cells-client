@@ -12,7 +12,6 @@ import (
 	"github.com/pydio/cells-client/rest"
 	"github.com/pydio/cells-sdk-go/client/tree_service"
 	"github.com/pydio/cells-sdk-go/models"
-	"github.com/pydio/cells/common/service"
 )
 
 var mkDir = &cobra.Command{
@@ -63,7 +62,7 @@ Use path including workspace slug
 			log.Fatal(err)
 		}
 		// Wait that it's indexed
-		e := service.Retry(func() error {
+		e := rest.Retry(func() error {
 			_, e := apiClient.TreeService.HeadNode(&tree_service.HeadNodeParams{Node: dir, Context: ctx})
 			if e != nil {
 				log.Log("Waiting for folder to be correctly indexed...")
