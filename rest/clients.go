@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
-	"time"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/shibukawa/configdir"
@@ -210,19 +209,4 @@ func getS3ConfigFromEnv() (cells_sdk.S3Config, error) {
 	c.IsDebug = isDebug
 
 	return c, nil
-}
-
-func RetryCallback(callback func() error, number int, interval time.Duration) error {
-
-	var e error
-	for i := 0; i < number; i++ {
-		if e = callback(); e == nil {
-			break
-		}
-		if i < number-1 {
-			<-time.After(interval)
-		}
-	}
-
-	return e
 }

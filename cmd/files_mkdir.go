@@ -62,13 +62,13 @@ Use path including workspace slug
 			log.Fatal(err)
 		}
 		// Wait that it's indexed
-		e := rest.Retry(func() error {
+		e := rest.RetryCallback(func() error {
 			_, e := apiClient.TreeService.HeadNode(&tree_service.HeadNodeParams{Node: dir, Context: ctx})
 			if e != nil {
 				log.Log("Waiting for folder to be correctly indexed...")
 			}
 			return e
-		}, 2*time.Second, 10*time.Second)
+		}, 10, 2*time.Second)
 
 		if e != nil {
 			log.Fatal(e)
