@@ -32,7 +32,7 @@ Use path including workspace slug
 			log.Fatal("Please provide at least a workspace segment in the path")
 		}
 
-		//connects to the pydio api via the sdkConfig
+		// Connect to the Pydio API via the sdkConfig
 		ctx, apiClient, err := rest.GetApiClient()
 		if err != nil {
 			log.Fatal(err)
@@ -61,7 +61,7 @@ Use path including workspace slug
 		if err != nil {
 			log.Fatal("error while calling CreateNodes:", err)
 		}
-		// Wait that it's indexed
+		// Wait that it is indexed
 		e := rest.RetryCallback(func() error {
 			_, e := apiClient.TreeService.HeadNode(&tree_service.HeadNodeParams{Node: dir, Context: ctx})
 			if e != nil {
@@ -73,7 +73,7 @@ Use path including workspace slug
 		if e != nil {
 			log.Fatal(e)
 		}
-		fmt.Printf("SUCCESS: Dir %s created and indexed", dir)
+		fmt.Printf("SUCCESS: Dir %s created and indexed\n", dir)
 
 	},
 }
