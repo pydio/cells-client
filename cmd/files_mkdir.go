@@ -48,7 +48,7 @@ Use path including workspace slug
 			}
 		}
 		if len(dirs) == 0 {
-			log.Log("All dirs already exist, exiting")
+			fmt.Println("All dirs already exist, exiting")
 			return
 		}
 		fmt.Printf("Creating folder(s) %s\n", strings.Join(paths, ","))
@@ -65,7 +65,7 @@ Use path including workspace slug
 		e := rest.RetryCallback(func() error {
 			_, e := apiClient.TreeService.HeadNode(&tree_service.HeadNodeParams{Node: dir, Context: ctx})
 			if e != nil {
-				log.Log("Waiting for folder to be correctly indexed...")
+				fmt.Println("Waiting for folder to be correctly indexed...")
 			}
 			return e
 		}, 10, 2*time.Second)
@@ -73,7 +73,7 @@ Use path including workspace slug
 		if e != nil {
 			log.Fatal(e)
 		}
-		log.Logf("SUCCESS: Dir %s created and indexed", dir)
+		fmt.Printf("SUCCESS: Dir %s created and indexed", dir)
 
 	},
 }
