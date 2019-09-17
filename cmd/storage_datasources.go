@@ -8,6 +8,8 @@ import (
 
 	"github.com/pydio/cells-client/rest"
 	"github.com/pydio/cells-sdk-go/client/config_service"
+	"github.com/pydio/cells-sdk-go/client/jobs_service"
+	"github.com/pydio/cells-sdk-go/models"
 )
 
 var listDatasources = &cobra.Command{
@@ -44,6 +46,34 @@ var listDatasources = &cobra.Command{
 	},
 }
 
+var resyncDs = &cobra.Command{
+	Use:  "resync-ds",
+	Long: `Launch a resync on the specified datasource`,
+	Run: func(cm *cobra.Command, args []string) {
+
+		if len(args) != 1 {
+			log.Fatal(fmt.Errorf("please provide the name of the datasource to resync"))
+		}
+		dsName := args[0]
+
+		ctx, client, err := rest.GetApiClient()
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		jsonParam := fmt.Sprintf("{\"dsName\":\"%s\"}", dsName)
+		body := &models.RestUserJobRequest{JobName: "datasource-resync", JSONParameters: jsonParam}
+
+		params := &jobs_service.UserCreateJobParams{JobName: "datasource-resync", Body: body, Context: ctx}
+
+		_, err = client.JobsService.UserCreateJob(params)
+		if err != nil {
+			log.Fatal(fmt.Sprintf("could not start the sync job for ds %s, cause: %s", dsName, err.Error()))
+		}
+	},
+}
+
 func init() {
 	storageCmd.AddCommand(listDatasources)
+	storageCmd.AddCommand(resyncDs)
 }

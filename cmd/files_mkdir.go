@@ -59,7 +59,7 @@ Use path including workspace slug
 			Context: ctx,
 		})
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("error while calling CreateNodes:", err)
 		}
 		// Wait that it's indexed
 		e := rest.RetryCallback(func() error {
