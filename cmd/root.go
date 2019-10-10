@@ -33,7 +33,7 @@ the powerful Cobra framework to easily implement small CLI client applications.
 `,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 
-		if cmd.Use != "configure" {
+		if cmd.Use != "configure" && cmd.Use != "oauth" {
 			e := rest.SetUpEnvironment(configFile)
 			if e != nil {
 				log.Fatalf("cannot read config file, please make sure to run %s configure first (error %s)", os.Args[0], e)
