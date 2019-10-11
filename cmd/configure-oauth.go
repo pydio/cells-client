@@ -57,7 +57,7 @@ func (o *oAuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func oAuthInteractive(newConf *cells_sdk.SdkConfig) error {
 	var e error
 	// PROMPT URL
-	p := promptui.Prompt{Label: "Server Address (provide a valid URL)", Validate: validUrl, Default: "https://local.pydio:8080"}
+	p := promptui.Prompt{Label: "Server Address (provide a valid URL)", Validate: validUrl, Default: ""}
 	if newConf.Url, e = p.Run(); e != nil {
 		return e
 	}
@@ -74,10 +74,12 @@ func oAuthInteractive(newConf *cells_sdk.SdkConfig) error {
 	}
 
 	// PROMPT CLIENT ID
-	p = promptui.Prompt{Label: "OAuth Static client ID (found in your server pydio.json)", Validate: notEmpty, Default: "cells-sync"}
+	p = promptui.Prompt{Label: "OAuth APP ID (found in your server pydio.json)", Validate: notEmpty, Default: "cells-cli"}
 	if newConf.ClientKey, e = p.Run(); e != nil {
 		return e
 	}
+	p = promptui.Prompt{Label: "OAuth APP Secret (leave empty for a public client)", Default: "", Mask: '*'}
+	newConf.ClientSecret, _ = p.Run()
 
 	openBrowser := true
 	p3 := promptui.Select{Label: "Can you open a browser on this computer? If not, you will make the authentication process by copy/pasting", Items: []string{"Yes", "No"}}
@@ -85,6 +87,7 @@ func oAuthInteractive(newConf *cells_sdk.SdkConfig) error {
 		openBrowser = false
 	}
 
+	// Starting Authentication process
 	var returnCode string
 	var redirUri string
 	authU := *u
@@ -93,6 +96,9 @@ func oAuthInteractive(newConf *cells_sdk.SdkConfig) error {
 	values := url.Values{}
 	values.Add("response_type", "code")
 	values.Add("client_id", newConf.ClientKey)
+	if newConf.ClientSecret != "" {
+		values.Add("client_secret", newConf.ClientSecret)
+	}
 	values.Add("state", state)
 	if openBrowser {
 		redirUri = "http://localhost:3000/servers/callback"
@@ -140,6 +146,9 @@ func oAuthInteractive(newConf *cells_sdk.SdkConfig) error {
 	values.Add("code", returnCode)
 	values.Add("redirect_uri", redirUri)
 	values.Add("client_id", newConf.ClientKey)
+	if newConf.ClientSecret != "" {
+		values.Add("client_secret", newConf.ClientSecret)
+	}
 	resp, err := http.Post(tokenU.String(), "application/x-www-form-urlencoded", strings.NewReader(values.Encode()))
 	if err != nil {
 		log.Fatal(err)
@@ -155,7 +164,7 @@ func oAuthInteractive(newConf *cells_sdk.SdkConfig) error {
 	if err := json.Unmarshal(b, &r); err != nil {
 		log.Fatal("Cannot unmarshall token response")
 	}
-	fmt.Println("Successfully Received Token!")
+	fmt.Println(promptui.IconGood + "Successfully Received Token!")
 	newConf.IdToken = r.AccessToken
 	newConf.RefreshToken = r.RefreshToken
 	newConf.TokenExpiresAt = int(time.Now().Unix()) + r.ExpiresIn
