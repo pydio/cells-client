@@ -88,7 +88,6 @@ func RefreshIfRequired(conf *cells_sdk.SdkConfig) (bool, error) {
 		data.Add("client_secret", conf.ClientSecret)
 	}
 	data.Add("refresh_token", conf.RefreshToken)
-	fmt.Println(data)
 	httpReq, err := http.NewRequest("POST", conf.Url+"/oidc/oauth2/token", strings.NewReader(data.Encode()))
 	if err != nil {
 		return true, err
