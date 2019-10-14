@@ -5,17 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
-
-	"github.com/syncthing/syncthing/lib/rand"
-
-	"github.com/skratchdot/open-golang/open"
 
 	"github.com/manifoldco/promptui"
 	"github.com/micro/go-log"
+	"github.com/skratchdot/open-golang/open"
 	"github.com/spf13/cobra"
 
 	"github.com/pydio/cells-client/rest"
@@ -54,6 +51,16 @@ func (o *oAuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(`<p>You can now close this window and go back to your shell!</p><script type="text/javascript">window.close();</script>`))
 }
 
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+func RandString(n int) string {
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+	}
+	return string(b)
+}
+
 func oAuthInteractive(newConf *cells_sdk.SdkConfig) error {
 	var e error
 	// PROMPT URL
@@ -89,24 +96,14 @@ func oAuthInteractive(newConf *cells_sdk.SdkConfig) error {
 
 	// Starting Authentication process
 	var returnCode string
-	var redirUri string
-	authU := *u
-	state := rand.String(16)
-	authU.Path = "/oidc/oauth2/auth"
-	values := url.Values{}
-	values.Add("response_type", "code")
-	values.Add("client_id", newConf.ClientKey)
-	if newConf.ClientSecret != "" {
-		values.Add("client_secret", newConf.ClientSecret)
+	state := RandString(16)
+	directUrl, callbackUrl, err := rest.OAuthPrepareUrl(newConf.Url, newConf.ClientKey, newConf.ClientSecret, state, openBrowser)
+	if err != nil {
+		log.Fatal(err)
 	}
-	values.Add("state", state)
 	if openBrowser {
-		redirUri = "http://localhost:3000/servers/callback"
-		values.Add("redirect_uri", redirUri)
-		authU.RawQuery = values.Encode()
-		fmt.Println("Opening URL", authU.String())
-		go open.Run(authU.String())
-
+		fmt.Println("Opening URL", directUrl)
+		go open.Run(directUrl)
 		h := &oAuthHandler{
 			done:  make(chan bool),
 			state: state,
@@ -123,10 +120,7 @@ func oAuthInteractive(newConf *cells_sdk.SdkConfig) error {
 		}
 		returnCode = h.code
 	} else {
-		redirUri = newConf.Url + "/oauth2/oob"
-		values.Add("redirect_uri", redirUri)
-		authU.RawQuery = values.Encode()
-		fmt.Println("Please copy and paste this URL in a browser", authU.String())
+		fmt.Println("Please copy and paste this URL in a browser", directUrl)
 		var err error
 		pr := promptui.Prompt{
 			Label:    "Please Paste the code returned to you in the browser",
@@ -139,35 +133,10 @@ func oAuthInteractive(newConf *cells_sdk.SdkConfig) error {
 	}
 
 	fmt.Println("Now exchanging the code for a valid IdToken")
-	tokenU := *u
-	tokenU.Path = "/oidc/oauth2/token"
-	values = url.Values{}
-	values.Add("grant_type", "authorization_code")
-	values.Add("code", returnCode)
-	values.Add("redirect_uri", redirUri)
-	values.Add("client_id", newConf.ClientKey)
-	if newConf.ClientSecret != "" {
-		values.Add("client_secret", newConf.ClientSecret)
-	}
-	resp, err := http.Post(tokenU.String(), "application/x-www-form-urlencoded", strings.NewReader(values.Encode()))
-	if err != nil {
+	if err := rest.OAuthExchangeCode(newConf, returnCode, callbackUrl); err != nil {
 		log.Fatal(err)
 	}
-	b, _ := ioutil.ReadAll(resp.Body)
-	type respData struct {
-		AccessToken  string `json:"access_token"`
-		ExpiresIn    int    `json:"expires_in"`
-		IdToken      string `json:"id_token"`
-		RefreshToken string `json:"refresh_token"`
-	}
-	var r respData
-	if err := json.Unmarshal(b, &r); err != nil {
-		log.Fatal("Cannot unmarshall token response")
-	}
 	fmt.Println(promptui.IconGood + "Successfully Received Token!")
-	newConf.IdToken = r.AccessToken
-	newConf.RefreshToken = r.RefreshToken
-	newConf.TokenExpiresAt = int(time.Now().Unix()) + r.ExpiresIn
 
 	// Test a simple PING with this config before saving!
 	fmt.Println(promptui.IconWarn + " Testing this configuration before saving")
@@ -177,7 +146,7 @@ func oAuthInteractive(newConf *cells_sdk.SdkConfig) error {
 		fmt.Println("   Error was " + e.Error())
 		return fmt.Errorf("test connection failed")
 	}
-	fmt.Println("\r" + promptui.IconGood + " Successfully logged to server")
+	fmt.Println("\r" + promptui.IconGood + fmt.Sprintf(" Successfully logged to server, token will be refreshed at %v", time.Unix(int64(newConf.TokenExpiresAt), 0)))
 	return nil
 }
 
@@ -220,6 +189,9 @@ var configureOAuthCmd = &cobra.Command{
 
 		// Now save config!
 		filePath := rest.DefaultConfigFilePath()
+		if err := rest.ConfigToKeyring(newConf); err != nil {
+			fmt.Println(promptui.IconWarn + " Cannot save token in keyring! " + err.Error())
+		}
 		data, _ := json.Marshal(newConf)
 		err = ioutil.WriteFile(filePath, data, 0755)
 		if err != nil {

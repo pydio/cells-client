@@ -3,6 +3,7 @@ package rest
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -91,6 +92,17 @@ func SetUpEnvironment(configFilePath string, s3ConfigFilePath ...string) error {
 		err = json.Unmarshal(s, &c)
 		if err != nil {
 			return err
+		}
+		ConfigFromKeyring(&c)
+		// Refresh token if required
+		if refreshed, err := RefreshIfRequired(&c); refreshed {
+			if err != nil {
+				log.Fatal("Error while refreshing authentication token!", err)
+			}
+			// Copy config as IdToken will be cleared
+			storeConfig := c
+			ConfigToKeyring(&storeConfig)
+			fmt.Println("Refreshed IdToken in keyring from server before applying command")
 		}
 	}
 

@@ -7,8 +7,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/pydio/cells-client/rest"
 	"github.com/spf13/cobra"
+
+	"github.com/pydio/cells-client/rest"
 )
 
 var (
@@ -33,7 +34,7 @@ the powerful Cobra framework to easily implement small CLI client applications.
 `,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 
-		if cmd.Use != "configure" && cmd.Use != "oauth" {
+		if cmd.Use != "configure" && cmd.Use != "oauth" && cmd.Use != "clear" {
 			e := rest.SetUpEnvironment(configFile)
 			if e != nil {
 				log.Fatalf("cannot read config file, please make sure to run %s configure first (error %s)", os.Args[0], e)
