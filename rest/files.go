@@ -7,12 +7,14 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/s3"
 
+	"github.com/pydio/cells-client/common"
 	"github.com/pydio/cells-sdk-go/client/tree_service"
 	"github.com/pydio/cells-sdk-go/models"
 	awstransport "github.com/pydio/cells-sdk-go/transport/aws"
 )
 
 func GetS3Client() (*s3.S3, string, error) {
+	DefaultConfig.CustomHeaders = map[string]string{"User-Agent": "cells-client/" + common.Version}
 	s3Config := getS3ConfigFromSdkConfig(*DefaultConfig)
 	bucketName := s3Config.Bucket
 	s3Client, e := awstransport.GetS3CLient(DefaultConfig, &s3Config)

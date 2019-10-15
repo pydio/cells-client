@@ -4,17 +4,17 @@ GITREV=`git rev-parse HEAD`
 
 main:
 	go build -a\
-	 -ldflags "-X github.com/pydio/cells-client/cmd.version=${CELLS_VERSION}\
-	 -X github.com/pydio/cells-client/cmd.BuildStamp=${TODAY}\
-	 -X github.com/pydio/cells-client/cmd.BuildRevision=${GITREV}\
+	 -ldflags "-X github.com/pydio/cells-client/common.Version=${CELLS_VERSION}\
+	 -X github.com/pydio/cells-client/common.BuildStamp=${TODAY}\
+	 -X github.com/pydio/cells-client/common.BuildRevision=${GITREV}\
 	 -o cec\
 	 .
 
 dev:
 	go build\
 	 -tags dev\
-	 -ldflags "-X github.com/pydio/cells-client/cmd.version=0.2.0\
-	 -X github.com/pydio/cells-client/cmd.BuildStamp=2018-01-01T00:00:00\
-	 -X github.com/pydio/cells-client/cmd.BuildRevision=dev"\
+	 -ldflags "-X github.com/pydio/cells-client/common.Version=0.2.0\
+	 -X github.com/pydio/cells-client/common.BuildStamp=2018-01-01T00:00:00\
+	 -X github.com/pydio/cells-client/common.BuildRevision=dev"\
 	 -o cec\
 	 .
