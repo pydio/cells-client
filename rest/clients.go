@@ -3,7 +3,6 @@ package rest
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -102,7 +101,9 @@ func SetUpEnvironment(configFilePath string, s3ConfigFilePath ...string) error {
 			// Copy config as IdToken will be cleared
 			storeConfig := c
 			ConfigToKeyring(&storeConfig)
-			fmt.Println("Refreshed IdToken in keyring from server before applying command")
+			// Save config to renew TokenExpireAt
+			confData, _ := json.Marshal(&storeConfig)
+			ioutil.WriteFile(configFilePath, confData, 0755)
 		}
 	}
 
