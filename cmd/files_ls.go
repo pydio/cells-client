@@ -176,7 +176,7 @@ false
 			table := tablewriter.NewWriter(os.Stdout)
 			if lsDetails {
 				if wsLevel {
-					table.SetHeader([]string{"Type", "Name", "Label", "Description", "Permissions"})
+					table.SetHeader([]string{"Type", "Uuid", "Name", "Label", "Description", "Permissions"})
 				} else {
 					table.SetHeader([]string{"Type", "Uuid", "Name", "Size", "Modified"})
 				}
@@ -212,6 +212,7 @@ false
 						}
 						table.Append([]string{
 							t,
+							fromStore("ws_uuid"),
 							path.Base(node.Path),
 							fromStore("ws_label"),
 							fromStore("ws_description"),
