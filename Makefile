@@ -18,3 +18,6 @@ dev:
 	 -X github.com/pydio/cells-client/common.BuildRevision=dev"\
 	 -o cec\
 	 .
+
+clean:
+	rm -f cec	 
