@@ -2,6 +2,8 @@
 
 [See Full Changelog](https://github.com/pydio/cells-client/compare/v0.0.1...v0.8.0)
 
+- [#474cdbc](https://github.com/pydio/cells-client/commit/474cdbc1b83a317f87bb5493b9f524dda3ce43ff): Update some of the dependencies
+- [#308853b](https://github.com/pydio/cells-client/commit/308853b474eca360429ac62e366ca747cbae99aa): Release v0.8.0
 - [#d757eae](https://github.com/pydio/cells-client/commit/d757eae3778cc7843640706cf089876fccec2f2a): Refactor version - append to user agent
 - [#0bebfd9](https://github.com/pydio/cells-client/commit/0bebfd98f3506d058b58587004f865b82ebd2764): Display ws uuid in root listing details
 - [#8082a94](https://github.com/pydio/cells-client/commit/8082a94c195757a580c8e4f25b2e6c5dcfda132a): Save refreshed token expiration date to config - Improve LS on root (workspaces list)
