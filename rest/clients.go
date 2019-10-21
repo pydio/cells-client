@@ -3,7 +3,6 @@ package rest
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -14,6 +13,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/shibukawa/configdir"
 
+	"github.com/pydio/cells-client/common"
 	cells_sdk "github.com/pydio/cells-sdk-go"
 	"github.com/pydio/cells-sdk-go/client"
 	"github.com/pydio/cells-sdk-go/transport"
@@ -61,7 +61,7 @@ func GetApiClient(anonymous ...bool) (context.Context, *client.PydioCellsRest, e
 	if len(anonymous) > 0 && anonymous[0] {
 		anon = true
 	}
-
+	DefaultConfig.CustomHeaders = map[string]string{"User-Agent": "cells-client/" + common.Version}
 	c, t, e := transport.GetRestClientTransport(DefaultConfig, anon)
 	if e != nil {
 		return nil, nil, e
@@ -102,7 +102,9 @@ func SetUpEnvironment(configFilePath string, s3ConfigFilePath ...string) error {
 			// Copy config as IdToken will be cleared
 			storeConfig := c
 			ConfigToKeyring(&storeConfig)
-			fmt.Println("Refreshed IdToken in keyring from server before applying command")
+			// Save config to renew TokenExpireAt
+			confData, _ := json.Marshal(&storeConfig)
+			ioutil.WriteFile(configFilePath, confData, 0755)
 		}
 	}
 

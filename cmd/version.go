@@ -7,13 +7,8 @@ import (
 
 	hashivers "github.com/hashicorp/go-version"
 	"github.com/spf13/cobra"
-)
 
-var (
-	PackageName   = "Cells Client"
-	BuildStamp    string
-	BuildRevision string
-	version       string
+	"github.com/pydio/cells-client/common"
 )
 
 var verCmd = &cobra.Command{
@@ -31,21 +26,21 @@ var showCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		var t time.Time
-		if BuildStamp != "" {
-			t, _ = time.Parse("2006-01-02T15:04:05", BuildStamp)
+		if common.BuildStamp != "" {
+			t, _ = time.Parse("2006-01-02T15:04:05", common.BuildStamp)
 		} else {
 			t = time.Now()
 		}
 
 		sV := "N/A"
-		if v, e := hashivers.NewVersion(version); e == nil {
+		if v, e := hashivers.NewVersion(common.Version); e == nil {
 			sV = v.String()
 		}
 
 		fmt.Println("")
-		fmt.Println("    " + fmt.Sprintf("%s (%s)", PackageName, sV))
+		fmt.Println("    " + fmt.Sprintf("%s (%s)", common.PackageName, sV))
 		fmt.Println("    " + fmt.Sprintf("Published on %s", t.Format(time.RFC822Z)))
-		fmt.Println("    " + fmt.Sprintf("Revision number %s", BuildRevision))
+		fmt.Println("    " + fmt.Sprintf("Revision number %s", common.BuildRevision))
 		fmt.Println("")
 
 	},

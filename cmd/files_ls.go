@@ -163,12 +163,23 @@ false
 			}
 
 			fmt.Printf("Listing: %d results for %s\n", len(result.Payload.Nodes), p)
+			var wsLevel bool
+			if len(result.Payload.Nodes) > 1 {
+				n0 := result.Payload.Nodes[1]
+				if n0.MetaStore != nil {
+					_, wsLevel = n0.MetaStore["ws_scope"]
+				}
+			}
 			if !lsDetails {
 				fmt.Println("Get more info by adding the -d (details) flag")
 			}
 			table := tablewriter.NewWriter(os.Stdout)
 			if lsDetails {
-				table.SetHeader([]string{"Type", "Uuid", "Name", "Size", "Modified"})
+				if wsLevel {
+					table.SetHeader([]string{"Type", "Uuid", "Name", "Label", "Description", "Permissions"})
+				} else {
+					table.SetHeader([]string{"Type", "Uuid", "Name", "Size", "Modified"})
+				}
 			} else {
 				table.SetHeader([]string{"Type", "Name"})
 			}
@@ -177,7 +188,11 @@ false
 					continue
 				}
 				t := "File"
-				if node.Type == models.TreeNodeTypeCOLLECTION {
+				if node.MetaStore != nil && node.MetaStore["ws_scope"] == "\"ROOM\"" {
+					t = "Cell"
+				} else if node.MetaStore != nil && node.MetaStore["ws_scope"] != "" {
+					t = "Workspace"
+				} else if node.Type == models.TreeNodeTypeCOLLECTION {
 					t = "Folder"
 					// The below does not work, we should rather use strings.Trim(node.Path, "/")
 					// but then the number of nodes count is false.
@@ -187,7 +202,25 @@ false
 					}
 				}
 				if lsDetails {
-					table.Append([]string{t, node.UUID, node.Path, sizeToBytes(node.Size), stampToDate(node.MTime)})
+					if wsLevel {
+						store := node.MetaStore
+						fromStore := func(key string) string {
+							if v, ok := store[key]; ok {
+								return strings.Trim(v, "\"")
+							}
+							return ""
+						}
+						table.Append([]string{
+							t,
+							fromStore("ws_uuid"),
+							path.Base(node.Path),
+							fromStore("ws_label"),
+							fromStore("ws_description"),
+							fromStore("ws_permissions"),
+						})
+					} else {
+						table.Append([]string{t, node.UUID, node.Path, sizeToBytes(node.Size), stampToDate(node.MTime)})
+					}
 				} else {
 					table.Append([]string{t, path.Base(node.Path)})
 				}
