@@ -13,7 +13,6 @@ main:
 	 -o cec\
 	 .
 
-
 xgo:
 	${GOPATH}/bin/xgo -go 1.12 \
 	 --image pydio/xgo:latest \
@@ -21,7 +20,8 @@ xgo:
 	 -ldflags "-X github.com/pydio/cells-client/common.Version=${CELLS_CLIENT_VERSION}\
 	 -X github.com/pydio/cells-client/common.BuildStamp=${TODAY}\
 	 -X github.com/pydio/cells-client/common.BuildRevision=${GITREV}"\
-	 .
+	 -out cec\
+	 ${PWD}
 
 
 dev:
