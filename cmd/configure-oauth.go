@@ -81,7 +81,7 @@ func oAuthInteractive(newConf *cells_sdk.SdkConfig) error {
 	}
 
 	// PROMPT CLIENT ID
-	p = promptui.Prompt{Label: "OAuth APP ID (found in your server pydio.json)", Validate: notEmpty, Default: "cells-cli"}
+	p = promptui.Prompt{Label: "OAuth APP ID (found in your server pydio.json)", Validate: notEmpty, Default: "cells-client"}
 	if newConf.ClientKey, e = p.Run(); e != nil {
 		return e
 	}

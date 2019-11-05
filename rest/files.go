@@ -21,28 +21,29 @@ func GetS3Client() (*s3.S3, string, error) {
 	return s3Client, bucketName, e
 }
 
-func GetFile(pathToFile string) (io.Reader, error) {
+func GetFile(pathToFile string) (io.Reader, int, error) {
 
 	s3Client, bucketName, e := GetS3Client()
 	if e != nil {
-		return nil, e
+		return nil, 0, e
 	}
-	_, err := s3Client.HeadObject((&s3.HeadObjectInput{}).
+	hO, err := s3Client.HeadObject((&s3.HeadObjectInput{}).
 		SetBucket(bucketName).
 		SetKey(pathToFile),
 	)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
+	size := int(*hO.ContentLength)
 
 	obj, err := s3Client.GetObject((&s3.GetObjectInput{}).
 		SetBucket(bucketName).
 		SetKey(pathToFile),
 	)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return obj.Body, nil
+	return obj.Body, size, nil
 }
 
 func PutFile(pathToFile string, content io.ReadSeeker, checkExists bool) (*s3.PutObjectOutput, error) {
