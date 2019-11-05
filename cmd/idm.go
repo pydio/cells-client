@@ -5,8 +5,9 @@ import (
 )
 
 var idmCmd = &cobra.Command{
-	Use:  "idm",
-	Long: `Users / Groups / Roles commands`,
+	Use:   "idm",
+	Short: "Identity Management commands (WIP)",
+	Long:  `Users / Groups / Roles commands`,
 	Run: func(cm *cobra.Command, args []string) {
 		cm.Usage()
 	},

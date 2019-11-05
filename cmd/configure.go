@@ -121,8 +121,10 @@ func noninterractive(conf *cells_sdk.SdkConfig) error {
 }
 
 var configureCmd = &cobra.Command{
-	Use:  "configure",
-	Long: `DataSources / Workspaces`,
+	Use:        "configure",
+	Short:      "Retrieve token using Grant Credentials",
+	Deprecated: "use oauth command instead",
+	Long:       `Retrieve token using Grant Credentials`,
 	Run: func(cm *cobra.Command, args []string) {
 
 		var err error

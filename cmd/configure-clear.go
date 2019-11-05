@@ -14,8 +14,9 @@ import (
 )
 
 var clearCmd = &cobra.Command{
-	Use:  "clear",
-	Long: "Clear current configuration",
+	Use:   "clear",
+	Short: "Clear current configuration",
+	Long:  "Clear current authentication data from your local keyring",
 	Run: func(cmd *cobra.Command, args []string) {
 		filePath := rest.DefaultConfigFilePath()
 		if s, err := ioutil.ReadFile(filePath); err == nil {
