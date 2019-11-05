@@ -34,13 +34,15 @@ You will be prompted with the following informations:
 - Server Address : full URL to Cells, e.g. `https://cells.yourdomain.com/`
 - Client ID / Client Secret: this is used by the OpenIDConnect service for authentication: using Cells 2.0, a default public client `cells-client` is already created. 
 - Then follow the OAuth2 process either by opening a browser or copy/pasting the URL in your browser to get a valid token.
+- The token is automatically saved in your keychain, and will be refreshed as necessary.
 
 ## Usage
 
 Use the `cec --help` command to know about the available commands. There are currently two interesting commands for manipulating files:
 
 - `./cec ls` : list files and folders on the server, when no path is passed, it lists the workspaces that use has access to.
-- `./cec cp` : Upload / Download file to/from a remote server.
+- `./cec cp` : Upload / Download file to/from a remote server (see below).
+- `./cec mkdir` : Create a folder on remote server
 - `./cec clear` : Clear authentication tokens stored in your keychain.
 
 Other commands are available for listing datasources, users, roles, etc... but it is still a WIP.
