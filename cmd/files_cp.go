@@ -10,40 +10,39 @@ import (
 	"time"
 
 	"github.com/gosuri/uiprogress"
-
 	"github.com/micro/go-log"
 	"github.com/spf13/cobra"
 
 	"github.com/pydio/cells-client/rest"
 	"github.com/pydio/cells-sdk-go/models"
+	"github.com/pydio/cells-sync/i18n"
+)
+
+var (
+	cpCmdExample = i18n.T(`
+Prefix remote paths with cells:// to differentiate local from remote. Currently, copy can only be performed with both different ends.
+
+1/ Uploading a file to server
+$ ./cec cp ./README.md cells://common-files/
+
+./cec cp <local-path> cells://<workspace-slug>/<path>
+
+2/ Downloading a file from server to local
+$ ./cec cp cells://personal-files/IMG_9723.JPG ./
+
+./cec cp cells://<workspace-slug>/<path-to-file> <local-path>
+	`)
 )
 
 var cpFiles = &cobra.Command{
-	Use:   "cp",
-	Short: `Copy files from/to Cells`,
-	Long: `Copy files between local server and remote Cells server
-
-Prefix remote paths with cells:// to differentiate local from remote. Currently, copy can only be performed with both different ends.
-For example:
-
-1/ Uploading a file to server
-
-$ ./cec cp ./README.md cells://common-files/
-Copying ./README.md to cells://common-files/
- ## Waiting for file to be indexed...
- ## File correctly indexed
-
-2/ Download a file from server
-
-$ ./cec cp cells://personal-files/IMG_9723.JPG ./
-Copying cells://personal-files/IMG_9723.JPG to ./
-Written 822601 bytes to file
-
-
-`,
+	Use:     "cp",
+	Short:   `Copy files from/to Cells`,
+	Long:    `Copy files between local server and remote Cells server`,
+	Example: cpCmdExample,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if len(args) < 2 {
+			cmd.Help()
 			log.Fatal(fmt.Errorf("please provide at least a source and a destination target"))
 		}
 
