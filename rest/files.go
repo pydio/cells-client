@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/s3"
-
-	"github.com/pydio/cells-client/common"
 	"github.com/pydio/cells-sdk-go/client/tree_service"
 	"github.com/pydio/cells-sdk-go/models"
 	awstransport "github.com/pydio/cells-sdk-go/transport/aws"
+
+	"github.com/pydio/cells-client/common"
 )
 
 func GetS3Client() (*s3.S3, string, error) {
@@ -106,4 +106,59 @@ func StatNode(pathToFile string) (*models.TreeNode, bool) {
 		return nil, false
 	}
 
+}
+
+func ListNodesPath(path string) ([]string, error) {
+	_, client, err := GetApiClient()
+	if err != nil {
+		return nil, err
+	}
+	params := tree_service.NewBulkStatNodesParams()
+	params.Body = &models.RestGetBulkMetaRequest{
+		Limit:     100,
+		NodePaths: []string{path},
+	}
+	res, e := client.TreeService.BulkStatNodes(params)
+	if e != nil {
+		return nil, e
+	}
+	var nodes []string
+	if len(res.Payload.Nodes) < 0 {
+		return nil, nil
+	}
+	for _, node := range res.Payload.Nodes {
+		nodes = append(nodes, node.Path)
+	}
+	return nodes, nil
+}
+
+func DeleteNode(paths []string) (jobUUIDs []string, e error) {
+	if len(paths) < 0 {
+		e = fmt.Errorf("no paths found to delete")
+		return
+	}
+	_, client, err := GetApiClient()
+	if err != nil {
+		e = err
+		return
+	}
+	var nn []*models.TreeNode
+	for _, p := range paths {
+		nn = append(nn, &models.TreeNode{Path: p})
+	}
+
+	params := tree_service.NewDeleteNodesParams()
+	params.Body = &models.RestDeleteNodesRequest{
+		Nodes: nn,
+	}
+	res, e := client.TreeService.DeleteNodes(params)
+	if e != nil {
+		e = err
+		return
+	}
+
+	for _, job := range res.Payload.DeleteJobs {
+		jobUUIDs = append(jobUUIDs, job.UUID)
+	}
+	return
 }
