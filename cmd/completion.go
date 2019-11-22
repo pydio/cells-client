@@ -11,7 +11,7 @@ var shType string
 // completionCmd represents the completion command
 var completionCmd = &cobra.Command{
 	Use:   "completion",
-	Short: "Auto completion for Pydio Cells",
+	Short: "Auto completion for Pydio Cells Client",
 	Long: `Completion for Pydio Cells Client
 	 
 	 # Add to current session
