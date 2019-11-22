@@ -10,14 +10,8 @@ import (
 	"github.com/pydio/cells-sdk-go/models"
 )
 
-//const (
-//	JobName        = "JobName"
-//	JSONParameters = "JSONParameters"
-//)
-
 func MoveParams(source []string, targetFolder string) string {
 	if !strings.HasSuffix(targetFolder, "/") {
-		//targetFolder += "/"
 		return BuildParams(source, targetFolder, false)
 	}
 	return BuildParams(source, targetFolder, true)
@@ -44,6 +38,14 @@ func BuildParams(source []string, targetFolder string, targetParent bool) string
 	}
 	data, _ := json.Marshal(i)
 	return string(data)
+}
+
+func CopyJob(jsonParams string) (string, error) {
+	return RunJob("copy", jsonParams)
+}
+
+func MoveJob(jsonParams string) (string, error) {
+	return RunJob("move", jsonParams)
 }
 
 // RunJob runs a job
@@ -110,8 +112,6 @@ func MonitorJob(JobID string) (err error) {
 			return
 		}
 
-		//fmt.Printf("Job : %s Current Status : %s | ", JobID, status)
-
 		switch status {
 		case models.JobsTaskStatusRunning, models.JobsTaskStatusPaused, models.JobsTaskStatusQueued:
 			//fmt.Println("running, progress: ", pg)
@@ -130,6 +130,7 @@ func MonitorJob(JobID string) (err error) {
 			fmt.Println("IDLE")
 			return
 		case models.JobsTaskStatusFinished:
+			//TODO remove this and add progress bar
 			fmt.Printf("Job : %s | Status : %s\n", JobID, status)
 			return
 		default:

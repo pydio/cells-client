@@ -43,7 +43,10 @@ var rmCmd = &cobra.Command{
 				log.Fatalf("This node does not exist: [%v]\n", arg)
 			}
 			if path.Base(arg) == "*" {
-				nodes, _ := rest.ListNodesPath(arg)
+				nodes, err := rest.ListNodesPath(arg)
+				if err != nil {
+					log.Println("could not list nodes path, ", err)
+				}
 				targetNodes = nodes
 			} else {
 				targetNodes = append(targetNodes, arg)
@@ -62,7 +65,7 @@ var rmCmd = &cobra.Command{
 				err := rest.MonitorJob(id)
 				defer wg.Done()
 				if err != nil {
-					log.Printf("could not monitor job, %s", id)
+					log.Printf("could not monitor job, %s\n", id)
 				}
 			}(id)
 		}

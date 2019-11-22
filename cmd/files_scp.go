@@ -134,7 +134,6 @@ var scpFiles = &cobra.Command{
 			fmt.Println(" ## File correctly indexed")
 
 		}
-
 	},
 }
 

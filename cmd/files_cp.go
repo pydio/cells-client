@@ -30,7 +30,7 @@ var cpCmd = &cobra.Command{
 	Short:   "Copy files",
 	Example: cpCmdExample,
 	Run: func(cmd *cobra.Command, args []string) {
-		//TODO Maybe add the dot (.) behaviour to simulate the linux command
+		//TODO Maybe add the dot (.) behaviour as seen with the linux command (cp /home/user/file .)
 		if len(args) < 2 {
 			cmd.Help()
 			log.Fatalln("Missing Source and Target path")
@@ -40,16 +40,17 @@ var cpCmd = &cobra.Command{
 
 		var sourceNodes []string
 		if path.Base(source) == "*" {
-			nodes, _ := rest.ListNodesPath(source)
+			nodes, err := rest.ListNodesPath(source)
+			if err != nil {
+				log.Println("could not list nodes path", err)
+			}
 			sourceNodes = nodes
 		} else {
 			sourceNodes = []string{source}
 		}
 
-		//TODO refactor
-		jobName := "copy"
 		params := rest.CopyParams(sourceNodes, target)
-		jobID, err := rest.RunJob(jobName, params)
+		jobID, err := rest.CopyJob(params)
 		if err != nil {
 			log.Fatalln("could not run job")
 		}

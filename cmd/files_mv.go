@@ -35,7 +35,10 @@ var filesMvCmd = &cobra.Command{
 
 		var sourceNodes []string
 		if path.Base(source) == "*" {
-			nodes, _ := rest.ListNodesPath(source)
+			nodes, err := rest.ListNodesPath(source)
+			if err != nil {
+				log.Println("could not list the nodes path", err)
+			}
 			sourceNodes = nodes
 		} else {
 			_, exists := rest.StatNode(source)
@@ -46,10 +49,7 @@ var filesMvCmd = &cobra.Command{
 		}
 
 		params := rest.MoveParams(sourceNodes, target)
-
-		//TODO refactor
-		jobName := "move"
-		jobID, err := rest.RunJob(jobName, params)
+		jobID, err := rest.MoveJob(params)
 		if err != nil {
 			log.Fatalln("could not run job")
 		}
