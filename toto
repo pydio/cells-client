@@ -1,0 +1,26 @@
+#!/usr/local/bin/bash
+
+_totoctl() {
+	local lsopts cur dir
+	cur="${COMP_WORDS[COMP_CWORD]}"
+
+	dir=$(dirname "$cur" 2>/dev/null)
+
+	curlen=${#cur}
+	last_char=${cur:curlen-1:1}
+
+	if [[ $last_char == "/" ]] && [[ curlen -gt 2 ]]; then
+		dir=$cur
+	elif [[ -z $dir ]]; then
+		dir="/"
+	elif [[ $dir == "." ]]; then
+		dir="/"
+	fi
+
+	# set +x
+
+	lsopts=$(./cec ls --raw $dir)
+	COMPREPLY=($(compgen -W "${lsopts[*]}" -- "$cur"))
+}
+
+complete -o nospace -F _totoctl toto
