@@ -19,7 +19,7 @@ var (
 const (
 	bash_completion_func = `__./cec_custom_func() {
 		case ${last_command} in
-		./cec_mv | ./cec_cp | ./cec_rm)
+		./cec_mv | ./cec_cp | ./cec_rm | ./cec_ls)
 			_totoctl
 			return
 			;;
