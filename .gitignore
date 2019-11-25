@@ -12,4 +12,7 @@
 *.out
 
 cec
+main
+cec-*
+
 .idea

@@ -171,8 +171,9 @@ func oAuthNonInteractive(conf *cells_sdk.SdkConfig) error {
 }
 
 var configureOAuthCmd = &cobra.Command{
-	Use:  "oauth",
-	Long: `Configure Authentication using OAuth`,
+	Use:   "oauth",
+	Short: "User OAuth2 to login to server",
+	Long:  `Configure Authentication using OAuth2`,
 	Run: func(cm *cobra.Command, args []string) {
 
 		var err error

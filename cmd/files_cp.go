@@ -1,217 +1,67 @@
 package cmd
 
 import (
-	"fmt"
-	"io"
-	"os"
+	"log"
 	"path"
-	"path/filepath"
-	"strings"
-	"time"
 
-	"github.com/gosuri/uiprogress"
-	"github.com/micro/go-log"
 	"github.com/spf13/cobra"
 
 	"github.com/pydio/cells-client/rest"
-	"github.com/pydio/cells-sdk-go/models"
-	"github.com/pydio/cells-sync/i18n"
 )
 
-var (
-	cpCmdExample = i18n.T(`
-Prefix remote paths with cells:// to differentiate local from remote. Currently, copy can only be performed with both different ends.
+const (
+	cpCmdExample = `
+Copy content in your Cells instance with,
 
-1/ Uploading a file to server
-$ ./cec cp ./README.md cells://common-files/
+# Copy file "test.txt" inside folder "folder-a"
+./cec cp common-files/test.txt common-files/folder-a
 
-./cec cp <local-path> cells://<workspace-slug>/<path>
+# Copy file "test.txt" inside folder "folder-b" (located in another workspace/datasource)
+./cec cp common-files/test.txt personal-files/folder-b
 
-2/ Downloading a file from server to local
-$ ./cec cp cells://personal-files/IMG_9723.JPG ./
-
-./cec cp cells://<workspace-slug>/<path-to-file> <local-path>
-	`)
+# Copiy all the content of folder "test" inside "folder-c"
+./cec cp common-files/test/* common-files/folder-c
+`
 )
 
-var cpFiles = &cobra.Command{
+// cmCmd represents the rm command
+var cpCmd = &cobra.Command{
 	Use:     "cp",
-	Short:   `Copy files from/to Cells`,
-	Long:    `Copy files between local server and remote Cells server`,
+	Short:   "Copy files",
 	Example: cpCmdExample,
 	Run: func(cmd *cobra.Command, args []string) {
-
+		//TODO Maybe add the dot (.) behaviour as seen with the linux command (cp /home/user/file .)
 		if len(args) < 2 {
 			cmd.Help()
-			log.Fatal(fmt.Errorf("please provide at least a source and a destination target"))
+			log.Fatalln("Missing Source and Target path")
 		}
+		source := args[0]
+		target := args[1]
 
-		from := args[0]
-		to := args[1]
-		fmt.Printf("Copying %s to %s\n", from, to)
-
-		if strings.HasPrefix(from, "cells://") {
-			// Download
-			fromPath := strings.TrimPrefix(from, "cells://")
-			toPath, remote, e := targetToFullPath(to, from)
-			if e != nil {
-				log.Fatal(e)
+		var sourceNodes []string
+		if path.Base(source) == "*" {
+			nodes, err := rest.ListNodesPath(source)
+			if err != nil {
+				log.Println("could not list nodes path", err)
 			}
-			if remote {
-				log.Fatal(fmt.Errorf("source and target are both remote, copy remote to local or the opposite"))
-			}
-			reader, length, e := rest.GetFile(fromPath)
-			if e != nil {
-				log.Fatal(e)
-			}
-			bar := uiprogress.AddBar(length).PrependCompleted()
-			wrapper := &PgReader{
-				Reader: reader,
-				bar:    bar,
-				total:  length,
-			}
-			writer, e := os.OpenFile(toPath, os.O_CREATE|os.O_WRONLY, 0755)
-			if e != nil {
-				log.Fatal(e)
-			}
-			defer writer.Close()
-			uiprogress.Start()
-			_, e = io.Copy(writer, wrapper)
-			if e != nil {
-				log.Fatal(e)
-			}
-			// Wait that progress bar finish rendering
-			<-time.After(100 * time.Millisecond)
-			uiprogress.Stop()
+			sourceNodes = nodes
 		} else {
-			// Upload
-			toPath, remote, e := targetToFullPath(to, from)
-			if e != nil {
-				log.Fatal(e)
-			}
-			if !remote {
-				log.Fatal(fmt.Errorf("source and target are both local, copy remote to local or the opposite"))
-			}
-			var length int64
-			if s, e := os.Stat(from); e != nil || s.IsDir() {
-				log.Fatal(fmt.Errorf("local source is not a valid file"))
-			} else {
-				length = s.Size()
-			}
-			reader, e := os.Open(from)
-			bar := uiprogress.AddBar(int(length)).PrependCompleted()
-			wrapper := &PgReader{
-				Reader: reader,
-				Seeker: reader,
-				bar:    bar,
-				total:  int(length),
-				double: true,
-			}
-			if e != nil {
-				log.Fatal(e)
-			}
-			uiprogress.Start()
-			_, e = rest.PutFile(toPath, wrapper, false)
-			if e != nil {
-				log.Fatal(e)
-			}
-			<-time.After(500 * time.Millisecond)
-			uiprogress.Stop()
-			// Now stat Node to make sure it is indexed
-			e = rest.RetryCallback(func() error {
-				fmt.Println(" ## Waiting for file to be indexed...")
-				_, ok := rest.StatNode(toPath)
-				if !ok {
-					return fmt.Errorf("cannot stat node just after PutFile operation")
-				}
-				return nil
-
-			}, 3, 3*time.Second)
-			if e != nil {
-				log.Fatal("File does not seem to be indexed!")
-			}
-			fmt.Println(" ## File correctly indexed")
-
+			sourceNodes = []string{source}
 		}
 
+		params := rest.CopyParams(sourceNodes, target)
+		jobID, err := rest.CopyJob(params)
+		if err != nil {
+			log.Fatalln("could not run job")
+		}
+
+		err = rest.MonitorJob(jobID)
+		if err != nil {
+			log.Fatalln("could not monitor job")
+		}
 	},
 }
 
 func init() {
-	RootCmd.AddCommand(cpFiles)
-}
-
-func targetToFullPath(to string, from string) (string, bool, error) {
-	var toPath string
-	var isDir bool
-	var isRemote bool
-	var e error
-	if strings.HasPrefix(to, "cells://") {
-		// This is remote
-		isRemote = true
-		toPath = strings.TrimPrefix(to, "cells://")
-		target, ok := rest.StatNode(toPath)
-		if !ok {
-			// Does not exists => will be created
-			return toPath, isRemote, nil
-		}
-		isDir = target.Type == models.TreeNodeTypeCOLLECTION
-	} else {
-		// This is local
-		toPath, e = filepath.Abs(to)
-		if e != nil {
-			return "", false, e
-		}
-		s, e := os.Stat(toPath)
-		if e != nil {
-			return "", false, e
-		}
-		isDir = s.IsDir()
-	}
-
-	if isDir {
-		toPath = path.Join(toPath, path.Base(from))
-	}
-	return toPath, isRemote, nil
-}
-
-type PgReader struct {
-	io.Reader
-	io.Seeker
-	bar   *uiprogress.Bar
-	total int
-	read  int
-
-	double bool
-	first  bool
-}
-
-func (r *PgReader) Read(p []byte) (n int, err error) {
-	n, err = r.Reader.Read(p)
-	if err == nil {
-		if r.double {
-			r.read += n / 2
-		} else {
-			r.read += n
-		}
-		r.bar.Set(r.read)
-	} else if err == io.EOF {
-		if r.double && !r.first {
-			r.first = true
-			r.bar.Set(r.total / 2)
-		} else {
-			r.bar.Set(r.total)
-		}
-	}
-	return
-}
-
-func (r *PgReader) Seek(offset int64, whence int) (int64, error) {
-	if r.double && r.first {
-		r.read = r.total/2 + int(offset)/2
-	} else {
-		r.read = int(offset)
-	}
-	r.bar.Set(r.read)
-	return r.Seeker.Seek(offset, whence)
+	RootCmd.AddCommand(cpCmd)
 }

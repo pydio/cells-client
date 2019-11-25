@@ -19,15 +19,7 @@ import (
 	"github.com/pydio/cells/common"
 )
 
-var (
-	lsDetails, lsRaw, lsExists bool
-)
-
-var listFiles = &cobra.Command{
-	Use:   "ls",
-	Short: "List files on pydio cells",
-	Long: `List files on Pydio Cells
-
+const lsCmdExample = `
 Use as a normal ls, with additional path to list sub-folders or read info about a node.
 You can use the optional -d (--details) flag to display more information, -r (--raw) flag 
 to only list found file (& folder) paths or -f (--exists) flag to only check if given path
@@ -91,7 +83,16 @@ false
 ...
 
 
-`,
+`
+
+var (
+	lsDetails, lsRaw, lsExists bool
+)
+
+var listFiles = &cobra.Command{
+	Use:     "ls",
+	Short:   "List files on pydio cells",
+	Example: lsCmdExample,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		// Check that we do not have multiple flags
@@ -143,22 +144,40 @@ false
 		//assigns the files data retrieved above in the results variable
 		result, err := apiClient.MetaService.GetBulkMeta(params)
 		if err != nil {
-			fmt.Printf("could not list files: %s\n", err.Error())
-			log.Fatal(err)
+			os.Exit(1)
+			// fmt.Printf("could not list files: %s\n", err.Error())
+			// log.Fatal(err)
 		}
 
 		//prints the path therefore the name of the files listed
 		if len(result.Payload.Nodes) > 0 {
 			if lsRaw {
+
 				for _, node := range result.Payload.Nodes {
 					if path.Base(node.Path) == common.PYDIO_SYNC_HIDDEN_FILE_META {
+						continue
+					}
+					if node.Path == "" {
 						continue
 					}
 					// if strings.Trim(node.Path, "/") == p {
 					// 	continue
 					// }
-					cmd.Println(node.Path)
+
+					//TODO hide parent from results
+					if node.Type == models.TreeNodeTypeCOLLECTION {
+						//TODO might have to rethink to make it less complicated
+						if strings.HasSuffix(node.Path, "/") {
+							continue
+
+						} else {
+							fmt.Fprintln(os.Stdout, node.Path+"/")
+						}
+					} else {
+						fmt.Fprintln(os.Stdout, node.Path)
+					}
 				}
+				// fmt.Fprintf(os.Stdout, "\n")
 				return
 			}
 

@@ -5,8 +5,9 @@ import (
 )
 
 var storageCmd = &cobra.Command{
-	Use:  "storage",
-	Long: `DataSources / Workspaces`,
+	Use:   "storage",
+	Short: "DataSources commands (WIP)",
+	Long:  `DataSources commands`,
 	Run: func(cm *cobra.Command, args []string) {
 		cm.Usage()
 	},

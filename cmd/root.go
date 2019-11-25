@@ -16,12 +16,50 @@ var (
 	configFile string
 )
 
+const (
+	bash_completion_func = `__./cec_custom_func() {
+		case ${last_command} in
+		./cec_mv | ./cec_cp | ./cec_rm | ./cec_ls)
+			_totoctl
+			return
+			;;
+		*) ;;
+	
+		esac
+	}
+	_totoctl() {
+		local lsopts cur dir
+		cur="${COMP_WORDS[COMP_CWORD]}"
+	
+		dir=$(dirname "$cur" 2>/dev/null)
+	
+		curlen=${#cur}
+		last_char=${cur:curlen-1:1}
+	
+		if [[ $last_char == "/" ]] && [[ curlen -gt 2 ]]; then
+			dir=$cur
+		elif [[ -z $dir ]]; then
+			dir="/"
+		elif [[ $dir == "." ]]; then
+			dir="/"
+		fi
+	
+		# set +x
+	
+		lsopts=$(./cec ls --raw $dir)
+		COMPREPLY=($(compgen -W "${lsopts[*]}" -- "$cur"))
+		compopt -o nospace
+	}
+	`
+)
+
 // RootCmd is the parent of all example commands defined in this package.
 // It takes care of the pre-configuration of the defaut connection to the SDK
 // in its PersistentPreRun phase.
 var RootCmd = &cobra.Command{
-	Use:   os.Args[0],
-	Short: "Connect to a Cells Server using the command line",
+	Use:                    os.Args[0],
+	Short:                  "Connect to a Cells Server using the command line",
+	BashCompletionFunction: bash_completion_func,
 	Long: `
 # This tool uses the REST API to connect a Cells Server.
 
