@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/spf13/cobra"
 
@@ -10,6 +11,10 @@ import (
 	"github.com/pydio/cells-sdk-go/client/config_service"
 	"github.com/pydio/cells-sdk-go/client/jobs_service"
 	"github.com/pydio/cells-sdk-go/models"
+)
+
+var (
+	ldRaw bool
 )
 
 var listDatasources = &cobra.Command{
@@ -37,6 +42,15 @@ var listDatasources = &cobra.Command{
 
 		//prints the name of the datasources retrieved previously
 		if len(result.Payload.DataSources) > 0 {
+			if ldRaw {
+				for _, ds := range result.Payload.DataSources {
+					if ds.Name == "" {
+						continue
+					}
+					_, _ = fmt.Fprintln(os.Stdout, ds.Name)
+				}
+				return
+			}
 			fmt.Printf("* %d datasources	\n", len(result.Payload.DataSources))
 			for _, u := range result.Payload.DataSources {
 				fmt.Println("  - " + u.Name)
@@ -70,10 +84,14 @@ var resyncDs = &cobra.Command{
 		if err != nil {
 			log.Fatal(fmt.Sprintf("could not start the sync job for ds %s, cause: %s", dsName, err.Error()))
 		}
+		fmt.Printf("Starting resync on %s \n", dsName)
 	},
 }
 
 func init() {
 	storageCmd.AddCommand(listDatasources)
 	storageCmd.AddCommand(resyncDs)
+
+	ldFlags := listDatasources.PersistentFlags()
+	ldFlags.BoolVarP(&ldRaw, "raw", "r", false, "List datasources name in raw format")
 }

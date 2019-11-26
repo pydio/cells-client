@@ -23,6 +23,10 @@ var (
     _path_completion
     return
     ;;
+	` + os.Args[0] + `_storage_resync-ds)
+	_datasources_completion
+	return
+	;;
   *) ;;
   esac
 }
@@ -42,16 +46,22 @@ _path_completion() {
     dir="/"
   fi
 
-  COMPREPLY=()
-
   IFS=$'\n'
-  lsopts="$(./cec ls --raw $dir)"
+  lsopts="$(` + os.Args[0] + ` ls --raw $dir)"
 
   COMPREPLY=($(compgen -W "${lsopts[@]}" -- "$cur"))
   compopt -o nospace
   compopt -o filenames
 }
-	`
+
+_datasources_completion() {
+  local dsopts cur
+  cur="${COMP_WORDS[COMP_CWORD]}"
+
+  dsopts="$(` + os.Args[0] + ` storage list-datasources --raw)"
+  COMPREPLY=($(compgen -W "${dsopts[@]}" -- "$cur"))
+}
+`
 )
 
 // RootCmd is the parent of all example commands defined in this package.
