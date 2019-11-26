@@ -145,6 +145,8 @@ github.com/pydio/cells-sdk-go v0.0.0-20191015135034-de45ed4a7684 h1:98Sdw5t7yUyv
 github.com/pydio/cells-sdk-go v0.0.0-20191015135034-de45ed4a7684/go.mod h1:MshwURKmd3KJzgbaCenFhX3LC3RsVTRE2t02xPHaO3E=
 github.com/pydio/cells-sdk-go v0.0.0-20191015195255-ce637a36835b h1:pouUy2wTbzIeaIKArFHT84QZ/hCT0Clt9qoKrXEviUM=
 github.com/pydio/cells-sdk-go v0.0.0-20191015195255-ce637a36835b/go.mod h1:MshwURKmd3KJzgbaCenFhX3LC3RsVTRE2t02xPHaO3E=
+github.com/pydio/cells-sdk-go v0.0.0-20191126084202-9658210ccf4a h1:aafgukV9hZ+PBt35cKcYqPJ1yBbJa9hxL1sC9ggRnlA=
+github.com/pydio/cells-sdk-go v0.0.0-20191126084202-9658210ccf4a/go.mod h1:MshwURKmd3KJzgbaCenFhX3LC3RsVTRE2t02xPHaO3E=
 github.com/pydio/go v0.0.0-20191105212324-a0b934bdf46b h1:Q8cKwVA8jOo80zMMMzX/tUAFYLpX+xyR1r5dpqmoZJc=
 github.com/pydio/go v0.0.0-20191105212324-a0b934bdf46b/go.mod h1:H+DrbjBEehySj5ykZVFHF12kpfWtmKpsoyDZ16kUyqk=
 github.com/russross/blackfriday v1.5.2/go.mod h1:JO/DiYxRf+HjHt06OyowR9PTA263kcR/rfWxYHBV53g=
