@@ -16,40 +16,41 @@ var (
 	configFile string
 )
 
-const (
-	bash_completion_func = `__./cec_custom_func() {
-		case ${last_command} in
-		./cec_mv | ./cec_cp | ./cec_rm | ./cec_ls)
-			_totoctl
-			return
-			;;
-		*) ;;
-	
-		esac
-	}
-	_totoctl() {
-		local lsopts cur dir
-		cur="${COMP_WORDS[COMP_CWORD]}"
-	
-		dir=$(dirname "$cur" 2>/dev/null)
-	
-		curlen=${#cur}
-		last_char=${cur:curlen-1:1}
-	
-		if [[ $last_char == "/" ]] && [[ curlen -gt 2 ]]; then
-			dir=$cur
-		elif [[ -z $dir ]]; then
-			dir="/"
-		elif [[ $dir == "." ]]; then
-			dir="/"
-		fi
-	
-		# set +x
-	
-		lsopts=$(./cec ls --raw $dir)
-		COMPREPLY=($(compgen -W "${lsopts[*]}" -- "$cur"))
-		compopt -o nospace
-	}
+var (
+	bash_completion_func = `__` + os.Args[0] + `_custom_func() {
+  case ${last_command} in
+  ` + os.Args[0] + `_mv | ` + os.Args[0] + `_cp | ` + os.Args[0] + `_rm | ` + os.Args[0] + `_ls)
+    _path_completion
+    return
+    ;;
+  *) ;;
+  esac
+}
+_path_completion() {
+  local lsopts cur dir
+  cur="${COMP_WORDS[COMP_CWORD]}"
+  dir="$(dirname "$cur" 2>/dev/null)"
+
+  currentlength=${#cur}
+  last_char=${cur:currentlength-1:1}
+
+  if [[ $last_char == "/" ]] && [[ currentlength -gt 2 ]]; then
+    dir=$cur
+  elif [[ -z $dir ]]; then
+    dir="/"
+  elif [[ $dir == "." ]]; then
+    dir="/"
+  fi
+
+  COMPREPLY=()
+
+  IFS=$'\n'
+  lsopts="$(./cec ls --raw $dir)"
+
+  COMPREPLY=($(compgen -W "${lsopts[@]}" -- "$cur"))
+  compopt -o nospace
+  compopt -o filenames
+}
 	`
 )
 

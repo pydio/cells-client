@@ -171,10 +171,12 @@ var listFiles = &cobra.Command{
 							continue
 
 						} else {
-							fmt.Fprintln(os.Stdout, node.Path+"/")
+							out := node.Path + "/"
+							//out = strings.ReplaceAll(out, " ", "\\ ")
+							_, _ = fmt.Fprintln(os.Stdout, out)
 						}
 					} else {
-						fmt.Fprintln(os.Stdout, node.Path)
+						_, _ = fmt.Fprintln(os.Stdout, node.Path)
 					}
 				}
 				// fmt.Fprintf(os.Stdout, "\n")
