@@ -95,6 +95,10 @@ github.com/google/shlex v0.0.0-20181106134648-c34317bd91bf/go.mod h1:RpwtwJQFrIE
 github.com/google/uuid v1.0.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/gordonklaus/ineffassign v0.0.0-20180909121442-1003c8bd00dc/go.mod h1:cuNKsD1zp2v6XfE/orVX2QE1LC+i254ceGcVeDT3pTU=
+github.com/gosuri/uilive v0.0.3 h1:kvo6aB3pez9Wbudij8srWo4iY6SFTTxTKOkb+uRCE8I=
+github.com/gosuri/uilive v0.0.3/go.mod h1:qkLSc0A5EXSP6B04TrN4oQoxqFI7A8XvoXSlJi8cwk8=
+github.com/gosuri/uiprogress v0.0.1 h1:0kpv/XY/qTmFWl/SkaJykZXrBBzwwadmW8fRb7RJSxw=
+github.com/gosuri/uiprogress v0.0.1/go.mod h1:C1RTYn4Sc7iEyf6j8ft5dyoZ4212h8G1ol9QQluh5+0=
 github.com/hashicorp/go-version v1.2.0 h1:3vNe/fWF5CBgRIguda1meWhsZHy3m8gCJ5wx+dIzX/E=
 github.com/hashicorp/go-version v1.2.0/go.mod h1:fltr4n8CU8Ke44wwGCBoEymUuxUHl09ZGVZPK5anwXA=
 github.com/hashicorp/hcl v1.0.0/go.mod h1:E5yfLk+7swimpb2L/Alb/PJmXilQ/rhwaUYs4T20WEQ=
@@ -141,6 +145,10 @@ github.com/pydio/cells-sdk-go v0.0.0-20191015135034-de45ed4a7684 h1:98Sdw5t7yUyv
 github.com/pydio/cells-sdk-go v0.0.0-20191015135034-de45ed4a7684/go.mod h1:MshwURKmd3KJzgbaCenFhX3LC3RsVTRE2t02xPHaO3E=
 github.com/pydio/cells-sdk-go v0.0.0-20191015195255-ce637a36835b h1:pouUy2wTbzIeaIKArFHT84QZ/hCT0Clt9qoKrXEviUM=
 github.com/pydio/cells-sdk-go v0.0.0-20191015195255-ce637a36835b/go.mod h1:MshwURKmd3KJzgbaCenFhX3LC3RsVTRE2t02xPHaO3E=
+github.com/pydio/cells-sdk-go v0.0.0-20191126084202-9658210ccf4a h1:aafgukV9hZ+PBt35cKcYqPJ1yBbJa9hxL1sC9ggRnlA=
+github.com/pydio/cells-sdk-go v0.0.0-20191126084202-9658210ccf4a/go.mod h1:MshwURKmd3KJzgbaCenFhX3LC3RsVTRE2t02xPHaO3E=
+github.com/pydio/go v0.0.0-20191105212324-a0b934bdf46b h1:Q8cKwVA8jOo80zMMMzX/tUAFYLpX+xyR1r5dpqmoZJc=
+github.com/pydio/go v0.0.0-20191105212324-a0b934bdf46b/go.mod h1:H+DrbjBEehySj5ykZVFHF12kpfWtmKpsoyDZ16kUyqk=
 github.com/russross/blackfriday v1.5.2/go.mod h1:JO/DiYxRf+HjHt06OyowR9PTA263kcR/rfWxYHBV53g=
 github.com/shibukawa/configdir v0.0.0-20170330084843-e180dbdc8da0 h1:Xuk8ma/ibJ1fOy4Ee11vHhUFHQNpHhrBneOCNHVXS5w=
 github.com/shibukawa/configdir v0.0.0-20170330084843-e180dbdc8da0/go.mod h1:7AwjWCpdPhkSmNAgUv5C7EJ4AbmjEB3r047r3DXWu3Y=
