@@ -162,3 +162,43 @@ func DeleteNode(paths []string) (jobUUIDs []string, e error) {
 	}
 	return
 }
+
+func GetBulkMetaNode(path string) ([]*models.TreeNode, error) {
+	_, client, err := GetApiClient()
+	if err != nil {
+		return nil, err
+	}
+	params := tree_service.NewBulkStatNodesParams()
+	params.Body = &models.RestGetBulkMetaRequest{
+		Limit:     100,
+		NodePaths: []string{path},
+	}
+	res, e := client.TreeService.BulkStatNodes(params)
+	if e != nil {
+		return nil, err
+	}
+	return res.Payload.Nodes, nil
+}
+
+func TreeCreateNodes(nodes []*models.TreeNode) error {
+	_, client, err := GetApiClient()
+	if err != nil {
+		return err
+
+	}
+	params := tree_service.NewCreateNodesParams()
+	params.Body = &models.RestCreateNodesRequest{
+		Nodes:     nodes,
+		Recursive: false,
+	}
+
+	_, e := client.TreeService.CreateNodes(params)
+	if e != nil {
+		return e
+	}
+
+	//TODO re-index
+	// monitor jobs to wait for the index
+
+	return nil
+}
