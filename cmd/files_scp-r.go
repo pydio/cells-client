@@ -15,11 +15,17 @@ import (
 	"github.com/pydio/cells-sdk-go/models"
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-client/rest"
+	. "github.com/pydio/cells-client/rest"
+)
+
+const (
+	scprCmdExample = `
+`
 )
 
 var (
-	targetPath, sourcePath string
+	sourcePath, targetPath string
+	recursive              bool
 )
 
 var scprCmd = &cobra.Command{
@@ -27,11 +33,19 @@ var scprCmd = &cobra.Command{
 	Short: "scp recursive test",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		downloadFrom := "personal-files/formula-one"
-		downloadTo := "/Users/jay/Downloads/lulu"
+		//TODO parse args if arg[Ø] starts with cells:// = download from remote -> to target
+		//example cec scp cells://common-files/formula-one
+		// if arg[1]
+
+		sourcePath = "personal-files/Top-left_triangle_rasterization_rule.gif"
+		targetPath = "/Users/jay/Downloads/lulu/"
+
+		if _, status := StatNode(sourcePath); status != true {
+			log.Fatalf("Cannot download this node, it does not exist, node : [%s]\n", sourcePath)
+		}
 
 		//// Load all tree and create folders locally
-		//nodes, err := walkRemote(downloadFrom, downloadTo, true)
+		//nodes, err := walkRemote(sourcePath, downloadTo, true)
 		//if err != nil {
 		//	log.Fatalln("", err)
 		//}
@@ -48,7 +62,7 @@ var scprCmd = &cobra.Command{
 		//if err != nil {
 		//	log.Fatalln("", err)
 		//}
-		err := downloadRecursive(downloadFrom, downloadTo)
+		err := downloadRecursive(sourcePath, targetPath)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -58,6 +72,8 @@ var scprCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(scprCmd)
+
+	scprCmd.PersistentFlags().BoolVarP(&recursive, " recursive", "r", false, "Apply recursion to the operation (behaviour similar to the -r option of the linux commands) ")
 }
 
 // TODO look at targetPath, sourcePath
@@ -78,8 +94,8 @@ func download(nodes []*models.TreeNode, to string, pgBar uiprogress.Bar, totalPg
 				<-buf
 				wg.Done()
 			}()
-			downloadPath := targetLocation(targetPath, sourcePath, remotePath)
-			reader, length, e := rest.GetFile(remotePath)
+			downloadPath := TargetLocation(targetPath, sourcePath, remotePath)
+			reader, length, e := GetFile(remotePath)
 			if e != nil {
 				log.Println("could not GetFile ", e)
 			}
@@ -114,13 +130,15 @@ func download(nodes []*models.TreeNode, to string, pgBar uiprogress.Bar, totalPg
 	return nil
 }
 
-func downloadRecursive(from, to string) error {
-	nodes, err := walkRemote(from, to, true)
+func downloadRecursive(downloadFrom, downloadTo string) error {
+	nodes, err := walkRemote(downloadFrom, downloadTo, true)
 	if err != nil {
 		log.Fatalln("", err)
 	}
+
 	wg := &sync.WaitGroup{}
 	buf := make(chan struct{}, 3)
+
 	for _, n := range nodes {
 		if n.Type == models.TreeNodeTypeCOLLECTION {
 			continue
@@ -128,13 +146,14 @@ func downloadRecursive(from, to string) error {
 		buf <- struct{}{}
 		wg.Add(1)
 		uiprogress.Start()
-		go func(remotePath string) {
+
+		go func(nodePath string) {
 			defer func() {
 				<-buf
 				wg.Done()
 			}()
-			downloadPath := targetLocation(from, to, remotePath)
-			reader, length, e := rest.GetFile(remotePath)
+
+			reader, length, e := GetFile(nodePath)
 			if e != nil {
 				log.Println("could not GetFile ", e)
 			}
@@ -143,19 +162,17 @@ func downloadRecursive(from, to string) error {
 			bar.PrependFunc(func(b *uiprogress.Bar) string {
 				return "file :"
 			})
-
 			wrapper := &PgReader{
 				Reader: reader,
 				bar:    bar,
 				total:  length,
 			}
-
-			writer, e := os.OpenFile(downloadPath, os.O_CREATE|os.O_WRONLY, 0755)
+			downloadToLocation := TargetLocation(downloadTo, downloadFrom, nodePath)
+			writer, e := os.OpenFile(downloadToLocation, os.O_CREATE|os.O_WRONLY, 0755)
 			if e != nil {
 				log.Println("could not OpenFile ", e)
 			}
 			defer writer.Close()
-
 			_, e = io.Copy(writer, wrapper)
 			if e != nil {
 				log.Println("could not Copy", e)
@@ -167,7 +184,6 @@ func downloadRecursive(from, to string) error {
 	}
 	wg.Wait()
 	return nil
-
 }
 
 func uploadRecursive(from, to string) error {
@@ -197,8 +213,8 @@ func uploadRecursive(from, to string) error {
 }
 
 // upload take a local resource and puts it in the remote location
-func upload(from string, to string) {
-	reader, e := os.Open(from)
+func upload(source string, target string) {
+	reader, e := os.Open(source)
 	if e != nil {
 		return
 	}
@@ -212,29 +228,29 @@ func upload(from string, to string) {
 		double: true,
 	}
 
-	_, e = rest.PutFile(to, wrapper, false)
+	_, e = PutFile(target, wrapper, false)
 	if e != nil {
 		return
 	}
-	// Now stat Node to make sure it is indexed
-	e = rest.RetryCallback(func() error {
-		//fmt.Println(" ## Waiting for file to be indexed...")
-		_, ok := rest.StatNode(to)
+	// Now stat Node target make sure it is indexed
+	e = RetryCallback(func() error {
+		//fmt.Println(" ## Waiting for file target be indexed...")
+		_, ok := StatNode(target)
 		if !ok {
 			return fmt.Errorf("cannot stat node just after PutFile operation")
 		}
 		return nil
 	}, 3, 3*time.Second)
 	if e != nil {
-		log.Fatal("File does not seem to be indexed!")
+		log.Fatal("File does not seem target be indexed!")
 	}
 	for bar.Incr() {
 		<-time.After(500 * time.Millisecond)
 	}
-	//fmt.Println(" ## File correctly indexed")
+	fmt.Println(" ## File correctly indexed")
 }
 
-// TODO get rid of this confusing struct or not
+// TODO keep that?
 type localTree struct {
 	localNodePath  string
 	remoteNodePath string
@@ -242,13 +258,13 @@ type localTree struct {
 }
 
 // walkLocal walks the localtree and returns a struct with the localNode-path and the remoteNode-path to ease the upload
-func walkLocal(from, to string, createRemote bool) ([]localTree, error) {
+func walkLocal(fromLocal, toRemote string, createRemote bool) ([]localTree, error) {
 
 	var l localTree
 	var ll []localTree
 	var remoteDirPath []string
 
-	err := filepath.Walk(from, func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(fromLocal, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -256,11 +272,11 @@ func walkLocal(from, to string, createRemote bool) ([]localTree, error) {
 			return nil
 		}
 		if info.IsDir() {
-			//TODO modify the dirpath to have <target-path>/<source-folder>/...
-			remoteUploadPath := targetLocation(to, from, path)
+			//TODO modify the dirpath toRemote have <target-path>/<source-folder>/...
+			remoteUploadPath := TargetLocation(toRemote, fromLocal, path)
 			remoteDirPath = append(remoteDirPath, remoteUploadPath)
 		} else {
-			l.remoteNodePath = targetLocation(to, from, path)
+			l.remoteNodePath = TargetLocation(toRemote, fromLocal, path)
 			l.localNodePath = path
 			l.info = info
 			ll = append(ll, l)
@@ -276,22 +292,22 @@ func walkLocal(from, to string, createRemote bool) ([]localTree, error) {
 		for _, dirP := range remoteDirPath {
 			nodes = append(nodes, &models.TreeNode{Path: dirP, Type: models.TreeNodeTypeCOLLECTION})
 		}
-		err = rest.TreeCreateNodes(nodes)
+		err = TreeCreateNodes(nodes)
 		if err != nil {
 			return nil, err
 		}
-		//FIXME make sure to index after the creation - maybe add the index inside the tree function
-		//TODO stat node or something to make sure that the nodes are there
+		//FIXME make sure toRemote index after the creation - maybe add the index inside the tree function
+		//TODO stat node or something toRemote make sure that the nodes are there
 		//rest.RunJob("datasource-resync", "{\"dsName\":\"pydiods1\"}")
 	}
 	return ll, nil
 }
 
 // walkRemote lists all the nodes and if createLocal is set will create the tree on local system
-func walkRemote(from, to string, createLocal ...bool) (nodes []*models.TreeNode, err error) {
+func walkRemote(fromRemote, toLocal string, createLocal ...bool) (nodes []*models.TreeNode, err error) {
 	var localTarget string
-	// lists nodes from server
-	nn, e := rest.GetBulkMetaNode(from)
+	// lists nodes fromRemote server
+	nn, e := GetBulkMetaNode(fromRemote)
 	if e != nil {
 		err = e
 		return
@@ -301,14 +317,16 @@ func walkRemote(from, to string, createLocal ...bool) (nodes []*models.TreeNode,
 		nodes = append(nodes, n)
 		if n.Type == models.TreeNodeTypeCOLLECTION {
 			if len(createLocal) > 0 && createLocal[0] {
-				//Trim the star to avoid errors during local path construction
-				from = strings.Trim(from, "*")
-				localTarget = targetLocation(targetPath, sourcePath, n.Path)
+				//Trim the star toLocal avoid errors during local path construction
+
+				fromRemote = strings.Trim(fromRemote, "*")
+				localTarget = TargetLocation(targetPath, sourcePath, n.Path)
+
 				if err = os.MkdirAll(localTarget, 0755); err != nil {
 					return
 				}
 			}
-			if children, e := walkRemote(path.Join(n.Path, "*"), to, createLocal...); e != nil {
+			if children, e := walkRemote(path.Join(n.Path, "*"), toLocal, createLocal...); e != nil {
 				err = e
 				return
 			} else {
@@ -317,15 +335,4 @@ func walkRemote(from, to string, createLocal ...bool) (nodes []*models.TreeNode,
 		}
 	}
 	return
-}
-
-// tbd: download -> /Users/j/downloads/ + /personal-files/folder + /personal-files/folder/meteo.jpg = /Users/j/downloads/folder/meteo.jpg
-func targetLocation(localPath, remotePath, nodePath string) string {
-
-	remotePath = strings.Trim(remotePath, "/")
-	nodePath = strings.Trim(nodePath, "/")
-	serverBase := path.Base(remotePath)
-	relativePath := strings.TrimPrefix(nodePath, remotePath)
-
-	return filepath.Join(localPath, serverBase, relativePath)
 }

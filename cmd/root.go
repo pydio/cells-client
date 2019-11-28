@@ -86,7 +86,7 @@ the powerful Cobra framework to easily implement small CLI client applications.
 		if cmd.Use != "configure" && cmd.Use != "oauth" && cmd.Use != "clear" && cmd.Use != "doc" {
 			e := rest.SetUpEnvironment(configFile)
 			if e != nil {
-				log.Fatalf("cannot read config file, please make sure to run %s configure first (error %s)", os.Args[0], e)
+				log.Fatalf("cannot read config file, please make sure to run %s configure first (error %s)\n", os.Args[0], e)
 			}
 		}
 

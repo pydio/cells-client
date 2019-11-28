@@ -1,6 +1,9 @@
 package rest
 
 import (
+	"path"
+	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -19,4 +22,15 @@ func RetryCallback(callback func() error, number int, interval time.Duration) er
 	}
 
 	return e
+}
+
+// tbd: download -> /Users/j/downloads/ + /personal-files/folder + /personal-files/folder/meteo.jpg = /Users/j/downloads/folder/meteo.jpg
+func TargetLocation(targetPath, sourcePath, nodeSourcePath string) string {
+
+	sourcePath = strings.Trim(sourcePath, "/")
+	nodeSourcePath = strings.Trim(nodeSourcePath, "/")
+	serverBase := path.Base(sourcePath)
+	relativePath := strings.TrimPrefix(nodeSourcePath, sourcePath)
+
+	return filepath.Join(targetPath, serverBase, relativePath)
 }
