@@ -7,7 +7,6 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/gosuri/uiprogress"
 
@@ -49,89 +48,111 @@ var scpFiles = &cobra.Command{
 
 		from := args[0]
 		to := args[1]
+
 		fmt.Printf("Copying %s to %s\n", from, to)
 
 		if strings.HasPrefix(from, "cells://") {
 			// Download
 			fromPath := strings.TrimPrefix(from, "cells://")
-			toPath, remote, e := targetToFullPath(to, from)
+			_, remote, e := targetToFullPath(to, from)
 			if e != nil {
 				log.Fatal(e)
 			}
 			if remote {
 				log.Fatal(fmt.Errorf("source and target are both remote, copy remote to local or the opposite"))
 			}
-			reader, length, e := rest.GetFile(fromPath)
-			if e != nil {
-				log.Fatal(e)
+
+			//TODO toPath already creates the targetedLocation --
+
+			sourcePath = fromPath
+			targetPath = to
+			// dl rec
+			if err := downloadRecursive(fromPath, to); err != nil {
+				log.Fatal(err)
 			}
-			bar := uiprogress.AddBar(length).PrependCompleted()
-			wrapper := &PgReader{
-				Reader: reader,
-				bar:    bar,
-				total:  length,
-			}
-			writer, e := os.OpenFile(toPath, os.O_CREATE|os.O_WRONLY, 0755)
-			if e != nil {
-				log.Fatal(e)
-			}
-			defer writer.Close()
-			uiprogress.Start()
-			_, e = io.Copy(writer, wrapper)
-			if e != nil {
-				log.Fatal(e)
-			}
-			// Wait that progress bar finish rendering
-			<-time.After(100 * time.Millisecond)
-			uiprogress.Stop()
+
+			//reader, length, e := rest.GetFile(fromPath)
+			//if e != nil {
+			//	log.Fatal(e)
+			//}
+			//bar := uiprogress.AddBar(length).PrependCompleted()
+			//wrapper := &PgReader{
+			//	Reader: reader,
+			//	bar:    bar,
+			//	total:  length,
+			//}
+			//writer, e := os.OpenFile(toPath, os.O_CREATE|os.O_WRONLY, 0755)
+			//if e != nil {
+			//	log.Fatal(e)
+			//}
+			//defer writer.Close()
+			//uiprogress.Start()
+			//_, e = io.Copy(writer, wrapper)
+			//if e != nil {
+			//	log.Fatal(e)
+			//}
+			//// Wait that progress bar finish rendering
+			//<-time.After(100 * time.Millisecond)
+			//uiprogress.Stop()
+
 		} else {
 			// Upload
-			toPath, remote, e := targetToFullPath(to, from)
+			_, remote, e := targetToFullPath(to, from)
 			if e != nil {
 				log.Fatal(e)
 			}
 			if !remote {
 				log.Fatal(fmt.Errorf("source and target are both local, copy remote to local or the opposite"))
 			}
-			var length int64
-			if s, e := os.Stat(from); e != nil || s.IsDir() {
-				log.Fatal(fmt.Errorf("local source is not a valid file"))
-			} else {
-				length = s.Size()
-			}
-			reader, e := os.Open(from)
-			bar := uiprogress.AddBar(int(length)).PrependCompleted()
-			wrapper := &PgReader{
-				Reader: reader,
-				Seeker: reader,
-				bar:    bar,
-				total:  int(length),
-				double: true,
-			}
-			if e != nil {
-				log.Fatal(e)
-			}
-			uiprogress.Start()
-			_, e = rest.PutFile(toPath, wrapper, false)
-			if e != nil {
-				log.Fatal(e)
-			}
-			<-time.After(500 * time.Millisecond)
-			uiprogress.Stop()
-			// Now stat Node to make sure it is indexed
-			e = rest.RetryCallback(func() error {
-				fmt.Println(" ## Waiting for file to be indexed...")
-				_, ok := rest.StatNode(toPath)
-				if !ok {
-					return fmt.Errorf("cannot stat node just after PutFile operation")
-				}
-				return nil
 
-			}, 3, 3*time.Second)
-			if e != nil {
-				log.Fatal("File does not seem to be indexed!")
+			// upload
+			to = strings.TrimPrefix(to, "cells://")
+			sourcePath = from
+			targetPath = to
+			//TODO make sure to index just once, because right now it indexes after each upload which makes the operation slow
+			if err := UploadRecursive(from, to); err != nil {
+				log.Fatal(err)
 			}
-			fmt.Println(" ## File correctly indexed")
+
+			//var length int64
+			//if s, e := os.Stat(from); e != nil || s.IsDir() {
+			//	log.Fatal(fmt.Errorf("local source is not a valid file"))
+			//} else {
+			//	length = s.Size()
+			//}
+			//reader, e := os.Open(from)
+			//bar := uiprogress.AddBar(int(length)).PrependCompleted()
+			//wrapper := &PgReader{
+			//	Reader: reader,
+			//	Seeker: reader,
+			//	bar:    bar,
+			//	total:  int(length),
+			//	double: true,
+			//}
+			//if e != nil {
+			//	log.Fatal(e)
+			//}
+			//uiprogress.Start()
+			//_, e = rest.PutFile(toPath, wrapper, false)
+			//if e != nil {
+			//	log.Fatal(e)
+			//}
+			//<-time.After(500 * time.Millisecond)
+			//uiprogress.Stop()
+			//// Now stat Node to make sure it is indexed
+			//e = rest.RetryCallback(func() error {
+			//	fmt.Println(" ## Waiting for file to be indexed...")
+			//	_, ok := rest.StatNode(toPath)
+			//	if !ok {
+			//		return fmt.Errorf("cannot stat node just after PutFile operation")
+			//	}
+			//	return nil
+			//
+			//}, 3, 3*time.Second)
+			//if e != nil {
+			//	log.Fatal("File does not seem to be indexed!")
+			//}
+			//fmt.Println(" ## File correctly indexed")
 
 		}
 	},

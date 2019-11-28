@@ -33,9 +33,13 @@ var scprCmd = &cobra.Command{
 	Short: "scp recursive test",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		//TODO parse args if arg[Ø] starts with cells:// = download from remote -> to target
+		//TODO parse args
+
+		//if arg[Ø] starts with cells:// = download from remote -> to target
 		//example cec scp cells://common-files/formula-one
-		// if arg[1]
+
+		// if arg[1] starts with cells:// it means upload to
+		// example cec scp /Users/j/Downloads/ cells://personal-files/formula-one
 
 		sourcePath = "personal-files/Top-left_triangle_rasterization_rule.gif"
 		targetPath = "/Users/jay/Downloads/lulu/"
@@ -186,7 +190,7 @@ func downloadRecursive(downloadFrom, downloadTo string) error {
 	return nil
 }
 
-func uploadRecursive(from, to string) error {
+func UploadRecursive(from, to string) error {
 	wg := &sync.WaitGroup{}
 	buf := make(chan struct{}, 3)
 	//TODO make sure to add error checks
@@ -200,11 +204,11 @@ func uploadRecursive(from, to string) error {
 				<-buf
 				wg.Done()
 			}()
-			upload(from, to)
+			Upload(from, to)
 		}(l.localNodePath, l.remoteNodePath)
 		wg.Wait()
 		//TODO add concurrent upload as seen with the downloads
-		upload(l.localNodePath, l.remoteNodePath)
+		Upload(l.localNodePath, l.remoteNodePath)
 	}
 	if err != nil {
 		return err
@@ -213,7 +217,7 @@ func uploadRecursive(from, to string) error {
 }
 
 // upload take a local resource and puts it in the remote location
-func upload(source string, target string) {
+func Upload(source string, target string) {
 	reader, e := os.Open(source)
 	if e != nil {
 		return
@@ -232,18 +236,19 @@ func upload(source string, target string) {
 	if e != nil {
 		return
 	}
-	// Now stat Node target make sure it is indexed
-	e = RetryCallback(func() error {
-		//fmt.Println(" ## Waiting for file target be indexed...")
-		_, ok := StatNode(target)
-		if !ok {
-			return fmt.Errorf("cannot stat node just after PutFile operation")
-		}
-		return nil
-	}, 3, 3*time.Second)
-	if e != nil {
-		log.Fatal("File does not seem target be indexed!")
-	}
+	//FIXME disabled (will be re enabled later)
+	//// Now stat Node target make sure it is indexed
+	//e = RetryCallback(func() error {
+	//	//fmt.Println(" ## Waiting for file target be indexed...")
+	//	_, ok := StatNode(target)
+	//	if !ok {
+	//		return fmt.Errorf("cannot stat node just after PutFile operation")
+	//	}
+	//	return nil
+	//}, 3, 3*time.Second)
+	//if e != nil {
+	//	log.Fatal("File does not seem target be indexed!")
+	//}
 	for bar.Incr() {
 		<-time.After(500 * time.Millisecond)
 	}
@@ -257,7 +262,7 @@ type localTree struct {
 	info           os.FileInfo
 }
 
-// walkLocal walks the localtree and returns a struct with the localNode-path and the remoteNode-path to ease the upload
+// walkLocal walks the localtree and returns a struct with the localNode-path and the remoteNode-path to ease the Upload
 func walkLocal(fromLocal, toRemote string, createRemote bool) ([]localTree, error) {
 
 	var l localTree

@@ -25,12 +25,12 @@ func RetryCallback(callback func() error, number int, interval time.Duration) er
 }
 
 // tbd: download -> /Users/j/downloads/ + /personal-files/folder + /personal-files/folder/meteo.jpg = /Users/j/downloads/folder/meteo.jpg
-func TargetLocation(targetPath, sourcePath, nodeSourcePath string) string {
+func TargetLocation(target, source, nodeSource string) string {
 
-	sourcePath = strings.Trim(sourcePath, "/")
-	nodeSourcePath = strings.Trim(nodeSourcePath, "/")
-	serverBase := path.Base(sourcePath)
-	relativePath := strings.TrimPrefix(nodeSourcePath, sourcePath)
+	source = strings.Trim(source, "/")
+	nodeSource = strings.Trim(nodeSource, "/")
+	serverBase := path.Base(source)
+	relativePath := strings.TrimPrefix(nodeSource, source)
 
-	return filepath.Join(targetPath, serverBase, relativePath)
+	return filepath.Join(target, serverBase, relativePath)
 }
