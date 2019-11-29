@@ -19,7 +19,7 @@ Copy content in your Cells instance with,
 # Copy file "test.txt" inside folder "folder-b" (located in another workspace/datasource)
 ./cec cp common-files/test.txt personal-files/folder-b
 
-# Copiy all the content of folder "test" inside "folder-c"
+# Copy all the content of folder "test" inside "folder-c"
 ./cec cp common-files/test/* common-files/folder-c
 `
 )

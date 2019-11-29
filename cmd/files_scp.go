@@ -86,6 +86,7 @@ var scpFiles = &cobra.Command{
 			//TODO targetToFullPath handles path such as "."
 			// Use it
 			sourcePath = fromPath
+			to, _ := filepath.Abs(to)
 			targetPath = to
 			// dl rec
 			if err := downloadRecursive(fromPath, to); err != nil {
@@ -135,6 +136,7 @@ var scpFiles = &cobra.Command{
 			to = strings.TrimPrefix(to, currentPrefix)
 			sourcePath = from
 			targetPath = to
+			from, _ = filepath.Abs(from)
 			if err := UploadRecursive(from, to); err != nil {
 				log.Fatal(err)
 			}
