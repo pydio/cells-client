@@ -80,8 +80,8 @@ _scp_path_completion() {
   IFS=$'\n'
   lsopts="$(` + os.Args[0] + ` ls --raw $dir)"
 
-  # COMPREPLY=($(compgen -P "$prefix" -W "${lsopts[@]}" -- "$cur"))
-  COMPREPLY=(${COMPREPLY[@]/#/"${prefix}"})
+  COMPREPLY=($(compgen -P "$prefix" -W "${lsopts[@]}" -- "$cur"))
+  #COMPREPLY=(${COMPREPLY[@]/#/"${prefix}"})
   compopt -o nospace
   compopt -o filenames
 }
