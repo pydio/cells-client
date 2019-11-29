@@ -25,8 +25,9 @@ Make sure that you have bash-completion installed
 
 `apt-get install bash-completion` `brew install bash-completion`
 
-MacOS users need to add `cec completion bash >/usr/local/etc/bash_completion.d/cec`
-Linux users with `a`
+MacOS users need to add `cec completion bash > /usr/local/etc/bash_completion.d/cec`.
+
+Linux users with `cec completion bash > /etc/bash_completion.d/cec`
 
 Otherwise you can source it to the current session with:
 `source <(cec completion bash)`
