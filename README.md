@@ -25,7 +25,7 @@ Make sure that you have bash-completion installed
 
 `apt-get install bash-completion` `brew install bash-completion`
 
-MacOS users need to add `cec completion bash >/usr/local/etc/bash_completion.d/cec`.
+MacOS users need to add `cec completion bash > /usr/local/etc/bash_completion.d/cec`.
 
 Linux users with `cec completion bash > /etc/bash_completion.d/cec`
 
