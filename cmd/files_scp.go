@@ -318,8 +318,10 @@ func downloadRecursive(downloadFrom, downloadTo string) error {
 func UploadRecursive(from, to string) error {
 	wg := &sync.WaitGroup{}
 	buf := make(chan struct{}, 3)
-	//TODO make sure to add error checks
 	ll, err := walkLocal(from, to, true)
+	if err != nil {
+		return err
+	}
 	uiprogress.Start()
 	for _, l := range ll {
 		buf <- struct{}{}
@@ -334,9 +336,6 @@ func UploadRecursive(from, to string) error {
 		}(l.localNodePath, l.remoteNodePath)
 		wg.Wait()
 
-	}
-	if err != nil {
-		return err
 	}
 	uiprogress.Stop()
 	return nil
