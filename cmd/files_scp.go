@@ -74,6 +74,7 @@ var scpFiles = &cobra.Command{
 			// Download
 			fromPath := strings.TrimPrefix(from, currentPrefix)
 			_, remote, e := targetToFullPath(to, from)
+
 			if e != nil {
 				log.Fatal(e)
 			}
@@ -81,8 +82,9 @@ var scpFiles = &cobra.Command{
 				log.Fatal(fmt.Errorf("source and target are both remote, copy remote to local or the opposite"))
 			}
 
-			//TODO toPath already creates the targetedLocation -- just append the node
-
+			//TODO targetToFullPath already creates the targetedLocation path -- just append the node
+			//TODO targetToFullPath handles path such as "."
+			// Use it
 			sourcePath = fromPath
 			targetPath = to
 			// dl rec
@@ -124,6 +126,10 @@ var scpFiles = &cobra.Command{
 			if !remote {
 				log.Fatal(fmt.Errorf("source and target are both local, copy remote to local or the opposite"))
 			}
+
+			//TODO targetToFullPath already creates the targetedLocation path -- just append the node
+			//TODO targetToFullPath handles path such as "."
+			// Use it
 
 			// upload
 			to = strings.TrimPrefix(to, currentPrefix)
