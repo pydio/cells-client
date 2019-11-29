@@ -19,6 +19,18 @@ cd $GOPATH/github.com/pydio/cells-client
 make dev
 ```
 
+## Command completion for BASH
+
+Make sure that you have bash-completion installed
+
+`apt-get install bash-completion` `brew install bash-completion`
+
+MacOS users need to add `cec completion bash >/usr/local/etc/bash_completion.d/cec`
+Linux users with `a`
+
+Otherwise you can source it to the current session with:
+`source <(cec completion bash)`
+
 You should have a `cec` binary available
 
 ## Configuration

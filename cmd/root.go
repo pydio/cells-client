@@ -24,9 +24,13 @@ var (
     return
     ;;
 	` + os.Args[0] + `_storage_resync-ds)
-	_datasources_completion
-	return
-	;;
+    _datasources_completion
+    return
+    ;;
+  ` + os.Args[0] + `_scp)
+    _scp_path_completion
+    return
+    ;;
   *) ;;
   esac
 }
@@ -50,6 +54,34 @@ _path_completion() {
   lsopts="$(` + os.Args[0] + ` ls --raw $dir)"
 
   COMPREPLY=($(compgen -W "${lsopts[@]}" -- "$cur"))
+  compopt -o nospace
+  compopt -o filenames
+}
+
+_scp_path_completion() {
+  local lsopts cur dir
+  cur="${COMP_WORDS[COMP_CWORD]}"
+
+  prefix="cells//"
+  cur=${cur#$prefix}
+
+  dir="$(dirname "$cur" 2>/dev/null)"
+  currentlength=${#cur}
+  last_char=${cur:currentlength-1:1}
+
+  if [[ $last_char == "/" ]] && [[ currentlength -gt 2 ]]; then
+      dir=$cur
+  elif [[ -z $dir ]]; then
+      dir="/"
+  elif [[ $dir == "." ]]; then
+      dir="/"
+  fi
+
+  IFS=$'\n'
+  lsopts="$(` + os.Args[0] + ` ls --raw $dir)"
+
+  COMPREPLY=($(compgen -P "$prefix" -W "${lsopts[@]}" -- "$cur"))
+  # COMPREPLY=(${COMPREPLY[@]/#/"${prefix}"})
   compopt -o nospace
   compopt -o filenames
 }

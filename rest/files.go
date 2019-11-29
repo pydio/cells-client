@@ -196,9 +196,6 @@ func TreeCreateNodes(nodes []*models.TreeNode) error {
 	if e != nil {
 		return e
 	}
-
-	//TODO re-index
-	// monitor jobs to wait for the index
-
+	//TODO monitor jobs to wait for the index
 	return nil
 }
