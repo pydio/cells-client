@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	. "github.com/pydio/cells-client/rest"
+	. "github.com/pydio/cells-client/cmd"
 )
 
 type testingPaths struct {
@@ -47,7 +47,7 @@ func TestComplicatedSourceLocationPath(t *testing.T) {
 		downloadTo:       "/Users/j/Downloads/my server/cells-test.your-files-your-rules.eu/",
 		downloadFrom:     "personal-files/formula-one/2019 season",
 		downloadNodeFrom: "personal-files/formula-one/2019 season/tracks/monza/ferrari/leclerc/first-corner.jpg",
-		expectedResult:   "/Users/j/Downloads/my server/cells-test.your-files-your-rules.eu/2019 season/tracks/monza/leclerc/first-corner.jpg",
+		expectedResult:   "/Users/j/Downloads/my server/cells-test.your-files-your-rules.eu/2019 season/tracks/monza/ferrari/leclerc/first-corner.jpg",
 	}
 	result := TargetLocation(mock.downloadTo, mock.downloadFrom, mock.downloadNodeFrom)
 	assert.Equal(t, mock.expectedResult, result)

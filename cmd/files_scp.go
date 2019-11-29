@@ -135,7 +135,6 @@ var scpFiles = &cobra.Command{
 			to = strings.TrimPrefix(to, currentPrefix)
 			sourcePath = from
 			targetPath = to
-			//TODO make sure to index just once, because right now it indexes after each upload which makes the operation slow
 			if err := UploadRecursive(from, to); err != nil {
 				log.Fatal(err)
 			}
