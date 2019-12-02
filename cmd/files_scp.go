@@ -13,20 +13,15 @@ import (
 )
 
 var scpFileExample = `
-Prefix remote paths with cells:// to differentiate local from remote. Currently, copy can only be performed with both different ends.
-For example:
+1/ Uploading a file to the server:
+  $ ` + os.Args[0] + ` scp ./README.md cells://common-files/
+  Copying ./README.md to cells://common-files/
+  ## Waiting for file to be indexed...
+  ## File correctly indexed
 
-1/ Uploading a file to server
-
-$ ` + os.Args[0] + ` scp ./README.md cells://common-files/
-Copying ./README.md to cells://common-files/
- ## Waiting for file to be indexed...
- ## File correctly indexed
-
-2/ Download a file from server
-
-$ ` + os.Args[0] + ` scp cells://personal-files/IMG_9723.JPG ./
-Copying cells://personal-files/IMG_9723.JPG to /home/pydio/downloads/
+2/ Download a file from server:
+  $ ` + os.Args[0] + ` scp cells://personal-files/funnyCat.jpg ./
+  Copying cells://personal-files/funnyCat.jpg to /home/pydio/downloads/
 `
 
 const (
@@ -39,9 +34,14 @@ var (
 )
 
 var scpFiles = &cobra.Command{
-	Use:     "scp",
-	Short:   `Copy files from/to Cells`,
-	Long:    `Copy files between local server and remote Cells server`,
+	Use:   "scp",
+	Short: `Copy files from/to Cells`,
+	Long: `
+Copy files from your local machine to your Pydio Cells server instance (and vice versa).
+
+To differentiate local from remote, prefix remote paths with 'cells://'. 
+For the time being, copy can only be performed with both different ends.
+`,
 	Example: scpFileExample,
 	Run: func(cmd *cobra.Command, args []string) {
 

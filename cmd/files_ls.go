@@ -19,18 +19,10 @@ import (
 	"github.com/pydio/cells/common"
 )
 
-const lsCmdExample = `
-Use as a normal ls, with additional path to list sub-folders or read info about a node.
-You can use the optional -d (--details) flag to display more information, -r (--raw) flag 
-to only list found file (& folder) paths or -f (--exists) flag to only check if given path
-exists on the server.
-Note that you can only use *one* of the three above flags at a time.
-
-# Examples
-
+var lsCmdExample = `
 1/ Listing the content of the personal-files workspace
 
-$ ./cec ls personal-files
+$ ` + os.Args[0] + ` ls personal-files
 +--------+--------------------------+
 |  TYPE  |           NAME           |
 +--------+--------------------------+
@@ -50,7 +42,7 @@ $ ./cec ls personal-files
 
 2/ Showing details about a file
 
-$ ./cec ls personal-files/P5021040.jpg -d
+$ ` + os.Args[0] + ` ls personal-files/P5021040.jpg -d
 Listing: 1 results for personal-files/P5021040.jpg
 +------+--------------------------------------+-----------------------------+--------+------------+
 | TYPE |                 UUID                 |            NAME             |  SIZE  |  MODIFIED  |
@@ -63,10 +55,10 @@ Will show the metadata for this node (uuid, size, modification date)
 
 3/ Only listing files and folders, one per line.
 
-$ ./cec ls personal-files/P5021040.jpg -r
+$ ` + os.Args[0] + ` ls personal-files/P5021040.jpg -r
 personal-files/P5021040.jpg
 
-$ ./cec ls personal-files -r
+$ ` + os.Args[0] + ` ls personal-files -r
 personal-files
 Huge Photo-1.jpg
 Huge Photo.jpg
@@ -75,14 +67,12 @@ IMG_9723.JPG
 
 4/ Check path existance.
 
-$ ./cec ls personal-files/P5021040.jpg -f
+$ ` + os.Args[0] + ` ls personal-files/P5021040.jpg -f
 true
 
-$ ./cec ls personal-files/P5021040-not-here -f
+$ ` + os.Args[0] + ` ls personal-files/P5021040-not-here -f
 false
 ...
-
-
 `
 
 var (
@@ -90,8 +80,15 @@ var (
 )
 
 var listFiles = &cobra.Command{
-	Use:     "ls",
-	Short:   "List files on pydio cells",
+	Use:   "ls",
+	Short: "List files on pydio cells",
+	Long: `
+Use as a normal ls, with additional path to list sub-folders or read info about a node.
+You can use the optional -d (--details) flag to display more information, -r (--raw) flag 
+to only list found file (& folder) paths or -f (--exists) flag to only check if given path
+exists on the server.
+Note that you can only use *one* of the three above flags at a time.
+`,
 	Example: lsCmdExample,
 	Run: func(cmd *cobra.Command, args []string) {
 

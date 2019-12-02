@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"log"
+	"os"
 	"path"
 
 	"github.com/spf13/cobra"
@@ -9,26 +10,26 @@ import (
 	"github.com/pydio/cells-client/rest"
 )
 
-const filesMvCmdExample = `
+var filesMvCmdExample = `
 # Move a node
-./cec mv common-files/formula-one.jpg personal-files/photos/
+` + os.Args[0] + ` mv common-files/formula-one.jpg personal-files/photos/
 
 # Rename a node
-./cec mv common-files/formula-one.jpg common-files/f1.jpg
+` + os.Args[0] + ` mv common-files/formula-one.jpg common-files/f1.jpg
 
 # Move all nodes recursively 
-./cec mv common-files/photos/* personal-files/photos/
+` + os.Args[0] + ` mv common-files/photos/* personal-files/photos/
 `
 
 // filesMvCmd represents the filesMv command
 var filesMvCmd = &cobra.Command{
 	Use:     "mv",
-	Short:   "Move, Rename nodes",
+	Short:   "Move and rename nodes",
 	Example: filesMvCmdExample,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 2 {
 			cmd.Help()
-			log.Fatalln("Missing Source and Target path")
+			log.Fatalln("You must specify a source *and* a target path.")
 		}
 		source := args[0]
 		target := args[1]
@@ -51,12 +52,12 @@ var filesMvCmd = &cobra.Command{
 		params := rest.MoveParams(sourceNodes, target)
 		jobID, err := rest.MoveJob(params)
 		if err != nil {
-			log.Fatalln("could not run job")
+			log.Fatalln("Could not run job:", err.Error())
 		}
 
 		err = rest.MonitorJob(jobID)
 		if err != nil {
-			log.Fatalln("could not monitor job")
+			log.Fatalln("Could not monitor job:", err.Error())
 		}
 	},
 }

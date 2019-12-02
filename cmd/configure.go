@@ -24,11 +24,10 @@ var (
 )
 
 func notEmpty(input string) error {
-	if len(input) > 0 {
-		return nil
-	} else {
+	if len(input) == 0 {
 		return fmt.Errorf("Field cannot be empty!")
 	}
+	return nil
 }
 
 func validUrl(input string) error {

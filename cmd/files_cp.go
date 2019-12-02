@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"log"
+	"os"
 	"path"
 
 	"github.com/spf13/cobra"
@@ -9,25 +10,24 @@ import (
 	"github.com/pydio/cells-client/rest"
 )
 
-const (
-	cpCmdExample = `
-Copy content in your Cells instance with,
+var cpCmdExample = `
+# Copy file "test.txt" from workspace root inside target "folder-a":
+` + os.Args[0] + ` cp common-files/test.txt common-files/folder-a
 
-# Copy file "test.txt" inside folder "folder-a"
-./cec cp common-files/test.txt common-files/folder-a
+# Copy a file from a workspace to another:
+` + os.Args[0] + ` cp common-files/test.txt personal-files/folder-b
 
-# Copy file "test.txt" inside folder "folder-b" (located in another workspace/datasource)
-./cec cp common-files/test.txt personal-files/folder-b
-
-# Copy all the content of folder "test" inside "folder-c"
-./cec cp common-files/test/* common-files/folder-c
-`
-)
+# Copy all the content of a folder inside another
+` + os.Args[0] + ` cp common-files/test/* common-files/folder-c`
 
 // cmCmd represents the rm command
 var cpCmd = &cobra.Command{
-	Use:     "cp",
-	Short:   "Copy files",
+	Use:   "cp",
+	Short: "Copy files within your Pydio Cells instance.",
+	Long: `
+Copy files from one location to another *within* a *single* Pydio Cells instance. 
+To copy files from your local machine to your server (and vice versa), rather see './cec scp' command.
+`,
 	Example: cpCmdExample,
 	Run: func(cmd *cobra.Command, args []string) {
 		//TODO Maybe add the dot (.) behaviour as seen with the linux command (cp /home/user/file .)
@@ -52,12 +52,12 @@ var cpCmd = &cobra.Command{
 		params := rest.CopyParams(sourceNodes, target)
 		jobID, err := rest.CopyJob(params)
 		if err != nil {
-			log.Fatalln("could not run job")
+			log.Fatalln("could not run job:", err.Error())
 		}
 
 		err = rest.MonitorJob(jobID)
 		if err != nil {
-			log.Fatalln("could not monitor job")
+			log.Fatalln("could not monitor job", err.Error())
 		}
 	},
 }
