@@ -14,12 +14,24 @@ import (
 	"github.com/pydio/cells-sdk-go/models"
 )
 
+var createAncestors bool
+
 var mkDir = &cobra.Command{
 	Use:   "mkdir",
 	Short: `Create folder on remote server`,
-	Long: `Create a folder on remote Cells server
+	Long: `
+Create a folder on a remote Cells server instance.
+If ancestor folders do not exist and if the 'parents' flag is set, non-existing folders are recursively created. 
 
-Use path including workspace slug 
+You must specify the full path, including the slug of an existing workspace: 
+even if 'parents' flags is set, trying to create a folder in an unknown/unexisting workspace will result in an error.
+`,
+	Example: `
+# Simply create a folder under an already existing folder 'existing' in 'common-files' workspace
+./cec mkdir common-files/existing/new-folder
+
+# Create a full tree
+./cec mkdir -p common-files/a/folder/that/does/not/exits
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 
@@ -40,18 +52,31 @@ Use path including workspace slug
 		var dirs []*models.TreeNode
 		var paths []string
 		var crt = parts[0]
-		for i := 1; i < len(parts); i++ {
+
+		// Checking existence of parent workspace
+		if _, e := apiClient.TreeService.HeadNode(&tree_service.HeadNodeParams{Node: crt, Context: ctx}); e != nil {
+			log.Fatalf("Could not find workspace %s. Please specify a parent workspace that exists.")
+		}
+
+		for i := 1; i < len(parts)-1; i++ {
 			crt = path.Join(crt, parts[i])
-			if _, e := apiClient.TreeService.HeadNode(&tree_service.HeadNodeParams{Node: crt, Context: ctx}); e != nil {
+			if _, e := apiClient.TreeService.HeadNode(&tree_service.HeadNodeParams{Node: crt, Context: ctx}); e != nil && createAncestors {
 				dirs = append(dirs, &models.TreeNode{Path: crt})
 				paths = append(paths, crt)
+			} else {
+				log.Fatalf("Could not find folder at %s, double check and correct your path or use the '-p' flags if you want to force the creation of missing ancestors.", crt)
 			}
 		}
+		// always create the leaf folder
+		crt = path.Join(crt, parts[len(parts)-1])
+		dirs = append(dirs, &models.TreeNode{Path: crt})
+		paths = append(paths, crt)
+
 		if len(dirs) == 0 {
 			fmt.Println("All dirs already exist, exiting")
 			return
 		}
-		fmt.Printf("Creating folder(s) %s\n", strings.Join(paths, ","))
+		fmt.Printf("Creating folder(s) %s\n", strings.Join(paths, ", "))
 		_, err = apiClient.TreeService.CreateNodes(&tree_service.CreateNodesParams{
 			Body: &models.RestCreateNodesRequest{
 				Nodes: dirs,
@@ -79,5 +104,9 @@ Use path including workspace slug
 }
 
 func init() {
+
+	flags := mkDir.PersistentFlags()
+	flags.BoolVarP(&createAncestors, "parents", "p", false, "Force creation of non-existing ancestors")
+
 	RootCmd.AddCommand(mkDir)
 }

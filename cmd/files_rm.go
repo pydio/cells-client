@@ -19,17 +19,19 @@ const rmCmdExample = `# Path
 # Remove recursively inside a folder
 ./cec rm common-files/folder/*
 
-# Remove a Folder
+# Remove a folder and all its children (even if it is not empty) 
 ./cec rm common-files/folder
 
 # Remove multiple files
 ./cec rm common-files/file-1.txt common-files/file-2.txt
 `
 
-// rmCmd represents the rm command
 var rmCmd = &cobra.Command{
-	Use:     "rm",
-	Short:   "Command to remove nodes",
+	Use:   "rm",
+	Short: "Trash files or folders",
+	Long: `
+Deleting specified files or folders. In fact, it moves specified files or folders to the recycle bin that is at the root of the corresponding workspace.
+`,
 	Example: rmCmdExample,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
@@ -40,12 +42,12 @@ var rmCmd = &cobra.Command{
 		for _, arg := range args {
 			_, exists := rest.StatNode(arg)
 			if !exists {
-				log.Fatalf("This node does not exist: [%v]\n", arg)
+				log.Fatalf("No node found at %v, could not delete\n", arg)
 			}
 			if path.Base(arg) == "*" {
 				nodes, err := rest.ListNodesPath(arg)
 				if err != nil {
-					log.Println("could not list nodes path, ", err)
+					log.Fatalf("Could not list nodes inside %s, aborting. Cause: %s\n", path.Dir(arg), err.Error())
 				}
 				targetNodes = nodes
 			} else {
