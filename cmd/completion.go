@@ -11,16 +11,32 @@ var shType string
 // completionCmd represents the completion command
 var completionCmd = &cobra.Command{
 	Use:   "completion",
-	Short: "Auto completion for Pydio Cells Client",
-	Long: `Completion for Pydio Cells Client
-	 
-	 # Add to current session
-	 source <(cec completion bash)
-	 # Add to current zsh session
+	Short: "Add auto-completion helper to Cells Client",
+	Long: `
+Install completion helper to Pydio Cells Client.
+
+This command installs an additional plugin to provide suggestions when working with the Cells Client and hitting the 'tab' key.
+
+1) Using Bash
+
+## On Linux, you must insure the 'bash-completion' library is installed:
+# on Debian / Ubuntu
+sudo apt install bash-completion
+# on RHEL / CentOS
+sudo yum install bash-completion
+
+# Then, to enable completion in your current session:
+source <(cec completion bash)
+
+# Or in a persistent manner:
+echo $(cec completion bash) | sudo tee /etc/bash_completion.d/cec
+
+2) Using Zsh
+
+# Add to current zsh session
 	 source <(cec completion zsh)
 	 
 	 # Add bashcompletion file (might require sudo)
-	 cec completion bash > /etc/bash_completion.d/cec
 	 # Add zshcompletion file
 	 cec	completion zsh > ~/.zsh/completion/_cec
 	 `,

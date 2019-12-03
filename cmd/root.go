@@ -31,7 +31,7 @@ See the help of the various commands for detailed explanation and some examples.
 `,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 
-		if cmd.Use != "configure" && cmd.Use != "oauth" && cmd.Use != "clear" && cmd.Use != "doc" {
+		if cmd.Use != "configure" && cmd.Use != "version" && cmd.Use != "completion" && cmd.Use != "oauth" && cmd.Use != "clear" && cmd.Use != "doc" {
 			e := rest.SetUpEnvironment(configFile)
 			if e != nil {
 				log.Fatalf("cannot read config file, please make sure to run '%s oauth' first. (Error: %s)\n", os.Args[0], e.Error())

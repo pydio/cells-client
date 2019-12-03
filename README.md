@@ -11,13 +11,53 @@ This command line client allows interacting with a [Pydio Cells](https://github.
 
 ## Installation
 
-Download source code and use the Makefile to compile binary on your os
+We do not provide a packaged installer for the various OSs. Yet, Cells Client is a single self-contained binary file: it is pretty straight forward to install it on your machine. 
+
+Typically on Linux, you have to:
+
+- Download the [latest binary file](https://download.pydio.com/latest/cells-client/release/{latest}/linux-amd64/cec) from Pydio website,
+- Make it executable: `chmod u+x cec`,
+- Put it in your path or add a symlink to the binary location, typically `sudo ln -s /<path to the correct folder>/cec /usr/local/bin/cec`. This last step is only required if you want to configure the completion helper (see below), otherwise you can also do `./cec ls` directly.
+
+You might verify that `cec` is correctly installed and configured by launching the `cec version show` command.
+
+###  Installing from source 
+
+If you want to install from source, you must have go version 1.12+ installed and configured on your machine and the necessary build utils (typically `make`, `gcc`, ...). You can then download the source code and use the Makefile to compile a binary for your os:
 
 ```sh
-go get -u github.com/pydio/cells-client
-cd $GOPATH/github.com/pydio/cells-client
+git clone https://github.com/pydio/cells-client.git
+cd ./cells-client
 make dev
 ```
+
+_Note: Cells Client uses the Go Modules mechanism to manage dependencies, so you do not have to be in your go path._
+
+## Configuration
+
+You must first configure the client to connect to the server.
+
+```sh
+./cec oauth
+```
+
+You will be prompted with the following informations:
+
+- Server Address : full URL to Cells, e.g.: `https://cells.yourdomain.com/`
+- Client ID / Client Secret: this is used by the OpenIDConnect service for authentication.
+  Note that since the v2.0, a default **public** client is registered by default in the server (see `pydio.json` config file if necessary): so using the suggested default values (Client ID: `cells-client` and no Client Secret) should work out of the box
+- Then follow the OAuth2 process either by opening a browser or copy/pasting the URL in your browser to get a valid token.
+- The token is automatically saved in your keychain, and will be refreshed as necessary.
+
+## Usage
+
+Use the `cec --help` command to know about available commands. Below are a few interresting ones for manipulating files:
+
+- `cec ls`: list files and folders on the server, when no path is provided, it lists the workspaces that current user can access.
+- `cec scp`: Upload / Download file to/from a remote server (see below).
+- `cec cp`, `cec cp` and `cec rm`: Copy, move, rename and delete files **within the server**.
+- `cec mkdir`: Create a folder on the remote server
+- `cec clear`: Clear authentication tokens stored in your keychain.
 
 ## Command completion for BASH
 
@@ -34,31 +74,6 @@ Otherwise you can source it to the current session with:
 
 You should have a `cec` binary available
 
-## Configuration
-
-You must first configure the client to connect to the server.
-
-```sh
-./cec oauth
-```
-
-You will be prompted with the following informations:
-
-- Server Address : full URL to Cells, e.g. `https://cells.yourdomain.com/`
-- Client ID / Client Secret: this is used by the OpenIDConnect service for authentication: using Cells 2.0, a default public client `cells-client` is already created. 
-- Then follow the OAuth2 process either by opening a browser or copy/pasting the URL in your browser to get a valid token.
-- The token is automatically saved in your keychain, and will be refreshed as necessary.
-
-## Usage
-
-Use the `cec --help` command to know about the available commands. There are currently two interesting commands for manipulating files:
-
-- `./cec ls` : list files and folders on the server, when no path is passed, it lists the workspaces that use has access to.
-- `./cec cp` : Upload / Download file to/from a remote server (see below).
-- `./cec mkdir` : Create a folder on remote server
-- `./cec clear` : Clear authentication tokens stored in your keychain.
-
-Other commands are available for listing datasources, users, roles, etc... but it is still a WIP.
 
 ## Examples
 
@@ -100,7 +115,7 @@ Listing: 1 results for personal-files/P5021040.jpg
 ### 3/ Uploading a file to server
 
 ```sh
-$ ./cec cp ./README.md cells://common-files/
+$ ./cec scp ./README.md cells://common-files/
 Copying ./README.md to cells://common-files/
  ## Waiting for file to be indexed...
  ## File correctly indexed
@@ -109,7 +124,7 @@ Copying ./README.md to cells://common-files/
 ### 4/ Download a file from server
 
 ```sh
-$ ./cec cp cells://personal-files/IMG_9723.JPG ./
+$ ./cec scp cells://personal-files/IMG_9723.JPG ./
 Copying cells://personal-files/IMG_9723.JPG to ./
 Written 822601 bytes to file
 ```
