@@ -3,7 +3,6 @@ module github.com/pydio/cells-client
 go 1.12
 
 require (
-	github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d // indirect
 	github.com/aws/aws-sdk-go v1.25.12
 	github.com/dustin/go-humanize v1.0.0
 	github.com/go-openapi/runtime v0.19.6 // indirect
@@ -12,7 +11,7 @@ require (
 	github.com/gosuri/uilive v0.0.3 // indirect
 	github.com/gosuri/uiprogress v0.0.1
 	github.com/hashicorp/go-version v1.2.0
-	github.com/manifoldco/promptui v0.3.2
+	github.com/manifoldco/promptui v0.6.0
 	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/micro/go-log v0.1.0
 	github.com/olekukonko/tablewriter v0.0.1
@@ -23,7 +22,6 @@ require (
 	github.com/pydio/go v0.0.0-20191105212324-a0b934bdf46b
 	github.com/shibukawa/configdir v0.0.0-20170330084843-e180dbdc8da0
 	github.com/skratchdot/open-golang v0.0.0-20190402232053-79abb63cd66e
-	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.4.0
 	github.com/zalando/go-keyring v0.0.0-20190913082157-62750a1ff80d
@@ -31,7 +29,7 @@ require (
 	go.uber.org/multierr v1.2.0 // indirect
 	go.uber.org/zap v1.10.0 // indirect
 	golang.org/x/crypto v0.0.0-20190617133340-57b3e21c3d56 // indirect
-	golang.org/x/net v0.0.0-20191014212845-da9a3fd4c582 // indirect
-	golang.org/x/tools v0.0.0-20190617190820-da514acc4774 // indirect
+	golang.org/x/net v0.0.0-20191126235420-ef20fe5d7933 // indirect
+	golang.org/x/tools v0.0.0-20191203051722-db047d72ee39 // indirect
 	gopkg.in/alecthomas/kingpin.v3-unstable v3.0.0-20191105091915-95d230a53780 // indirect
 )

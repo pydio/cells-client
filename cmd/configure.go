@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/url"
+	"strings"
 
 	"github.com/manifoldco/promptui"
 	"github.com/micro/go-log"
@@ -31,6 +32,9 @@ func notEmpty(input string) error {
 }
 
 func validUrl(input string) error {
+	// Warning: trim must also be performed when retrieving the final value.
+	// Here we only validate that the trimed input is valid, but do not modify it.
+	input = strings.Trim(input, " ")
 	if len(input) == 0 {
 		return fmt.Errorf("Field cannot be empty!")
 	}
@@ -47,7 +51,10 @@ func interractive(newConf *cells_sdk.SdkConfig) error {
 	p := promptui.Prompt{Label: "Server Address (provide a valid URL)", Validate: validUrl}
 	if newConf.Url, e = p.Run(); e != nil {
 		return e
+	} else {
+		newConf.Url = strings.Trim(newConf.Url, " ")
 	}
+
 	u, e := url.Parse(newConf.Url)
 	if e != nil {
 		return e

@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/manifoldco/promptui"
@@ -64,9 +65,16 @@ func RandString(n int) string {
 func oAuthInteractive(newConf *cells_sdk.SdkConfig) error {
 	var e error
 	// PROMPT URL
-	p := promptui.Prompt{Label: "Server Address (provide a valid URL)", Validate: validUrl, Default: ""}
+	p := promptui.Prompt{
+		Label:    "Server Address (provide a valid URL)",
+		Validate: validUrl,
+		Default:  "",
+	}
+
 	if newConf.Url, e = p.Run(); e != nil {
 		return e
+	} else {
+		newConf.Url = strings.Trim(newConf.Url, " ")
 	}
 	u, e := url.Parse(newConf.Url)
 	if e != nil {
@@ -81,7 +89,12 @@ func oAuthInteractive(newConf *cells_sdk.SdkConfig) error {
 	}
 
 	// PROMPT CLIENT ID
-	p = promptui.Prompt{Label: "OAuth APP ID (found in your server pydio.json)", Validate: notEmpty, Default: "cells-client"}
+	p = promptui.Prompt{
+		Label:     "OAuth APP ID (found in your server pydio.json)",
+		Validate:  notEmpty,
+		Default:   "cells-client",
+		AllowEdit: true,
+	}
 	if newConf.ClientKey, e = p.Run(); e != nil {
 		return e
 	}
@@ -115,6 +128,10 @@ func oAuthInteractive(newConf *cells_sdk.SdkConfig) error {
 			srv.Shutdown(context.Background())
 		}()
 		srv.ListenAndServe()
+		// err = srv.ListenAndServe()
+		// if err != nil {
+		// 	log.Fatal("Could not bind to port 3000 on local machine, is it busy?", err)
+		// }
 		if h.err != nil {
 			log.Fatal("Could not correctly connect", h.err)
 		}
