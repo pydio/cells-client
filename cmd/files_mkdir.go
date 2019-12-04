@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"path"
+	"os"
 	"strings"
 	"time"
 
@@ -28,10 +29,10 @@ even if 'parents' flags is set, trying to create a folder in an unknown/unexisti
 `,
 	Example: `
 # Simply create a folder under an already existing folder 'existing' in 'common-files' workspace
-./cec mkdir common-files/existing/new-folder
+` + os.Args[0] + ` mkdir common-files/existing/new-folder
 
 # Create a full tree
-./cec mkdir -p common-files/a/folder/that/does/not/exits
+` + os.Args[0] + ` mkdir -p common-files/a/folder/that/does/not/exits
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 

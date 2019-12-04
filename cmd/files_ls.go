@@ -81,12 +81,17 @@ var (
 
 var listFiles = &cobra.Command{
 	Use:   "ls",
-	Short: "List files on pydio cells",
+	Short: "List files in your Pydio Cells server instance",
 	Long: `
+List files in your Pydio Cells server instance.
+
 Use as a normal ls, with additional path to list sub-folders or read info about a node.
-You can use the optional -d (--details) flag to display more information, -r (--raw) flag 
-to only list found file (& folder) paths or -f (--exists) flag to only check if given path
-exists on the server.
+You can use one of the below optional flags: 
+
+- d (--details) flag to display more information, 
+- r (--raw) flag to only list the paths of found files and folders
+- f (--exists) flag to only check if given path exists on the server.
+
 Note that you can only use *one* of the three above flags at a time.
 `,
 	Example: lsCmdExample,

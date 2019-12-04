@@ -24,7 +24,7 @@ var filesMvCmdExample = `
 // filesMvCmd represents the filesMv command
 var filesMvCmd = &cobra.Command{
 	Use:     "mv",
-	Short:   "Move and rename nodes",
+	Short:   "Move and/or rename nodes on the server",
 	Example: filesMvCmdExample,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 2 {

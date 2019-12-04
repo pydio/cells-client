@@ -13,8 +13,10 @@ import (
 
 var listRoles = &cobra.Command{
 	Use:   "list-roles",
-	Short: "Lise roles",
-	Long:  "List roles on pydio cells and also technical roles such as user/group",
+	Short: "List roles",
+	Long: `List the roles defined in your Pydio Cells instance, 
+including technical roles that are implicitely created upon user and group creation.
+`,
 	Run: func(cm *cobra.Command, args []string) {
 
 		ctx, apiClient, err := rest.GetApiClient()

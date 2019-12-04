@@ -3,6 +3,7 @@ package cmd
 import (
 	"log"
 	"path"
+	"os"
 	"sync"
 
 	"github.com/spf13/cobra"
@@ -10,20 +11,20 @@ import (
 	"github.com/pydio/cells-client/rest"
 )
 
-const rmCmdExample = `# Path
-./cec rm <workspace-slug>/path/to/resource
+var rmCmdExample = `# Path
+` + os.Args[0] + ` rm <workspace-slug>/path/to/resource
 
 # Remove a single file
-./cec rm common-files/target.txt
+` + os.Args[0] + ` rm common-files/target.txt
 
 # Remove recursively inside a folder
-./cec rm common-files/folder/*
+` + os.Args[0] + ` rm common-files/folder/*
 
 # Remove a folder and all its children (even if it is not empty) 
-./cec rm common-files/folder
+` + os.Args[0] + ` rm common-files/folder
 
 # Remove multiple files
-./cec rm common-files/file-1.txt common-files/file-2.txt
+` + os.Args[0] + ` rm common-files/file-1.txt common-files/file-2.txt
 `
 
 var rmCmd = &cobra.Command{

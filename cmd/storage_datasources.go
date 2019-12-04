@@ -19,7 +19,7 @@ var (
 
 var listDatasources = &cobra.Command{
 	Use:   "list-datasources",
-	Short: "ld",
+	Short: "List configured datasources",
 	Long:  `List all the datasources`,
 	Run: func(cm *cobra.Command, args []string) {
 
@@ -61,8 +61,9 @@ var listDatasources = &cobra.Command{
 }
 
 var resyncDs = &cobra.Command{
-	Use:  "resync-ds",
-	Long: `Launch a resync on the specified datasource`,
+	Use:   "resync-ds",
+	Short: "Launch a resync",
+	Long:  `Launch a resync job on the specified datasource`,
 	Run: func(cm *cobra.Command, args []string) {
 
 		if len(args) != 1 {

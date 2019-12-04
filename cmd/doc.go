@@ -33,10 +33,12 @@ var docPath string
 
 var generateDocCmd = &cobra.Command{
 	Use:   "doc",
-	Short: "Generate MD and YAML documentation for all CellsClient CLI commands",
+	Short: "Generate MD and YAML documentation for all CLI commands of the Cells Client",
 	Long: `Generate Markdown documentation for the Cells Client command line tool.
-Provide a target folder where to put the generated files.
-This command also generates yaml files for pydio.com documentation format.
+
+Please, provide the '-p' flag with a path to define where to put the generated files.
+
+Note that this command also generates yaml files for pydio.com documentation format.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 
