@@ -11,20 +11,15 @@ import (
 	"github.com/pydio/cells-client/common"
 )
 
-var verCmd = &cobra.Command{
+var versionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "Version related commands",
+	Short: "Show current version of this application (and some utils)",
+	Long: `
+The version command simply shows the version that is currently running.
+
+It also provides various utility sub commands than comes handy when manipulating software files. 
+`,
 	Run: func(cm *cobra.Command, args []string) {
-		cm.Usage()
-	},
-}
-
-// showCmd displays information about the current version of this software.
-var showCmd = &cobra.Command{
-	Use:   "show",
-	Short: "Display current version of this software",
-	Run: func(cmd *cobra.Command, args []string) {
-
 		var t time.Time
 		if common.BuildStamp != "" {
 			t, _ = time.Parse("2006-01-02T15:04:05", common.BuildStamp)
@@ -42,14 +37,23 @@ var showCmd = &cobra.Command{
 		fmt.Println("    " + fmt.Sprintf("Published on %s", t.Format(time.RFC822Z)))
 		fmt.Println("    " + fmt.Sprintf("Revision number %s", common.BuildRevision))
 		fmt.Println("")
-
 	},
 }
 
 var ivCmd = &cobra.Command{
 	Use:   "isvalid",
 	Short: "Return an error if the passed version is not correctly formatted",
-	Long:  `Tries to parse passed version as string using the hashicorp/go-version library`,
+	Long: `Tries to parse the passed string version using the hashicorp/go-version library 
+and hence validates that it respects semantic versionning rules.
+
+In case the passed version is *not* valid, the process exits with status 1.`,
+	Example: `
+# A valid version
+` + os.Args[0] + ` version isvalid 2.0.6-dev.20191205
+
+# A *non* valid version
+` + os.Args[0] + ` version isvalid 2.a
+`,
 	Run: func(cm *cobra.Command, args []string) {
 		if len(args) != 1 {
 			cm.Printf("Please provide a version to parse\n")
@@ -57,22 +61,27 @@ var ivCmd = &cobra.Command{
 		}
 
 		versionStr := args[0]
-		fmt.Printf("Checking version %s \n", versionStr)
 
 		_, err := hashivers.NewVersion(versionStr)
 		if err != nil {
-			cm.Printf("Passed version [%s] is not a valid version\n", versionStr)
+			cm.Printf("[%s] is *not* a valid version\n", versionStr)
 			os.Exit(1)
+		} else {
+			cm.Printf("[%s] is a valid version\n", versionStr)
 		}
 	},
 }
 
 var igtCmd = &cobra.Command{
 	Use:   "isgreater",
-	Short: "Compares the two passed versions and returns true if the first is strictly greater than the second",
-	Long: `Tries to parse passed versions as string using the hashicorp/go-version library and returns an error if:
-	- one of the 2 strings cannot be parsed
-	- the first version is not strictly greater than the second`,
+	Short: "Compares the two passed versions and returns an error if the first is *not* strictly greater than the second",
+	Long: `Tries to parse the passed string versions using the hashicorp/go-version library and returns an error if:
+  - one of the 2 strings is not a valid semantic version,
+  - the first version is not strictly greater than the second`,
+	Example: `
+# This exits with status 1.
+` + os.Args[0] + ` version isgreater 2.0.6-dev.20191205 2.0.6
+`,
 	Run: func(cm *cobra.Command, args []string) {
 		if len(args) != 2 {
 			cm.Printf("Please provide two versions to be compared\n")
@@ -101,8 +110,7 @@ var igtCmd = &cobra.Command{
 }
 
 func init() {
-	verCmd.AddCommand(showCmd)
-	verCmd.AddCommand(ivCmd)
-	verCmd.AddCommand(igtCmd)
-	RootCmd.AddCommand(verCmd)
+	versionCmd.AddCommand(ivCmd)
+	versionCmd.AddCommand(igtCmd)
+	RootCmd.AddCommand(versionCmd)
 }

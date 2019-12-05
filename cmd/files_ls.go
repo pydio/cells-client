@@ -81,7 +81,7 @@ var (
 
 var listFiles = &cobra.Command{
 	Use:   "ls",
-	Short: "List files in your Pydio Cells server instance",
+	Short: "List files in your remote server",
 	Long: `
 List files in your Pydio Cells server instance.
 

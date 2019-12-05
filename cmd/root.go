@@ -6,6 +6,7 @@ package cmd
 import (
 	"log"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -21,24 +22,37 @@ var RootCmd = &cobra.Command{
 	Short:                  "Connect to a Pydio Cells server using the command line",
 	BashCompletionFunction: bash_completion_func,
 	Long: `
-# This tool uses the REST API to connect to your Pydio Cells server instance
+# Pydio Cells Client
 
-Pydio Cells comes with a powerful REST API that exposes various endpoints and enables management of the running instance.
-As a convenience, the Pydio team also provides a ready to use SDK for the Go language that encapsulates the boiling plate code to wire things 
-and provides a few chosen utilitary methods to ease implementation when using the SDK in various Go programs.
+This command line client allows interacting with a Pydio Cells server instance directly via the command line. 
+It uses the Cells SDK for Go and the REST API under the hood.
 
-See the help of the various commands for detailed explanation and some examples. 
+See the respective help pages of the various commands to get detailed explanation and some examples.
+
+You should probably start with configuring your setup by running:
+ ` + os.Args[0] + ` configure
+
+This will guide you through a quick procedure to get you up and ready in no time.
 `,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 
-		if cmd.Use != "configure" && cmd.Use != "version" && cmd.Use != "completion" && cmd.Use != "oauth" && cmd.Use != "clear" && cmd.Use != "doc" {
+		parts := strings.Split(cmd.CommandPath(), " ")
+		rc := ""
+		if len(parts) > 1 {
+			rc = parts[1]
+		}
+		switch rc {
+		// These command and respective children do not need an already configured environment
+		case "", "configure", "version", "completion", "oauth", "clear", "doc":
+			break
+		default:
 			e := rest.SetUpEnvironment(configFile)
 			if e != nil {
 				log.Fatalf("cannot read config file, please make sure to run '%s oauth' first. (Error: %s)\n", os.Args[0], e.Error())
 			}
 		}
 
-  },
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Help()
 	},

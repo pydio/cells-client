@@ -23,7 +23,7 @@ var cpCmdExample = `
 // cmCmd represents the rm command
 var cpCmd = &cobra.Command{
 	Use:   "cp",
-	Short: "Copy files within your Pydio Cells instance.",
+	Short: "Copy files from A to B within your remote server",
 	Long: `
 Copy files from one location to another *within* a *single* Pydio Cells instance. 
 To copy files from your local machine to your server (and vice versa), rather see './cec scp' command.

@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"fmt"
-	"path"
 	"os"
+	"path"
 	"strings"
 	"time"
 
@@ -19,9 +19,9 @@ var createAncestors bool
 
 var mkDir = &cobra.Command{
 	Use:   "mkdir",
-	Short: `Create folder on remote server`,
+	Short: `Create folder(s) in the remote server`,
 	Long: `
-Create a folder on a remote Cells server instance.
+mkdir commande creates a folder in the remote Cells server instance.
 If ancestor folders do not exist and if the 'parents' flag is set, non-existing folders are recursively created. 
 
 You must specify the full path, including the slug of an existing workspace: 
