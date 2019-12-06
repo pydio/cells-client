@@ -167,17 +167,13 @@ func oAuthInteractive(newConf *cells_sdk.SdkConfig) error {
 			done:  make(chan bool),
 			state: state,
 		}
-		srv := &http.Server{Addr: ":3000"}
+		srv := &http.Server{Addr: fmt.Sprintf(":%d", callbackPort)}
 		srv.Handler = h
 		go func() {
 			<-h.done
 			srv.Shutdown(context.Background())
 		}()
 		srv.ListenAndServe()
-		// err = srv.ListenAndServe()
-		// if err != nil {
-		// 	log.Fatal("Could not bind to port 3000 on local machine, is it busy?", err)
-		// }
 		if h.err != nil {
 			log.Fatal("Could not correctly connect", h.err)
 		}
