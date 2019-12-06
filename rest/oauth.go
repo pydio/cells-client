@@ -71,7 +71,7 @@ func OAuthExchangeCode(c *cells_sdk.SdkConfig, code, callbackUrl string) error {
 	return nil
 }
 
-// RefreshIfRequired refreshes the token inside the given conf if required
+// RefreshIfRequired refreshes the token inside the given conf if required.
 func RefreshIfRequired(conf *cells_sdk.SdkConfig) (bool, error) {
 	// No token to refresh
 	if conf.IdToken == "" || conf.RefreshToken == "" || conf.TokenExpiresAt == 0 {

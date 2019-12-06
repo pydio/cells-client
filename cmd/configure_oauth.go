@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -20,10 +21,14 @@ import (
 	cells_sdk "github.com/pydio/cells-sdk-go"
 )
 
+const authTypeOAuth = "oauth"
+
 var (
 	oAuthUrl        string
 	oAuthIdToken    string
 	oAuthSkipVerify bool
+
+	callbackPort = 3000
 )
 
 type oAuthHandler struct {
@@ -33,6 +38,39 @@ type oAuthHandler struct {
 	// Output
 	code string
 	err  error
+}
+
+var configureOAuthCmd = &cobra.Command{
+	Use:   authTypeOAuth,
+	Short: "User OAuth2 to login to server",
+	Long:  `Configure Authentication using OAuth2`,
+	Run: func(cm *cobra.Command, args []string) {
+
+		var err error
+		newConf := &cells_sdk.SdkConfig{}
+
+		if oAuthUrl != "" && oAuthIdToken != "" {
+			err = oAuthNonInteractive(newConf)
+		} else {
+			err = oAuthInteractive(newConf)
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Now save config!
+		if err := rest.ConfigToKeyring(newConf); err != nil {
+			fmt.Println(promptui.IconWarn + " Cannot save token in keyring! " + err.Error())
+		}
+		filePath := rest.DefaultConfigFilePath()
+		data, _ := json.Marshal(newConf)
+		err = ioutil.WriteFile(filePath, data, 0755)
+		if err != nil {
+			fmt.Println(promptui.IconBad + " Cannot save configuration file! " + err.Error())
+		} else {
+			fmt.Printf("%s Configuration saved, you can now use the client to interract with %s.\n", promptui.IconGood, newConf.Url)
+		}
+	},
 }
 
 func (o *oAuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -107,6 +145,14 @@ func oAuthInteractive(newConf *cells_sdk.SdkConfig) error {
 		openBrowser = false
 	}
 
+	// TODO give  the opportunity to the end user to choose another port
+	avail := isPortAvailable(callbackPort, 10)
+	if !avail {
+		log.Fatalf("Warning: default port %d is not available on this machine, "+
+			"you thus won't be able to automatically complete the auth code flow with the implicit callback URL."+
+			"Please free this port or choose the copy/paste solution.", callbackPort)
+	}
+
 	// Starting Authentication process
 	var returnCode string
 	state := RandString(16)
@@ -160,11 +206,22 @@ func oAuthInteractive(newConf *cells_sdk.SdkConfig) error {
 	rest.DefaultConfig = newConf
 	if _, _, e := rest.GetApiClient(); e != nil {
 		fmt.Println("\r" + promptui.IconBad + " Could not connect to server, please recheck your configuration")
-		fmt.Println("   Error was " + e.Error())
+		fmt.Printf("Id_token: [%s]\n", newConf.IdToken)
+
+		fmt.Println("Cause: " + e.Error())
 		return fmt.Errorf("test connection failed")
 	}
 	fmt.Println("\r" + promptui.IconGood + fmt.Sprintf(" Successfully logged to server, token will be refreshed at %v", time.Unix(int64(newConf.TokenExpiresAt), 0)))
 	return nil
+}
+
+func isPortAvailable(port int, timeout int) bool {
+	conn, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	if err != nil {
+		return false
+	}
+	conn.Close()
+	return true
 }
 
 func oAuthNonInteractive(conf *cells_sdk.SdkConfig) error {
@@ -187,39 +244,6 @@ func oAuthNonInteractive(conf *cells_sdk.SdkConfig) error {
 	return nil
 }
 
-var configureOAuthCmd = &cobra.Command{
-	Use:   "oauth",
-	Short: "User OAuth2 to login to server",
-	Long:  `Configure Authentication using OAuth2`,
-	Run: func(cm *cobra.Command, args []string) {
-
-		var err error
-		newConf := &cells_sdk.SdkConfig{}
-
-		if oAuthUrl != "" && oAuthIdToken != "" {
-			err = oAuthNonInteractive(newConf)
-		} else {
-			err = oAuthInteractive(newConf)
-		}
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// Now save config!
-		filePath := rest.DefaultConfigFilePath()
-		if err := rest.ConfigToKeyring(newConf); err != nil {
-			fmt.Println(promptui.IconWarn + " Cannot save token in keyring! " + err.Error())
-		}
-		data, _ := json.Marshal(newConf)
-		err = ioutil.WriteFile(filePath, data, 0755)
-		if err != nil {
-			fmt.Println(promptui.IconBad + " Cannot save configuration file! " + err.Error())
-		} else {
-			fmt.Printf("%s Configuration saved, you can now use the client to interract with %s.\n", promptui.IconGood, newConf.Url)
-		}
-	},
-}
-
 func init() {
 
 	flags := configureOAuthCmd.PersistentFlags()
@@ -228,5 +252,5 @@ func init() {
 	flags.StringVarP(&oAuthIdToken, "idToken", "t", "", "Valid IdToken")
 	flags.BoolVar(&oAuthSkipVerify, "skipVerify", false, "Skip SSL certificate verification (not recommended)")
 
-	RootCmd.AddCommand(configureOAuthCmd)
+	configureCmd.AddCommand(configureOAuthCmd)
 }

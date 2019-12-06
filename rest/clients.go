@@ -20,14 +20,7 @@ import (
 )
 
 var (
-	DefaultConfig   *cells_sdk.SdkConfig
-	DefaultS3Config *cells_sdk.S3Config
-
-	// Keys to retrieve configuration via environment variables
-	KeyURL, KeyClientKey, KeyClientSecret, KeyUser, KeyPassword, KeySkipVerify = "TARGET_URL", "TARGET_CLIENT_KEY", "TARGET_CLIENT_SECRET", "TARGET_USER", "TARGET_PASSWORD", "TARGET_SKIP_VERIFY"
-
-	// Keys to retrieve environment variables to configure a connection to Pydio Cells S3 API
-	KeyS3Endpoint, KeyS3Region, KeyS3Bucket, KeyS3ApiKey, KeyS3ApiSecret, KeyS3UsePydioSpecificHeader, KeyS3IsDebug = "TARGET_S3_ENDPOINT", "TARGET_S3_REGION", "TARGET_S3_BUCKET", "TARGET_S3_API_KEY", "TARGET_S3_API_SECRET", "TARGET_S3_USE_PYDIO_SPECIFIC_HEADER", "TARGET_S3_IS_DEBUG"
+	DefaultConfig *cells_sdk.SdkConfig
 )
 
 func DefaultConfigFilePath() string {
@@ -72,9 +65,14 @@ func GetApiClient(anonymous ...bool) (context.Context, *client.PydioCellsRest, e
 }
 
 // SetUpEnvironment retrieves parameters and stores them in the DefaultConfig of the SDK.
-// configFilePath and s3ConfigFilePath can be <nil> if the parameters are defined via env variables.
+// It also puts the sensible info in the server keyring if one is present.
+// Note the precedence order (for each start of the app):
+//  1) environment variables,
+//  2) config files whose path is passed as argument of the start command
+//  3) local config file (that are generated at first start with one of the 2 options above OR by calling the configure command.
 func SetUpEnvironment(configFilePath string, s3ConfigFilePath ...string) error {
 
+	// Get config params from environment variables
 	c, err := getSdkConfigFromEnv()
 	if err != nil {
 		return err
@@ -82,6 +80,7 @@ func SetUpEnvironment(configFilePath string, s3ConfigFilePath ...string) error {
 
 	if c.Url == "" {
 
+		// Use a config file
 		if configFilePath == "" {
 			configFilePath = DefaultConfigFilePath()
 		}
@@ -93,11 +92,13 @@ func SetUpEnvironment(configFilePath string, s3ConfigFilePath ...string) error {
 		if err != nil {
 			return err
 		}
+		// Retrieves sensible info from the keyring if one is present
 		ConfigFromKeyring(&c)
+
 		// Refresh token if required
 		if refreshed, err := RefreshIfRequired(&c); refreshed {
 			if err != nil {
-				log.Fatal("Error while refreshing authentication token!", err)
+				log.Fatal("Could not refresh authentication token:", err)
 			}
 			// Copy config as IdToken will be cleared
 			storeConfig := c
@@ -111,25 +112,25 @@ func SetUpEnvironment(configFilePath string, s3ConfigFilePath ...string) error {
 	// Store the retrieved parameters in a public static singleton
 	DefaultConfig = &c
 
-	cs3, err := getS3ConfigFromEnv()
-	if err != nil {
-		return err
-	}
+	// cs3, err := getS3ConfigFromEnv()
+	// if err != nil {
+	// 	return err
+	// }
 
-	if cs3.Bucket == "" && len(s3ConfigFilePath) > 0 {
-		s, err := ioutil.ReadFile(s3ConfigFilePath[0])
-		if err == nil {
-			json.Unmarshal(s, &cs3)
-		}
-	}
+	// if cs3.Bucket == "" && len(s3ConfigFilePath) > 0 {
+	// 	s, err := ioutil.ReadFile(s3ConfigFilePath[0])
+	// 	if err == nil {
+	// 		json.Unmarshal(s, &cs3)
+	// 	}
+	// }
 
-	// Build S3 config directly
-	if cs3.Bucket == "" {
-		cs3 = getS3ConfigFromSdkConfig(c)
-	}
+	// // Build S3 config directly
+	// if cs3.Bucket == "" {
+	// 	cs3 = getS3ConfigFromSdkConfig(c)
+	// }
 
-	// Store the retrieved parameters in a public static singleton
-	DefaultS3Config = &cs3
+	// // Store the retrieved parameters in a public static singleton
+	// DefaultS3Config = &cs3
 
 	return nil
 }
@@ -182,45 +183,45 @@ func getS3ConfigFromSdkConfig(sConf cells_sdk.SdkConfig) cells_sdk.S3Config {
 	return c
 }
 
-func getS3ConfigFromEnv() (cells_sdk.S3Config, error) {
+// func getS3ConfigFromEnv() (cells_sdk.S3Config, error) {
 
-	var c cells_sdk.S3Config
+// 	var c cells_sdk.S3Config
 
-	// check presence of Env variable
-	endpoint := os.Getenv(KeyS3Endpoint)
-	region := os.Getenv(KeyS3Region)
-	bucket := os.Getenv(KeyS3Bucket)
-	apiKey := os.Getenv(KeyS3ApiKey)
-	apiSecret := os.Getenv(KeyS3ApiSecret)
-	usePSHStr := os.Getenv(KeyS3UsePydioSpecificHeader)
-	if usePSHStr == "" {
-		usePSHStr = "false"
-	}
-	usePSH, err := strconv.ParseBool(usePSHStr)
-	if err != nil {
-		return c, err
-	}
+// 	// check presence of Env variable
+// 	endpoint := os.Getenv(KeyS3Endpoint)
+// 	region := os.Getenv(KeyS3Region)
+// 	bucket := os.Getenv(KeyS3Bucket)
+// 	apiKey := os.Getenv(KeyS3ApiKey)
+// 	apiSecret := os.Getenv(KeyS3ApiSecret)
+// 	usePSHStr := os.Getenv(KeyS3UsePydioSpecificHeader)
+// 	if usePSHStr == "" {
+// 		usePSHStr = "false"
+// 	}
+// 	usePSH, err := strconv.ParseBool(usePSHStr)
+// 	if err != nil {
+// 		return c, err
+// 	}
 
-	isDebugStr := os.Getenv(KeyS3IsDebug)
-	if isDebugStr == "" {
-		isDebugStr = "false"
-	}
-	isDebug, err := strconv.ParseBool(isDebugStr)
-	if err != nil {
-		return c, err
-	}
+// 	isDebugStr := os.Getenv(KeyS3IsDebug)
+// 	if isDebugStr == "" {
+// 		isDebugStr = "false"
+// 	}
+// 	isDebug, err := strconv.ParseBool(isDebugStr)
+// 	if err != nil {
+// 		return c, err
+// 	}
 
-	if !(len(endpoint) > 0 && len(region) > 0 && len(bucket) > 0 && len(apiKey) > 0 && len(apiSecret) > 0) {
-		return c, nil
-	}
+// 	if !(len(endpoint) > 0 && len(region) > 0 && len(bucket) > 0 && len(apiKey) > 0 && len(apiSecret) > 0) {
+// 		return c, nil
+// 	}
 
-	c.Endpoint = endpoint
-	c.Region = region
-	c.Bucket = bucket
-	c.ApiKey = apiKey
-	c.ApiSecret = apiSecret
-	c.UsePydioSpecificHeader = usePSH
-	c.IsDebug = isDebug
+// 	c.Endpoint = endpoint
+// 	c.Region = region
+// 	c.Bucket = bucket
+// 	c.ApiKey = apiKey
+// 	c.ApiSecret = apiSecret
+// 	c.UsePydioSpecificHeader = usePSH
+// 	c.IsDebug = isDebug
 
-	return c, nil
-}
+// 	return c, nil
+// }

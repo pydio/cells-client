@@ -48,7 +48,7 @@ This will guide you through a quick procedure to get you up and ready in no time
 		default:
 			e := rest.SetUpEnvironment(configFile)
 			if e != nil {
-				log.Fatalf("cannot read config file, please make sure to run '%s oauth' first. (Error: %s)\n", os.Args[0], e.Error())
+				log.Fatalf("cannot read config file, please make sure to run '%s configure' first. (Error: %s)\n", os.Args[0], e.Error())
 			}
 		}
 
