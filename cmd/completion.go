@@ -24,21 +24,23 @@ This command installs an additional plugin to provide suggestions when working w
 sudo apt install bash-completion
 # on RHEL / CentOS
 sudo yum install bash-completion
+# on MacOS
+brew install bash-completion
+(make sure to follow the instructions displayed on Homebrew)
 
 # Then, to enable completion in your current session:
-source <(cec completion bash)
+source <(` + os.Args[0] + ` completion bash)
 
 # Or in a persistent manner:
-cec completion bash | sudo tee /etc/bash_completion.d/cec
+` + os.Args[0] + ` completion bash | sudo tee /etc/bash_completion.d/cec
 
 2) Using Zsh
 
-# Add to current zsh session
-	 source <(cec completion zsh)
-	 
-	 # Add bashcompletion file (might require sudo)
-	 # Add zshcompletion file
-	 cec	completion zsh > ~/.zsh/completion/_cec
+# Add to current zsh session:
+	 source <(` + os.Args[0] + ` completion zsh)
+
+	 # Add in a persistent manner:
+	 ` + os.Args[0] + ` completion bash | sudo tee /etc/bash_completion.d/cec
 	 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Help()
