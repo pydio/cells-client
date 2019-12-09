@@ -112,6 +112,6 @@ func RefreshIfRequired(conf *cells_sdk.SdkConfig) (bool, error) {
 	conf.IdToken = respMap.AccessToken
 	conf.RefreshToken = respMap.RefreshToken
 	conf.TokenExpiresAt = int(time.Now().Unix()) + respMap.ExpiresIn
-	fmt.Printf("Got new token that will be refeshed at %v\n", time.Unix(int64(conf.TokenExpiresAt), 0))
+	// fmt.Printf("Retrieved new token that will be refeshed at %v\n", time.Unix(int64(conf.TokenExpiresAt), 0))
 	return true, nil
 }

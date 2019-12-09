@@ -13,10 +13,11 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-client/rest"
 	"github.com/pydio/cells-sdk-go/client/meta_service"
 	"github.com/pydio/cells-sdk-go/models"
 	"github.com/pydio/cells/common"
+
+	"github.com/pydio/cells-client/rest"
 )
 
 var lsCmdExample = `
@@ -26,7 +27,7 @@ $ ` + os.Args[0] + ` ls personal-files
 +--------+--------------------------+
 |  TYPE  |           NAME           |
 +--------+--------------------------+
-| Folder | personal-files           |
+| Folder | .			            |
 | File   | Huge Photo-1.jpg         |
 | File   | Huge Photo.jpg           |
 | File   | IMG_9723.JPG             |
@@ -59,7 +60,6 @@ $ ` + os.Args[0] + ` ls personal-files/P5021040.jpg -r
 personal-files/P5021040.jpg
 
 $ ` + os.Args[0] + ` ls personal-files -r
-personal-files
 Huge Photo-1.jpg
 Huge Photo.jpg
 IMG_9723.JPG
@@ -75,8 +75,17 @@ false
 ...
 `
 
+const (
+	exists      = "EXISTS"
+	raw         = "RAW"
+	defaultList = "DEFAULT"
+	details     = "DETAILS"
+)
+
 var (
-	lsDetails, lsRaw, lsExists bool
+	lsDetails bool
+	lsRaw     bool
+	lsExists  bool
 )
 
 var listFiles = &cobra.Command{
@@ -97,171 +106,179 @@ Note that you can only use *one* of the three above flags at a time.
 	Example: lsCmdExample,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		// Check that we do not have multiple flags
-		nb := 0
-		if lsDetails {
-			nb++
-		}
-		if lsExists {
-			nb++
-		}
-		if lsRaw {
-			nb++
-		}
+		// Retrieve requested display type and check it is valid
+		dt := sanityCheck()
 
-		if nb > 1 {
-			log.Fatal("please use at most *one* modifier flag")
-		}
-
-		//connects to the pydio api via the sdkConfig
-		ctx, apiClient, err := rest.GetApiClient()
-		if err != nil {
-			log.Fatal(err)
-		}
-
+		// Retrieve and pre-process path if defined
 		lsPath := ""
 		if len(args) > 0 {
 			lsPath = args[0]
 		}
 		p := strings.Trim(lsPath, "/")
 
-		if lsExists { // check existence and returns
-			_, exists := rest.StatNode(p)
+		// Connect to the Cells API
+		ctx, apiClient, err := rest.GetApiClient()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		_, exists := rest.StatNode(p)
+		if lsExists {
+			// Only check existence and return
 			cmd.Println(exists)
+			return
+		} else if !exists && p != "" {
+			// Avoid 404 errors
+			cmd.Println("could not list content, no folder found at ", p)
 			return
 		}
 
-		/*
-			GetBulkMetaParams contains all the parameters to send to the API endpoint
-			for the get bulk meta operation typically these are written to a http.Request
-		*/
+		// Perform effective listing
 		params := &meta_service.GetBulkMetaParams{
+			// list folder (p) and its content (p/*) => folder is always first return
 			Body: &models.RestGetBulkMetaRequest{NodePaths: []string{
-				//the workspaces from whom the files are listed
 				p, p + "/*",
 			}},
 			Context: ctx,
 		}
-
-		//assigns the files data retrieved above in the results variable
 		result, err := apiClient.MetaService.GetBulkMeta(params)
 		if err != nil {
+			cmd.Printf("could not list files at %s, cause: %s\n", p, err.Error())
 			os.Exit(1)
-			// fmt.Printf("could not list files: %s\n", err.Error())
-			// log.Fatal(err)
+		}
+		if len(result.Payload.Nodes) == 0 {
+			// Nothing to list: should never happen, we always have at least the current path.
+			return
 		}
 
-		//prints the path therefore the name of the files listed
-		if len(result.Payload.Nodes) > 0 {
-			if lsRaw {
+		// Not very elegant way to check if we are at the workspace level
+		// TODO enhance
+		var wsLevel bool
+		if len(result.Payload.Nodes) > 1 {
+			firstChild := result.Payload.Nodes[1]
+			if firstChild.MetaStore != nil {
+				_, wsLevel = firstChild.MetaStore["ws_scope"]
+			}
+		}
 
-				for _, node := range result.Payload.Nodes {
-					if path.Base(node.Path) == common.PYDIO_SYNC_HIDDEN_FILE_META {
-						continue
-					}
-					if node.Path == "" {
-						continue
-					}
-					// if strings.Trim(node.Path, "/") == p {
-					// 	continue
-					// }
+		table := tablewriter.NewWriter(os.Stdout)
 
-					//TODO hide parent from results
-					if node.Type == models.TreeNodeTypeCOLLECTION {
-						//TODO might have to rethink to make it less complicated
-						if strings.HasSuffix(node.Path, "/") {
-							continue
+		// Process the results
+	processingLoop:
+		for i, node := range result.Payload.Nodes {
 
-						} else {
-							out := node.Path + "/"
-							//out = strings.ReplaceAll(out, " ", "\\ ")
-							_, _ = fmt.Fprintln(os.Stdout, out)
-						}
-					} else {
-						_, _ = fmt.Fprintln(os.Stdout, node.Path)
-					}
-				}
-				// fmt.Fprintf(os.Stdout, "\n")
-				return
+			currPath := node.Path
+			currName := path.Base(currPath)
+
+			// First, filter out unwanted nodes
+			if currName == common.PYDIO_SYNC_HIDDEN_FILE_META {
+				continue
 			}
 
-			fmt.Printf("Listing: %d results for %s\n", len(result.Payload.Nodes), p)
-			var wsLevel bool
-			if len(result.Payload.Nodes) > 1 {
-				n0 := result.Payload.Nodes[1]
-				if n0.MetaStore != nil {
-					_, wsLevel = n0.MetaStore["ws_scope"]
-				}
+			// fmt.Println(node.MetaStore)
+
+			t := "File"
+			if node.MetaStore != nil && node.MetaStore["ws_scope"] == "\"ROOM\"" {
+				t = "Cell"
+			} else if node.MetaStore != nil && node.MetaStore["ws_scope"] != "" {
+				t = "Workspace"
+			} else if node.Type == models.TreeNodeTypeCOLLECTION {
+				t = "Folder"
 			}
-			if !lsDetails {
-				fmt.Println("Get more info by adding the -d (details) flag")
-			}
-			table := tablewriter.NewWriter(os.Stdout)
-			if lsDetails {
-				if wsLevel {
-					table.SetHeader([]string{"Type", "Uuid", "Name", "Label", "Description", "Permissions"})
-				} else {
-					table.SetHeader([]string{"Type", "Uuid", "Name", "Size", "Modified"})
-				}
-			} else {
-				table.SetHeader([]string{"Type", "Name"})
-			}
-			for _, node := range result.Payload.Nodes {
-				if path.Base(node.Path) == common.PYDIO_SYNC_HIDDEN_FILE_META {
-					continue
-				}
-				t := "File"
-				if node.MetaStore != nil && node.MetaStore["ws_scope"] == "\"ROOM\"" {
-					t = "Cell"
-				} else if node.MetaStore != nil && node.MetaStore["ws_scope"] != "" {
-					t = "Workspace"
+
+			// Corner case of the 1st result
+			if i == 0 {
+				// Do not list root of the repo
+				if currPath == "" && wsLevel {
+					continue processingLoop
+				} else if lsRaw && (t == "Folder" || t == "Workspace") {
+					// We do not want to list parent folder or workspace in simple lists
+					continue processingLoop
 				} else if node.Type == models.TreeNodeTypeCOLLECTION {
-					t = "Folder"
-					// The below does not work, we should rather use strings.Trim(node.Path, "/")
-					// but then the number of nodes count is false.
-					// TODO specify and enhance.
-					if node.Path == p {
-						continue
-					}
+					// replace path by "." notation
+					currName = "."
 				}
-				if lsDetails {
-					if wsLevel {
-						store := node.MetaStore
-						fromStore := func(key string) string {
-							if v, ok := store[key]; ok {
-								return strings.Trim(v, "\"")
-							}
-							return ""
-						}
-						table.Append([]string{
-							t,
-							fromStore("ws_uuid"),
-							path.Base(node.Path),
-							fromStore("ws_label"),
-							fromStore("ws_description"),
-							fromStore("ws_permissions"),
-						})
-					} else {
-						table.Append([]string{t, node.UUID, node.Path, sizeToBytes(node.Size), stampToDate(node.MTime)})
-					}
+			}
+
+			switch dt {
+			case details:
+				if wsLevel {
+					table.Append([]string{
+						t,
+						fromMetaStore(node, "ws_uuid"),
+						currName,
+						fromMetaStore(node, "ws_label"),
+						fromMetaStore(node, "ws_description"),
+						fromMetaStore(node, "ws_permissions"),
+					})
 				} else {
-					table.Append([]string{t, path.Base(node.Path)})
+					table.Append([]string{t, node.UUID, currName, sizeToBytes(node.Size), stampToDate(node.MTime)})
 				}
+				break
+			case raw:
+				//TODO hide parent from results
+				if node.Type == models.TreeNodeTypeCOLLECTION {
+					out := currPath + "/"
+					//out = strings.ReplaceAll(out, " ", "\\ ")
+					_, _ = fmt.Fprintln(os.Stdout, out)
+				} else {
+					_, _ = fmt.Fprintln(os.Stdout, node.Path)
+				}
+				break
+			default:
+				table.Append([]string{t, currName})
+			}
+		}
+
+		// Add meta-info and table headers and render (if necessary)
+		switch dt {
+		case details:
+			fmt.Printf("Listing: %d results for %s\n", len(result.Payload.Nodes), p)
+			if wsLevel {
+				table.SetHeader([]string{"Type", "Uuid", "Name", "Label", "Description", "Permissions"})
+			} else {
+				table.SetHeader([]string{"Type", "Uuid", "Name", "Size", "Modified"})
 			}
 			table.Render()
+			break
+		case raw: // Nothing to add: we just want the raw values that we already displayed while looping
+			break
+		default:
+			fmt.Printf("Listing: %d results for %s\n", len(result.Payload.Nodes), p)
+			fmt.Println("Get more info by adding the -d (details) flag")
+			table.SetHeader([]string{"Type", "Name"})
+			table.Render()
 		}
-
 	},
 }
 
-func init() {
+func sanityCheck() string {
+	// Check that we do not have multiple flags
+	displayType := defaultList
+	nb := 0
+	if lsDetails {
+		nb++
+		displayType = details
+	}
+	if lsExists {
+		nb++
+		displayType = exists
+	}
+	if lsRaw {
+		nb++
+		displayType = raw
+	}
+	if nb > 1 {
+		log.Fatal("please use at most *one* modifier flag")
+	}
+	return displayType
+}
 
-	flags := listFiles.PersistentFlags()
-	flags.BoolVarP(&lsDetails, "details", "d", false, "Show more information about files")
-	flags.BoolVarP(&lsRaw, "raw", "r", false, "List only found paths (one per line) with no further info to be able to use returned results in later commands")
-	flags.BoolVarP(&lsExists, "exists", "f", false, "Only check if the passed path exists on the server")
-
-	RootCmd.AddCommand(listFiles)
+func fromMetaStore(node *models.TreeNode, key string) string {
+	if v, ok := node.MetaStore[key]; ok {
+		return strings.Trim(v, "\"")
+	}
+	return ""
 }
 
 func sizeToBytes(size string) string {
@@ -270,9 +287,8 @@ func sizeToBytes(size string) string {
 	}
 	if i, e := strconv.ParseUint(size, 10, 64); e == nil {
 		return humanize.Bytes(i)
-	} else {
-		return "-"
 	}
+	return "-"
 }
 
 func stampToDate(stamp string) string {
@@ -282,7 +298,15 @@ func stampToDate(stamp string) string {
 	if i, e := strconv.ParseInt(stamp, 10, 64); e == nil {
 		t := time.Unix(i, 0)
 		return humanize.Time(t)
-	} else {
-		return "-"
 	}
+	return "-"
+}
+
+func init() {
+	flags := listFiles.PersistentFlags()
+	flags.BoolVarP(&lsDetails, "details", "d", false, "Show more information about files")
+	flags.BoolVarP(&lsRaw, "raw", "r", false, "List found paths (one per line) with no further info to be able to use returned results in later commands")
+	flags.BoolVarP(&lsExists, "exists", "f", false, "Check if the passed path exists on the server and return non zero status code if not")
+
+	RootCmd.AddCommand(listFiles)
 }

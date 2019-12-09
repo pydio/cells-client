@@ -30,7 +30,8 @@ const (
 )
 
 var (
-	currentPrefix string
+	scpCurrentPrefix   string
+	scpCreateAncestors bool
 )
 
 var scpFiles = &cobra.Command{
@@ -45,55 +46,55 @@ For the time being, copy can only be performed with both different ends.
 	Example: scpFileExample,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		if len(args) < 2 {
+		if len(args) != 2 {
 			cmd.Help()
-			log.Fatal(fmt.Errorf("please provide at least a source and a destination target"))
+			log.Fatal("Please provide at least a source *and* a destination target.")
 		}
 
 		from := args[0]
 		to := args[1]
 
 		if strings.HasPrefix(from, prefixA) || strings.HasPrefix(to, prefixA) {
-			currentPrefix = prefixA
+			scpCurrentPrefix = prefixA
 		} else if strings.HasPrefix(from, prefixB) || strings.HasPrefix(to, prefixB) {
-			currentPrefix = prefixB
+			scpCurrentPrefix = prefixB
+		} else {
+			// No prefix found
+			log.Fatal("Source and target are both local, copy remote to local or the opposite.")
 		}
 
 		DryRun = false // Debug option
+		isSrcLocal := true
 		var crawlerPath, targetPath string
-		var isLocal bool
 
-		if strings.HasPrefix(from, currentPrefix) {
+		// Prepare paths
+		if strings.HasPrefix(from, scpCurrentPrefix) {
 			// Download
-			fromPath := strings.TrimPrefix(from, currentPrefix)
+			fromPath := strings.TrimPrefix(from, scpCurrentPrefix)
 			localTarget, isRemote, e := targetToFullPath(to, from)
 			if e != nil {
 				log.Fatal(e)
 			}
 			if isRemote {
-				log.Fatal(fmt.Errorf("source and target are both remote, copy remote to local or the opposite"))
+				log.Fatal("Source and target are both remote, copy remote to local or the opposite.")
 			}
 			crawlerPath = fromPath
-			isLocal = false
+			isSrcLocal = false
 			targetPath = localTarget
 			fmt.Printf("Downloading %s to %s\n", from, to)
 
 		} else {
 			// Upload
-			_, remote, e := targetToFullPath(to, from)
-			if e != nil {
+			// Called to check target path existence
+			if _, _, e := targetToFullPath(to, from); e != nil {
 				log.Fatal(e)
 			}
-			if !remote {
-				log.Fatal(fmt.Errorf("source and target are both local, copy remote to local or the opposite"))
-			}
 			crawlerPath = from
-			isLocal = true
-			targetPath = strings.TrimPrefix(to, currentPrefix)
+			targetPath = strings.TrimPrefix(to, scpCurrentPrefix)
 			fmt.Printf("Uploading %s to %s\n", from, to)
 		}
 
-		crawler, e := NewCrawler(crawlerPath, isLocal)
+		crawler, e := NewCrawler(crawlerPath, isSrcLocal)
 		if e != nil {
 			log.Fatal(e)
 		}
@@ -122,6 +123,9 @@ For the time being, copy can only be performed with both different ends.
 }
 
 func init() {
+
+	flags := scpFiles.PersistentFlags()
+	flags.BoolVarP(&scpCreateAncestors, "parents", "p", false, "Force creation of non-existing ancestors on remote Cells server")
 	RootCmd.AddCommand(scpFiles)
 }
 
@@ -130,14 +134,19 @@ func targetToFullPath(to, from string) (string, bool, error) {
 	//var isDir bool
 	var isRemote bool
 	var e error
-	if strings.HasPrefix(to, currentPrefix) {
+	if strings.HasPrefix(to, scpCurrentPrefix) {
 		// This is remote
 		isRemote = true
-		toPath = strings.TrimPrefix(to, currentPrefix)
+		toPath = strings.TrimPrefix(to, scpCurrentPrefix)
 		_, ok := StatNode(toPath)
 		if !ok {
-			// Does not exists => will be created
-			return toPath, isRemote, nil
+			if scpCreateAncestors {
+				// Does not exists => will be created
+				return toPath, true, nil
+			} else {
+				// No force creation flag && target not exist=> error
+				return toPath, true, fmt.Errorf("Target folder %s does not exits on remote server. Consider using the '-p' flag to force creation of non existing ancestors.", toPath)
+			}
 		}
 	} else {
 		// This is local
