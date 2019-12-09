@@ -29,7 +29,7 @@ sudo yum install bash-completion
 source <(cec completion bash)
 
 # Or in a persistent manner:
-echo $(cec completion bash) | sudo tee /etc/bash_completion.d/cec
+cec completion bash | sudo tee /etc/bash_completion.d/cec
 
 2) Using Zsh
 
