@@ -67,16 +67,16 @@ You are then prompted for the following information:
 
 Example:
 
-Assuming that I have a Pydio Cells instance running under this URL `https://cells.my-files.com` and that you are running the command on the same **graphical environment**.
+Assuming that I have a Pydio Cells instance running under this URL `https://cells.my-files.com` and that I am running the command on the same **graphical environment**.
 ```
 ./cec configure
 ```
 
 ```
-Server Address (provide a valid URL): https://cells.my-files.com█
+Server Address (provide a valid URL): https://cells.my-files.com
 ✔ No
-OAuth APP ID (found in your server pydio.json): cells-client█
-OAuth APP Secret (leave empty for a public client): █
+OAuth APP ID (found in your server pydio.json): cells-client
+OAuth APP Secret (leave empty for a public client):
 ✔ Yes
 Opening URL https://cells.my-files.com/oidc/oauth2/auth?client_id=cells-client&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fservers%2Fcallback&response_type=code&state=XVlBzgbaiCMRAjWw
 Now exchanging the code for a valid IdToken
@@ -86,7 +86,7 @@ Now exchanging the code for a valid IdToken
 ✔ Configuration saved, you can now use the client to interract with https://cells.my-files.com.
 ```
 
-*If you have no tab opening on your browser you can manually copy the URL and put it in your browser*
+*If you have no tab opening in your browser you can manually copy the URL and put it in your browser*
 
 ## Usage
 
