@@ -1,14 +1,12 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
-var (
-	configAuthType string
-)
+// var (
+// configAuthType string
+// )
 
 var configureCmd = &cobra.Command{
 	Use:   "configure",
@@ -27,21 +25,25 @@ If no keyring is defined in the local machine, all information is stored in *cle
 In such case, do not use the 'client-auth' process.
 `,
 	Run: func(cm *cobra.Command, args []string) {
-		switch configAuthType {
-		case authTypeClientAuth:
-			configureClientAuthCmd.Run(cm, args)
-			break
-		case authTypeOAuth:
-		default:
-			configureOAuthCmd.Run(cm, args)
-		}
+
+		// Call OAuth grant flow by default
+		configureOAuthCmd.Run(cm, args)
+
+		// switch configAuthType {
+		// case authTypeClientAuth:
+		// configureClientAuthCmd.Run(cm, args)
+		// break
+		// case authTypeOAuth:
+		// default:
+		// configureOAuthCmd.Run(cm, args)
+		// }
 	},
 }
 
 func init() {
 
-	flags := configureCmd.PersistentFlags()
-	helpMsg := fmt.Sprintf("Choose the authentication process you want to use: %s (default) or %s", authTypeOAuth, authTypeClientAuth)
-	flags.StringVar(&configHost, "auth-type", "", helpMsg)
+	// flags := configureCmd.PersistentFlags()
+	// helpMsg := fmt.Sprintf("Choose the authentication process you want to use: %s (default) or %s", authTypeOAuth, authTypeClientAuth)
+	// flags.StringVar(&configHost, "auth-type", "", helpMsg)
 	RootCmd.AddCommand(configureCmd)
 }
