@@ -51,10 +51,11 @@ _Note: Cells Client uses the Go Modules mechanism to manage dependencies, so you
 You must first configure the client to connect to the server.
 
 ```sh
-./cec oauth
+## By default this command will run the oauth configuration
+./cec configure
 ```
 
-You are prompted for following informations:
+You are then prompted for the following information:
 
 - Server Address : full URL to Cells, e.g.: `https://cells.yourdomain.com/`
 - Client ID / Client Secret: this is used by the OpenIDConnect service for authentication.  
@@ -63,6 +64,29 @@ You are prompted for following informations:
   - Client Secret: (leave empty)
 - Then follow the OAuth2 process either by opening a browser or copy/pasting the URL in your browser to get a valid token.
 - The token is automatically saved in your keychain. It will be refreshed as necessary.
+
+Example:
+
+Assuming that I have a Pydio Cells instance running under this URL `https://cells.my-files.com` and that you are running the command on the same **graphical environment**.
+```
+./cec configure
+```
+
+```
+Server Address (provide a valid URL): https://cells.my-files.com█
+✔ No
+OAuth APP ID (found in your server pydio.json): cells-client█
+OAuth APP Secret (leave empty for a public client): █
+✔ Yes
+Opening URL https://cells.my-files.com/oidc/oauth2/auth?client_id=cells-client&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fservers%2Fcallback&response_type=code&state=XVlBzgbaiCMRAjWw
+Now exchanging the code for a valid IdToken
+✔Successfully Received Token!
+⚠ Testing this configuration before saving
+✔ Successfully logged to server, token will be refreshed at 2019-12-09 12:42:58 +0100 CET
+✔ Configuration saved, you can now use the client to interract with https://cells.my-files.com.
+```
+
+*If you have no tab opening on your browser you can manually copy the URL and put it in your browser*
 
 ## Usage
 
@@ -78,17 +102,26 @@ Use the `cec --help` command to know about available commands. Below are a few i
 
 Make sure that you have bash-completion installed
 
-`apt-get install bash-completion` `brew install bash-completion`
+```
+## On Linux, you must insure the 'bash-completion' library is installed:
+# on Debian / Ubuntu
+sudo apt install bash-completion
 
-MacOS users need to add `cec completion bash > /usr/local/etc/bash_completion.d/cec`.
+# on RHEL / CentOS
+sudo yum install bash-completion
 
-Linux users with `cec completion bash > /etc/bash_completion.d/cec`
+# on MacOS
+brew install bash-completion
+(make sure to follow the instructions displayed on Homebrew)
+```
+
+Then to add the completion in a persistent manner:
+
+- Linux users with `cec completion bash | sudo tee /etc/bash_completion.d/cec`
+- MacOS users need to add `cec completion bash | sudo tee /usr/local/etc/bash_completion.d/cec`.
 
 Otherwise you can source it to the current session with:
 `source <(cec completion bash)`
-
-You should have a `cec` binary available
-
 
 ## Examples
 
