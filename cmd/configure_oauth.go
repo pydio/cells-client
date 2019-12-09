@@ -17,8 +17,9 @@ import (
 	"github.com/skratchdot/open-golang/open"
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-client/rest"
 	cells_sdk "github.com/pydio/cells-sdk-go"
+
+	"github.com/pydio/cells-client/rest"
 )
 
 const authTypeOAuth = "oauth"
@@ -146,11 +147,16 @@ func oAuthInteractive(newConf *cells_sdk.SdkConfig) error {
 	}
 
 	// TODO give  the opportunity to the end user to choose another port
+
 	avail := isPortAvailable(callbackPort, 10)
 	if !avail {
-		log.Fatalf("Warning: default port %d is not available on this machine, "+
+		fmt.Printf("Warning: default port %d is not available on this machine, "+
 			"you thus won't be able to automatically complete the auth code flow with the implicit callback URL."+
-			"Please free this port or choose the copy/paste solution.", callbackPort)
+			"Please free this port or choose the copy/paste solution.\n", callbackPort)
+		openBrowser = false
+		//log.Fatalf("Warning: default port %d is not available on this machine, "+
+		//	"you thus won't be able to automatically complete the auth code flow with the implicit callback URL."+
+		//	"Please free this port or choose the copy/paste solution.", callbackPort)
 	}
 
 	// Starting Authentication process
