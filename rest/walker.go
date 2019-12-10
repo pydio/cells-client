@@ -236,7 +236,9 @@ func (c *CrawlNode) upload(src *CrawlNode, bar *uiprogress.Bar) error {
 		total:  int(stats.Size()),
 		double: true,
 	}
-	_, e = PutFile(c.Join(c.FullPath, src.RelPath), wrapper, false)
+	errChan, done := wrapper.CreateErrorChan()
+	defer close(done)
+	_, e = PutFile(c.Join(c.FullPath, src.RelPath), wrapper, false, errChan)
 	return e
 }
 
@@ -352,6 +354,31 @@ type PgReader struct {
 
 	double bool
 	first  bool
+
+	errChan chan error
+}
+
+func (r *PgReader) CreateErrorChan() (chan error, chan struct{}) {
+	done := make(chan struct{}, 1)
+	r.errChan = make(chan error)
+	go func() {
+		for {
+			select {
+			case e := <-r.errChan:
+				r.sendErr(e)
+			case <-done:
+				close(r.errChan)
+				return
+			}
+		}
+	}()
+	return r.errChan, done
+}
+
+func (r *PgReader) sendErr(err error) {
+	r.bar.AppendFunc(func(b *uiprogress.Bar) string {
+		return err.Error()
+	})
 }
 
 func (r *PgReader) Read(p []byte) (n int, err error) {

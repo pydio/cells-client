@@ -46,23 +46,27 @@ func GetFile(pathToFile string) (io.Reader, int, error) {
 	return obj.Body, size, nil
 }
 
-func PutFile(pathToFile string, content io.ReadSeeker, checkExists bool) (*s3.PutObjectOutput, error) {
+func PutFile(pathToFile string, content io.ReadSeeker, checkExists bool, errChan ...chan error) (*s3.PutObjectOutput, error) {
 	s3Client, bucketName, e := GetS3Client()
 	if e != nil {
 		return nil, e
 	}
 
-	var err error
 	key := pathToFile
 	var obj *s3.PutObjectOutput
 	e = RetryCallback(func() error {
+		var err error
 		obj, err = s3Client.PutObject((&s3.PutObjectInput{}).
 			SetBucket(bucketName).
 			SetKey(key).
 			SetBody(content),
 		)
 		if err != nil {
-			fmt.Println(" ## Trying to Put file:", key)
+			if len(errChan) > 0 {
+				errChan[0] <- err
+			} else {
+				fmt.Println(" ## Trying to Put file:", key)
+			}
 		}
 		return err
 	}, 3, 2*time.Second)
