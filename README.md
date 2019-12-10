@@ -115,10 +115,12 @@ brew install bash-completion
 (make sure to follow the instructions displayed on Homebrew)
 ```
 
+_MacOS users should update their bash version_
+
 Then to add the completion in a persistent manner:
 
-- Linux users with `cec completion bash | sudo tee /etc/bash_completion.d/cec`
-- MacOS users need to add `cec completion bash | sudo tee /usr/local/etc/bash_completion.d/cec`.
+- Linux users: `cec completion bash | sudo tee /etc/bash_completion.d/cec`
+- MacOS users: `cec completion bash | sudo tee /usr/local/etc/bash_completion.d/cec`.
 
 Otherwise you can source it to the current session with:
 `source <(cec completion bash)`
