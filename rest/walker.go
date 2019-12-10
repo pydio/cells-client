@@ -90,11 +90,14 @@ func NewLocalNode(fullPath string, i os.FileInfo) *CrawlNode {
 }
 
 func (c *CrawlNode) MkdirAll(dd []*CrawlNode, pool *BarsPool) error {
+
+	var createRoot bool
 	// Remote : prepare TreeNodes list and append root if required
 	var mm []*models.TreeNode
 	if !c.IsLocal {
 		if _, b := StatNode(c.FullPath); !b {
 			mm = append(mm, &models.TreeNode{Path: c.FullPath, Type: models.TreeNodeTypeCOLLECTION})
+			createRoot = true
 		}
 	} else {
 		if _, e := os.Stat(c.FullPath); e != nil {
@@ -107,6 +110,9 @@ func (c *CrawlNode) MkdirAll(dd []*CrawlNode, pool *BarsPool) error {
 	}
 	for _, d := range dd {
 		if !d.IsDir {
+			continue
+		}
+		if d.RelPath == "" && createRoot {
 			continue
 		}
 		newFolder := c.Join(c.FullPath, d.RelPath)
