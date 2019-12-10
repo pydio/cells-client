@@ -36,6 +36,7 @@ type CrawlNode struct {
 
 func NewCrawler(target string, isLocal bool) (*CrawlNode, error) {
 	if isLocal {
+		target, _ = filepath.Abs(target)
 		i, e := os.Stat(target)
 		if e != nil {
 			return nil, e
