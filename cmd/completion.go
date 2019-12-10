@@ -40,7 +40,10 @@ source <(` + os.Args[0] + ` completion bash)
 	 source <(` + os.Args[0] + ` completion zsh)
 
 	 # Add in a persistent manner:
-	 ` + os.Args[0] + ` completion bash | sudo tee /etc/bash_completion.d/cec
+	 ` + os.Args[0] + ` completion zsh | sudo tee <path>/<to>/<your zsh completion folder>
+	
+	# On macOS
+	` + os.Args[0] + ` completion zsh | sudo tee /Users/<your current user>/.zsh/completion/_cec
 	 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Help()
