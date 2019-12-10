@@ -147,20 +147,18 @@ func oAuthInteractive(newConf *cells_sdk.SdkConfig) error {
 		openBrowser = false
 	}
 
-	// TODO give  the opportunity to the end user to choose another port
-
+	// Check default port availability: Note that we do not offer option to change the port,
+	// because it would also require impacting the registered client in the pydio.json
+	// of the server that is not an acceptable option.
 	avail := isPortAvailable(callbackPort, 10)
 	if !avail {
 		fmt.Printf("Warning: default port %d is not available on this machine, "+
 			"you thus won't be able to automatically complete the auth code flow with the implicit callback URL."+
 			"Please free this port or choose the copy/paste solution.\n", callbackPort)
 		openBrowser = false
-		//log.Fatalf("Warning: default port %d is not available on this machine, "+
-		//	"you thus won't be able to automatically complete the auth code flow with the implicit callback URL."+
-		//	"Please free this port or choose the copy/paste solution.", callbackPort)
 	}
 
-	// Starting Authentication process
+	// Starting authentication process
 	var returnCode string
 	state := RandString(16)
 	directUrl, callbackUrl, err := rest.OAuthPrepareUrl(newConf.Url, newConf.ClientKey, newConf.ClientSecret, state, openBrowser)

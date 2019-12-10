@@ -26,11 +26,10 @@ var cpCmd = &cobra.Command{
 	Short: "Copy files from A to B within your remote server",
 	Long: `
 Copy files from one location to another *within* a *single* Pydio Cells instance. 
-To copy files from your local machine to your server (and vice versa), rather see './cec scp' command.
+To copy files from your local machine to your server (and vice versa), rather see '` + os.Args[0] + ` scp' command.
 `,
 	Example: cpCmdExample,
 	Run: func(cmd *cobra.Command, args []string) {
-		//TODO Maybe add the dot (.) behaviour as seen with the linux command (cp /home/user/file .)
 		if len(args) < 2 {
 			cmd.Help()
 			log.Fatalln("Missing Source and Target path")

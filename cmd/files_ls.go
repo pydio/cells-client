@@ -152,7 +152,6 @@ Note that you can only use *one* of the three above flags at a time.
 		}
 
 		// Not very elegant way to check if we are at the workspace level
-		// TODO enhance
 		var wsLevel bool
 		if len(result.Payload.Nodes) > 1 {
 			firstChild := result.Payload.Nodes[1]
@@ -216,10 +215,8 @@ Note that you can only use *one* of the three above flags at a time.
 				}
 				break
 			case raw:
-				//TODO hide parent from results
 				if node.Type == models.TreeNodeTypeCOLLECTION {
 					out := currPath + "/"
-					//out = strings.ReplaceAll(out, " ", "\\ ")
 					_, _ = fmt.Fprintln(os.Stdout, out)
 				} else {
 					_, _ = fmt.Fprintln(os.Stdout, node.Path)

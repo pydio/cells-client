@@ -90,7 +90,6 @@ Note that you can rename the file or base folder that you upload/download if:
 			if isRemote {
 				log.Fatal("Source and target are both remote, copy remote to local or the opposite.")
 			}
-			// TODO handle rename case in the message
 			fmt.Printf("Downloading %s to %s\n", from, to)
 		} else {
 			// Upload
@@ -103,9 +102,6 @@ Note that you can rename the file or base folder that you upload/download if:
 			fmt.Printf("Uploading %s to %s\n", from, to)
 		}
 
-		// FLAG RENAME ON THE FLY
-		// scp /Users/charles/tmp/toto  => cells//common-files/tutu
-
 		crawler, e := NewCrawler(crawlerPath, isSrcLocal)
 		if e != nil {
 			log.Fatal(e)
@@ -116,19 +112,6 @@ Note that you can rename the file or base folder that you upload/download if:
 		}
 
 		targetNode := NewTarget(targetPath, crawler, rename)
-
-		// FLAG RENAME ON THE FLY
-		// [CrawlNode{FullPath:/Users/charles/tmp/toto, RelPath:""}]
-		// [CrawlNode{FullPath:/Users/charles/tmp/toto/A.txt, RelPath:"A.txt"}]
-		// [CrawlNode{FullPath:/Users/charles/tmp/toto/B.txt, RelPath:"B.txt"}]
-		// ==> patchRelativePath(nn)
-		// [CrawlNode{FullPath:/Users/charles/tmp/toto, RelPath:"tutu"}]
-		// [CrawlNode{FullPath:/Users/charles/tmp/toto/A.txt, RelPath:"tutu/A.txt"}]
-		// [CrawlNode{FullPath:/Users/charles/tmp/toto/B.txt, RelPath:"tutu/A.txt"}]
-
-		// [CrawlNode{FullPath:/Users/charles/tmp/toto.txt, RelPath:"toto.txt"}]
-		// ==> patchRelativePath(nn)
-		// [CrawlNode{FullPath:/Users/charles/tmp/toto.txt, RelPath:"tutu.txt"}]
 
 		pool := NewBarsPool(len(nn) > 1, len(nn))
 		pool.Start()
