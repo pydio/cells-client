@@ -48,7 +48,7 @@ func MoveJob(jsonParams string) (string, error) {
 	return RunJob("move", jsonParams)
 }
 
-// RunJob runs a job
+// RunJob runs a job.
 func RunJob(jobName string, jsonParams string) (string, error) {
 
 	_, client, err := GetApiClient()
@@ -69,7 +69,7 @@ func RunJob(jobName string, jsonParams string) (string, error) {
 	return job.Payload.JobUUID, nil
 }
 
-// GetTaskStatusForJob retrieves the task status, progress and message
+// GetTaskStatusForJob retrieves the task status, progress and message.
 func GetTaskStatusForJob(jobID string) (status models.JobsTaskStatus, msg string, pg float32, e error) {
 	_, client, err := GetApiClient()
 	if err != nil {
@@ -103,7 +103,7 @@ func GetTaskStatusForJob(jobID string) (status models.JobsTaskStatus, msg string
 	return
 }
 
-// MonitorJob monitors a job status every 1 sec
+// MonitorJob monitors a job status every second.
 func MonitorJob(JobID string) (err error) {
 	for {
 		status, _, _, e := GetTaskStatusForJob(JobID)

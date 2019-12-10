@@ -21,21 +21,23 @@ var (
 	QueueSize = 3
 )
 
+// CrawlNode enables processing the scp command step by step.
 type CrawlNode struct {
 	IsLocal bool
 
-	IsDir    bool
-	FullPath string
-	RelPath  string
-	MTime    time.Time
-	Size     int64
+	IsDir       bool
+	FullPath    string
+	RelPath     string
+	MTime       time.Time
+	Size        int64
+	NewFileName string
 
 	os.FileInfo
 	models.TreeNode
 }
 
-func NewCrawler(target string, isLocal bool) (*CrawlNode, error) {
-	if isLocal {
+func NewCrawler(target string, isSrcLocal bool) (*CrawlNode, error) {
+	if isSrcLocal {
 		i, e := os.Stat(target)
 		if e != nil {
 			return nil, e
@@ -50,32 +52,7 @@ func NewCrawler(target string, isLocal bool) (*CrawlNode, error) {
 	}
 }
 
-func NewTarget(target string, source *CrawlNode) *CrawlNode {
-	c := &CrawlNode{
-		IsLocal:  !source.IsLocal,
-		IsDir:    source.IsDir,
-		FullPath: target,
-		RelPath:  "",
-	}
-	// For dirs, add source directory name
-	if source.IsDir {
-		c.FullPath = c.Join(c.FullPath, source.Base())
-	}
-	return c
-}
-
-func NewRemoteNode(t *models.TreeNode) *CrawlNode {
-	n := &CrawlNode{
-		IsDir:    t.Type == models.TreeNodeTypeCOLLECTION,
-		FullPath: strings.Trim(t.Path, "/"),
-	}
-	n.Size, _ = strconv.ParseInt(t.Size, 10, 64)
-	unixTime, _ := strconv.ParseInt(t.MTime, 10, 32)
-	n.MTime = time.Unix(unixTime, 0)
-	n.TreeNode = *t
-	return n
-}
-
+// NewLocalNode creates the base node for crawling in case of an upload.
 func NewLocalNode(fullPath string, i os.FileInfo) *CrawlNode {
 	fullPath = strings.TrimRight(fullPath, string(os.PathSeparator))
 	n := &CrawlNode{
@@ -89,15 +66,106 @@ func NewLocalNode(fullPath string, i os.FileInfo) *CrawlNode {
 	return n
 }
 
+// NewRemoteNode creates the base node for crawling in case of a download.
+func NewRemoteNode(t *models.TreeNode) *CrawlNode {
+	n := &CrawlNode{
+		IsDir:    t.Type == models.TreeNodeTypeCOLLECTION,
+		FullPath: strings.Trim(t.Path, "/"),
+	}
+	n.Size, _ = strconv.ParseInt(t.Size, 10, 64)
+	unixTime, _ := strconv.ParseInt(t.MTime, 10, 32)
+	n.MTime = time.Unix(unixTime, 0)
+	n.TreeNode = *t
+	return n
+}
+
+func NewTarget(target string, source *CrawlNode, rename bool) *CrawlNode {
+	c := &CrawlNode{
+		IsLocal:  !source.IsLocal,
+		IsDir:    source.IsDir,
+		FullPath: target,
+		RelPath:  "",
+	}
+	// For dirs, add source directory name, if we are not in the rename case:
+	// in such case, target is already the full target path.
+	if source.IsDir && !rename {
+		c.FullPath = c.Join(c.FullPath, source.Base())
+	}
+
+	// Manage rename corner case for files:
+	// we remove last part of the path that is the target file name
+	if rename && !source.IsDir {
+		// We must compute NewFileName first because it relies on the FullPath that is then impacted
+		c.NewFileName = c.Base()
+		c.FullPath = c.Dir()
+	}
+
+	return c
+}
+
+// Walk prepares the list of single upload/download nodes that we process in a second time.
+func (c *CrawlNode) Walk(current ...string) (children []*CrawlNode, e error) {
+	crt := ""
+	if len(current) > 0 {
+		crt = current[0]
+	}
+
+	// Source is a single file
+	if !c.IsDir {
+		c.RelPath = c.Base()
+		children = append(children, c)
+		return
+	}
+
+	if c.IsLocal {
+		e = filepath.Walk(filepath.Join(c.FullPath, crt), func(p string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if strings.HasPrefix(filepath.Base(p), ".") {
+				return nil
+			}
+			n := NewLocalNode(p, info)
+			n.RelPath = strings.TrimPrefix(n.FullPath, c.FullPath)
+			children = append(children, n)
+			return nil
+		})
+	} else {
+		nn, er := GetBulkMetaNode(path.Join(c.FullPath, crt, "*"))
+		if er != nil {
+			e = er
+			return
+		}
+		for _, n := range nn {
+			remote := NewRemoteNode(n)
+			remote.RelPath = strings.TrimPrefix(remote.FullPath, c.FullPath)
+			children = append(children, remote)
+			if n.Type == models.TreeNodeTypeCOLLECTION {
+				cc, er := c.Walk(remote.RelPath)
+				if er != nil {
+					e = er
+					return
+				}
+				children = append(children, cc...)
+			}
+		}
+	}
+	return
+}
+
+// MkdirAll prepares a recursive scp by first creating all necessary folders under the target root folder.
 func (c *CrawlNode) MkdirAll(dd []*CrawlNode, pool *BarsPool) error {
 
 	var createRoot bool
-	// Remote : prepare TreeNodes list and append root if required
 	var mm []*models.TreeNode
 	if !c.IsLocal {
-		if _, b := StatNode(c.FullPath); !b {
+		// Remote : append root if required
+		if tn, b := StatNode(c.FullPath); !b {
 			mm = append(mm, &models.TreeNode{Path: c.FullPath, Type: models.TreeNodeTypeCOLLECTION})
 			createRoot = true
+		} else if tn.Type != models.TreeNodeTypeCOLLECTION {
+			// target root is not a folder, fail fast.
+			return fmt.Errorf("%s exists on the server and is not a folder, cannot upload there", c.FullPath)
 		}
 	} else {
 		if _, e := os.Stat(c.FullPath); e != nil {
@@ -143,52 +211,7 @@ func (c *CrawlNode) MkdirAll(dd []*CrawlNode, pool *BarsPool) error {
 	return nil
 }
 
-func (c *CrawlNode) Walk(current ...string) (children []*CrawlNode, e error) {
-	crt := ""
-	if len(current) > 0 {
-		crt = current[0]
-	}
-	if !c.IsDir {
-		c.RelPath = c.Base()
-		children = append(children, c)
-		return
-	}
-	if c.IsLocal {
-		e = filepath.Walk(filepath.Join(c.FullPath, crt), func(p string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			if strings.HasPrefix(filepath.Base(p), ".") {
-				return nil
-			}
-			n := NewLocalNode(p, info)
-			n.RelPath = strings.TrimPrefix(n.FullPath, c.FullPath)
-			children = append(children, n)
-			return nil
-		})
-	} else {
-		nn, er := GetBulkMetaNode(path.Join(c.FullPath, crt, "*"))
-		if er != nil {
-			e = er
-			return
-		}
-		for _, n := range nn {
-			remote := NewRemoteNode(n)
-			remote.RelPath = strings.TrimPrefix(remote.FullPath, c.FullPath)
-			children = append(children, remote)
-			if n.Type == models.TreeNodeTypeCOLLECTION {
-				cc, er := c.Walk(remote.RelPath)
-				if er != nil {
-					e = er
-					return
-				}
-				children = append(children, cc...)
-			}
-		}
-	}
-	return
-}
-
+// CopyAll parallely performs the real upload/download of files that have been prepared during the Walk step.
 func (c *CrawlNode) CopyAll(dd []*CrawlNode, pool *BarsPool) (errs []error) {
 	idx := -1
 	buf := make(chan struct{}, QueueSize)
@@ -248,7 +271,11 @@ func (c *CrawlNode) upload(src *CrawlNode, bar *uiprogress.Bar) error {
 	}
 	errChan, done := wrapper.CreateErrorChan()
 	defer close(done)
-	_, e = PutFile(c.Join(c.FullPath, src.RelPath), wrapper, false, errChan)
+	bname := src.RelPath
+	if c.NewFileName != "" {
+		bname = c.NewFileName
+	}
+	_, e = PutFile(c.Join(c.FullPath, bname), wrapper, false, errChan)
 	return e
 }
 
@@ -262,7 +289,11 @@ func (c *CrawlNode) download(src *CrawlNode, bar *uiprogress.Bar) error {
 		bar:    bar,
 		total:  length,
 	}
-	downloadToLocation := c.Join(c.FullPath, src.RelPath)
+	bname := src.RelPath
+	if c.NewFileName != "" {
+		bname = c.NewFileName
+	}
+	downloadToLocation := c.Join(c.FullPath, bname)
 	writer, e := os.OpenFile(downloadToLocation, os.O_CREATE|os.O_WRONLY, 0755)
 	if e != nil {
 		return e
@@ -294,6 +325,14 @@ func (c *CrawlNode) Base() string {
 		return filepath.Base(c.FullPath)
 	} else {
 		return path.Base(c.FullPath)
+	}
+}
+
+func (c *CrawlNode) Dir() string {
+	if c.IsLocal {
+		return filepath.Dir(c.FullPath)
+	} else {
+		return path.Dir(c.FullPath)
 	}
 }
 

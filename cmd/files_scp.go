@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -22,6 +23,10 @@ var scpFileExample = `
 2/ Download a file from server:
   $ ` + os.Args[0] + ` scp cells://personal-files/funnyCat.jpg ./
   Copying cells://personal-files/funnyCat.jpg to /home/pydio/downloads/
+
+3/ Download a file changing its name - remember: this will fail if a 'cat2.jpg' file already exists: 
+$ ` + os.Args[0] + ` scp cells://personal-files/funnyCat.jpg ./cat2.jpg
+Copying cells://personal-files/funnyCat.jpg to /home/pydio/downloads/
 `
 
 const (
@@ -40,8 +45,12 @@ var scpFiles = &cobra.Command{
 	Long: `
 Copy files from your local machine to your Pydio Cells server instance (and vice versa).
 
-To differentiate local from remote, prefix remote paths with 'cells://'. 
+To differentiate local from remote, prefix remote paths with 'cells://' or with 'cells//' (without the column) if you have installed the completion and intend to use it.
 For the time being, copy can only be performed with both different ends.
+
+Note that you can rename the file or base folder that you upload/download if:
+- last part of the target path is a new name that *does not exists*
+- parent path exists and is a folder a target location
 `,
 	Example: scpFileExample,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -63,34 +72,34 @@ For the time being, copy can only be performed with both different ends.
 			log.Fatal("Source and target are both local, copy remote to local or the opposite.")
 		}
 
+		// Prepare paths
 		DryRun = false // Debug option
 		isSrcLocal := true
 		var crawlerPath, targetPath string
-
-		// Prepare paths
+		var rename bool
+		var err error
 		if strings.HasPrefix(from, scpCurrentPrefix) {
 			// Download
-			fromPath := strings.TrimPrefix(from, scpCurrentPrefix)
-			localTarget, isRemote, e := targetToFullPath(to, from)
-			if e != nil {
-				log.Fatal(e)
+			isSrcLocal = false
+			var isRemote bool
+			crawlerPath = strings.TrimPrefix(from, scpCurrentPrefix)
+			targetPath, isRemote, rename, err = targetToFullPath(from, to)
+			if err != nil {
+				log.Fatal(err)
 			}
 			if isRemote {
 				log.Fatal("Source and target are both remote, copy remote to local or the opposite.")
 			}
-			crawlerPath = fromPath
-			isSrcLocal = false
-			targetPath = localTarget
+			// TODO handle rename case in the message
 			fmt.Printf("Downloading %s to %s\n", from, to)
-
 		} else {
 			// Upload
-			// Called to check target path existence
-			if _, _, e := targetToFullPath(to, from); e != nil {
-				log.Fatal(e)
+			targetPath = strings.TrimPrefix(to, scpCurrentPrefix)
+			// Check target path existence and handle rename corner cases
+			if _, _, rename, err = targetToFullPath(from, to); err != nil {
+				log.Fatal(err)
 			}
 			crawlerPath = from
-			targetPath = strings.TrimPrefix(to, scpCurrentPrefix)
 			fmt.Printf("Uploading %s to %s\n", from, to)
 		}
 
@@ -105,7 +114,8 @@ For the time being, copy can only be performed with both different ends.
 		if e != nil {
 			log.Fatal(e)
 		}
-		targetNode := NewTarget(targetPath, crawler)
+
+		targetNode := NewTarget(targetPath, crawler, rename)
 
 		// FLAG RENAME ON THE FLY
 		// [CrawlNode{FullPath:/Users/charles/tmp/toto, RelPath:""}]
@@ -138,43 +148,69 @@ For the time being, copy can only be performed with both different ends.
 	},
 }
 
-func init() {
-
-	flags := scpFiles.PersistentFlags()
-	flags.BoolVarP(&scpCreateAncestors, "parents", "p", false, "Force creation of non-existing ancestors on remote Cells server")
-	RootCmd.AddCommand(scpFiles)
-}
-
-func targetToFullPath(to, from string) (string, bool, error) {
+func targetToFullPath(from, to string) (string, bool, bool, error) {
 	var toPath string
 	//var isDir bool
 	var isRemote bool
 	var e error
 	if strings.HasPrefix(to, scpCurrentPrefix) {
-		// This is remote
+		// This is remote: UPLOAD
 		isRemote = true
 		toPath = strings.TrimPrefix(to, scpCurrentPrefix)
 		_, ok := StatNode(toPath)
 		if !ok {
-			if scpCreateAncestors {
-				// Does not exists => will be created
-				return toPath, true, nil
+
+			parPath, _ := path.Split(toPath)
+			if parPath == "" {
+				// unexisting workspace
+				return toPath, true, false, fmt.Errorf("Target path %s does not exist on remote server, please double check and correct.", toPath)
+			}
+
+			// Check if parent exists. In such case, we rename the file or root folder that has been passed as local source
+			// Typically, `cec scp README.txt cells//common-files/readMe.md` or `cec scp local-folder cells//common-files/remote-folder`
+			if _, ok2 := StatNode(parPath); !ok2 {
+				// Target parent folder does not exist, we do not create it
+				return toPath, true, false, fmt.Errorf("Target parent folder %s does not exist on remote server. ", parPath)
 			} else {
-				// No force creation flag && target not exist=> error
-				return toPath, true, fmt.Errorf("Target folder %s does not exits on remote server. Consider using the '-p' flag to force creation of non existing ancestors.", toPath)
+				// Parent folder exists on remote, we rename src file or folder
+				return toPath, true, true, nil
 			}
 		}
 	} else {
-		// This is local
+		// This is local: DOWNLOAD
 		toPath, e = filepath.Abs(to)
 		if e != nil {
-			return "", false, e
+			return "", false, false, e
 		}
 		_, e := os.Stat(toPath)
 		if e != nil {
-			return "", false, e
+
+			parPath := filepath.Dir(toPath)
+			if parPath == "." {
+				// this should never happen
+				return toPath, true, false, fmt.Errorf("Target path %s does not exist on local server, please double check and correct.", toPath)
+			}
+
+			// Check if parent exists. In such case, we rename the file or root folder that has been passed as remote source
+			if ln, err2 := os.Stat(parPath); err2 != nil {
+				// Target parent folder does not exist on local machine, we do not create it
+				return "", true, false, fmt.Errorf("Target parent folder %s does not exist on local server. ", parPath)
+			} else if !ln.IsDir() {
+				// Local parent is not a folder
+				return "", true, false, fmt.Errorf("Target parent %s is not a folder, could not download to it.", parPath)
+			} else {
+				// Parent folder exists on local, we rename src file or folder
+				return toPath, false, true, nil
+			}
 		}
 	}
 
-	return toPath, isRemote, nil
+	return toPath, isRemote, false, nil
+}
+
+func init() {
+
+	flags := scpFiles.PersistentFlags()
+	flags.BoolVarP(&scpCreateAncestors, "parents", "p", false, "Force creation of non-existing ancestors on remote Cells server")
+	RootCmd.AddCommand(scpFiles)
 }
