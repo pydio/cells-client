@@ -199,7 +199,13 @@ func (c *CrawlNode) CopyAll(dd []*CrawlNode, pool *BarsPool) (errs []error) {
 		}
 		buf <- struct{}{}
 		idx++
-		bar := pool.Get(idx, int(d.Size), d.Base())
+		barSize := d.Size
+		emptyFile := false
+		if barSize == 0 {
+			emptyFile = true
+			barSize = 1
+		}
+		bar := pool.Get(idx, int(barSize), d.Base())
 		wg.Add(1)
 		go func(src *CrawlNode, barId int) {
 			defer func() {
@@ -210,10 +216,14 @@ func (c *CrawlNode) CopyAll(dd []*CrawlNode, pool *BarsPool) (errs []error) {
 			if !c.IsLocal {
 				if e := c.upload(src, bar); e != nil {
 					errs = append(errs, e)
+				} else if emptyFile {
+					bar.Set(1)
 				}
 			} else {
 				if e := c.download(src, bar); e != nil {
 					errs = append(errs, e)
+				} else if emptyFile {
+					bar.Set(1)
 				}
 			}
 		}(d, idx)
