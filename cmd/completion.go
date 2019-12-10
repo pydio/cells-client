@@ -32,7 +32,10 @@ brew install bash-completion
 source <(` + os.Args[0] + ` completion bash)
 
 # Or in a persistent manner:
+## Debian/Ubuntu/CentOS
 ` + os.Args[0] + ` completion bash | sudo tee /etc/bash_completion.d/cec
+## macOS
+` + os.Args[0] + ` completion bash | /usr/local/etc/bash_completion.d/cec
 
 2) Using Zsh
 

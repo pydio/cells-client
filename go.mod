@@ -8,6 +8,7 @@ require (
 	github.com/go-openapi/runtime v0.19.6 // indirect
 	github.com/go-openapi/strfmt v0.19.3
 	github.com/golang/protobuf v1.3.2 // indirect
+	github.com/gookit/color v1.2.0
 	github.com/gosuri/uilive v0.0.3 // indirect
 	github.com/gosuri/uiprogress v0.0.1
 	github.com/hashicorp/go-version v1.2.0

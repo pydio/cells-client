@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gookit/color"
 	"github.com/manifoldco/promptui"
 	"github.com/micro/go-log"
 	"github.com/skratchdot/open-golang/open"
@@ -185,7 +186,8 @@ func oAuthInteractive(newConf *cells_sdk.SdkConfig) error {
 		}
 		returnCode = h.code
 	} else {
-		fmt.Println("Please copy and paste this URL in a browser", directUrl)
+		col := color.FgLightRed.Render
+		fmt.Println("Please copy and paste this URL in a browser", col(directUrl))
 		var err error
 		pr := promptui.Prompt{
 			Label:    "Please Paste the code returned to you in the browser",
