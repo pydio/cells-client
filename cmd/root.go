@@ -22,9 +22,7 @@ var RootCmd = &cobra.Command{
 	Short:                  "Connect to a Pydio Cells server using the command line",
 	BashCompletionFunction: bash_completion_func,
 	Long: `
-# Pydio Cells Client
-
-This command line client allows interacting with a Pydio Cells server instance directly via the command line. 
+The Cells Client tool allows interacting with a Pydio Cells server instance directly via the command line. 
 It uses the Cells SDK for Go and the REST API under the hood.
 
 See the respective help pages of the various commands to get detailed explanation and some examples.

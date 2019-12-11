@@ -17,16 +17,16 @@ var scpFileExample = `
 1/ Uploading a file to the server:
   $ ` + os.Args[0] + ` scp ./README.md cells://common-files/
   Copying ./README.md to cells://common-files/
-  ## Waiting for file to be indexed...
-  ## File correctly indexed
+  Waiting for file to be indexed...
+  File correctly indexed
 
 2/ Download a file from server:
   $ ` + os.Args[0] + ` scp cells://personal-files/funnyCat.jpg ./
   Copying cells://personal-files/funnyCat.jpg to /home/pydio/downloads/
 
 3/ Download a file changing its name - remember: this will fail if a 'cat2.jpg' file already exists: 
-$ ` + os.Args[0] + ` scp cells://personal-files/funnyCat.jpg ./cat2.jpg
-Copying cells://personal-files/funnyCat.jpg to /home/pydio/downloads/
+  $ ` + os.Args[0] + ` scp cells://personal-files/funnyCat.jpg ./cat2.jpg
+  Copying cells://personal-files/funnyCat.jpg to /home/pydio/downloads/
 `
 
 const (
@@ -48,9 +48,10 @@ Copy files from your local machine to your Pydio Cells server instance (and vice
 To differentiate local from remote, prefix remote paths with 'cells://' or with 'cells//' (without the column) if you have installed the completion and intend to use it.
 For the time being, copy can only be performed with both different ends.
 
-Note that you can rename the file or base folder that you upload/download if:
-- last part of the target path is a new name that *does not exists*
-- parent path exists and is a folder a target location
+Note that you can rename the file or base folder that you upload/download if:  
+
+- last part of the target path is a new name that *does not exists*,  
+- parent path exists and is a folder a target location.
 `,
 	Example: scpFileExample,
 	Run: func(cmd *cobra.Command, args []string) {
