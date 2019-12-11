@@ -106,7 +106,7 @@ sudo yum install bash-completion
 brew install bash-completion
 ```
 
-_Note: MacOS users should update their bash version_
+_MacOS users should update their bash version to v5, (by default it is using v3)_
 
 Then to add the completion in a persistent manner:
 
