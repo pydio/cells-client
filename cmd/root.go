@@ -102,6 +102,10 @@ _path_completion() {
 _scp_path_completion() {
   local lsopts cur dir
   cur="${COMP_WORDS[COMP_CWORD]}"
+	
+  if [[ $cur != cells//* ]]; then
+    return
+  fi
 
   prefix="cells//"
   cur=${cur#$prefix}
