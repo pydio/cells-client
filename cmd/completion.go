@@ -26,9 +26,8 @@ This command installs an additional plugin to provide suggestions when working w
 		RHEL / CentOS
 			sudo yum install bash-completion
 		
-		On MacOS
+		On MacOS (be sure to follow the instructions displayed on Homebrew)
 			brew install bash-completion
-			(make sure to follow the instructions displayed on Homebrew)
 
 Then, to enable completion in your current session:
 	
