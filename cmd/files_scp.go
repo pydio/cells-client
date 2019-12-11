@@ -119,6 +119,9 @@ Note that you can rename the file or base folder that you upload/download if:
 		// CREATE FOLDERS
 		e = targetNode.MkdirAll(nn, pool)
 		if e != nil {
+			// Force stop of the pool that stays blocked otherwise:
+			// It is launched *before* the MkdirAll but only managed during the CopyAll phase.
+			pool.Stop()
 			log.Fatal(e)
 		}
 

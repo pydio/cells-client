@@ -240,13 +240,15 @@ func (c *CrawlNode) CopyAll(dd []*CrawlNode, pool *BarsPool) (errs []error) {
 			if !c.IsLocal {
 				if e := c.upload(src, bar); e != nil {
 					errs = append(errs, e)
-				} else if emptyFile {
+				}
+				if emptyFile {
 					bar.Set(1)
 				}
 			} else {
 				if e := c.download(src, bar); e != nil {
 					errs = append(errs, e)
-				} else if emptyFile {
+				}
+				if emptyFile {
 					bar.Set(1)
 				}
 			}
@@ -276,7 +278,14 @@ func (c *CrawlNode) upload(src *CrawlNode, bar *uiprogress.Bar) error {
 	if c.NewFileName != "" {
 		bname = c.NewFileName
 	}
-	_, e = PutFile(c.Join(c.FullPath, bname), wrapper, false, errChan)
+
+	fp := c.Join(c.FullPath, bname)
+	// Handle corner case when trying to upload a file and *folder* with same name already exists at target path
+	if tn, b := StatNode(fp); b && tn.Type == models.TreeNodeTypeCOLLECTION {
+		// target root is not a folder, fail fast.
+		return fmt.Errorf("cannot upload file to %s, a folder with same same already exists at target path", fp)
+	}
+	_, e = PutFile(fp, wrapper, false, errChan)
 	return e
 }
 
