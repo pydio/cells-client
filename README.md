@@ -28,8 +28,8 @@ Typically on Linux, you have to:
 - Make it executable: `chmod u+x cec`,
 - Put it in your path or add a symlink to the binary location, typically:  
   `sudo ln -s /<path-to-bin>/cec /usr/local/bin/cec`  
-  This last step is only required if you want to configure the completion helper (see below).  
-  Otherwise, you can also do `./cec ls` directly.
+  This last step is **required** if you want to configure the completion helper (see below).  
+  Otherwise, you can also do `./cec ls` directly (in such case, adapt the suggested commands to run the examples).
 
 You can verify that `cec` is correctly installed and configured by launching any command, for instance:  
 `cec version`
@@ -123,6 +123,13 @@ cec scp ./README.md cells//com <press the tab key>
 # will complete the path to 
 cec scp ./README.md cells//common-files/
 ...
+```
+
+Note: when you update the Cells Client, you also have to update the completion file, typically on linux machines:
+
+```sh
+cec completion bash | sudo tee /etc/bash_completion.d/cec
+source /etc/bash_completion.d/cec
 ```
 
 ## Usage
