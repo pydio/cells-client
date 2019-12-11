@@ -32,7 +32,7 @@ Typically on Linux, you have to:
   Otherwise, you can also do `./cec ls` directly.
 
 You can verify that `cec` is correctly installed and configured by launching any command, for instance:  
-`cec version show`
+`cec version`
 
 ###  Installing from source 
 
@@ -44,20 +44,22 @@ cd ./cells-client
 make dev
 ```
 
-_Note: Cells Client uses the Go Modules mechanism to manage dependencies, so you do not have to be in your go path._
+_Note: Cells Client uses the Go Modules mechanism to manage dependencies, so you do not have to be in your GOPATH._
 
 ## Configuration
 
-You must first configure the client to connect to the server.
+This step is compulsory if you do not want to precise all configuration information each time you call the command, typically on your working station. It guides through a few steps to gather necessary information and store sensitive bits in your keyring _**if you have one configured and running on your machine**_.
+
+Default authentication mechanism is a OAuth _Authorization Code_ flow. 
 
 ```sh
-## By default this command will run the oauth configuration
-./cec configure
+# simply call
+cec configure
 ```
 
 You are then prompted for the following information:
 
-- Server Address : full URL to Cells, e.g.: `https://cells.yourdomain.com/`
+- Server Address: full URL to Cells, e.g.: `https://cells.yourdomain.com/`
 - Client ID / Client Secret: this is used by the OpenIDConnect service for authentication.  
   Note that since the v2.0, a default **public** client is registered by default, using the suggested default values should work out of the box:
   - Client ID: `cells-client`
@@ -65,14 +67,12 @@ You are then prompted for the following information:
 - Then follow the OAuth2 process either by opening a browser or copy/pasting the URL in your browser to get a valid token.
 - The token is automatically saved in your keychain. It will be refreshed as necessary.
 
-Example:
+**Example:**
 
 Assuming that I have a Pydio Cells instance running under this URL `https://cells.my-files.com` and that I am running the command on the same **graphical environment**.
-```
-./cec configure
-```
 
-```
+``` sh
+$ cec configure
 Server Address (provide a valid URL): https://cells.my-files.com
 ✔ No
 OAuth APP ID (found in your server pydio.json): cells-client
@@ -88,21 +88,13 @@ Now exchanging the code for a valid IdToken
 
 *If you have no tab opening in your browser you can manually copy the URL and put it in your browser*
 
-## Usage
-
-Use the `cec --help` command to know about available commands. Below are a few interresting ones for manipulating files:
-
-- `cec ls`: List files and folders on the server, when no path is provided, it lists the workspaces that current user can access.
-- `cec scp`: Upload / Download file to/from a remote server (see below).
-- `cec cp`, `cec cp` and `cec rm`: Copy, move, rename and delete files **within the server**.
-- `cec mkdir`: Create a folder on the remote server
-- `cec clear`: Clear authentication tokens stored in your keychain.
-
 ## Command completion for BASH
 
-Make sure that you have bash-completion installed
+Cells Client provides a handy feature that provides completion on both available commands and path, both on local and remote machines.
 
-```
+This feature requires that you have `bash-completion` third party add-on installed on your workstation.
+
+```sh
 ## On Linux, you must insure the 'bash-completion' library is installed:
 # on Debian / Ubuntu
 sudo apt install bash-completion
@@ -110,12 +102,11 @@ sudo apt install bash-completion
 # on RHEL / CentOS
 sudo yum install bash-completion
 
-# on MacOS
+# on MacOS (make sure to follow the instructions displayed by Homebrew)
 brew install bash-completion
-(make sure to follow the instructions displayed on Homebrew)
 ```
 
-_MacOS users should update their bash version_
+_Note: MacOS users should update their bash version_
 
 Then to add the completion in a persistent manner:
 
@@ -125,12 +116,31 @@ Then to add the completion in a persistent manner:
 Otherwise you can source it to the current session with:
 `source <(cec completion bash)`
 
-## Examples
+Note: if you want to use completion for remote paths while using `scp` sub command, you have prefix the _remote_ path with `cells//` rather than `cells://` - that is omit column character before the double slash. Typically:
+
+```sh
+cec scp ./README.md cells//com <press the tab key>
+# will complete the path to 
+cec scp ./README.md cells//common-files/
+...
+```
+
+## Usage
+
+Use the `cec --help` command to know about available commands. Below are a few interresting ones for manipulating files:
+
+- `cec ls`: List files and folders on the server, when no path is provided, it lists the workspaces that the current user can access.
+- `cec scp`: Upload/Download file to/from a remote server.
+- `cec cp`, `cec cp` and `cec rm`: Copy, move, rename and delete files **within the server**.
+- `cec mkdir`: Create a folder on the remote server
+- `cec clear`: Clear authentication tokens stored in your keychain.
+
+For your convenience, below are a few examples.
 
 ### 1/ Listing the content of the personal-files workspace
 
 ```sh
-$ ./cec ls personal-files
+$ cec ls personal-files
 +--------+--------------------------+
 |  TYPE  |           NAME           |
 +--------+--------------------------+
@@ -152,20 +162,19 @@ $ ./cec ls personal-files
 ### 2/ Showing details about a file
 
 ```sh
-$ ./cec ls personal-files/P5021040.jpg -d
+$ cec ls personal-files/P5021040.jpg -d
 Listing: 1 results for personal-files/P5021040.jpg
 +------+--------------------------------------+-----------------------------+--------+------------+
 | TYPE |                 UUID                 |            NAME             |  SIZE  |  MODIFIED  |
 +------+--------------------------------------+-----------------------------+--------+------------+
 | File | 98bbd86c-acb9-4b56-a6f3-837609155ba6 | personal-files/P5021040.jpg | 3.1 MB | 5 days ago |
 +------+--------------------------------------+-----------------------------+--------+------------+
-
 ```
 
 ### 3/ Uploading a file to server
 
 ```sh
-$ ./cec scp ./README.md cells://common-files/
+$ cec scp ./README.md cells://common-files/
 Copying ./README.md to cells://common-files/
  ## Waiting for file to be indexed...
  ## File correctly indexed
