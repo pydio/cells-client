@@ -8,7 +8,6 @@ import (
 
 var shType string
 
-// completionCmd represents the completion command
 var completionCmd = &cobra.Command{
 	Use:   "completion",
 	Short: "Add auto-completion helper to Cells Client",

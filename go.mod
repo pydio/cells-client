@@ -20,7 +20,7 @@ require (
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/pydio/cells v2.0.1+incompatible
 	github.com/pydio/cells-sdk-go v0.0.0-20191126084202-9658210ccf4a
-	github.com/pydio/go v0.0.0-20191105212324-a0b934bdf46b
+	github.com/pydio/go v0.0.0-20191211170306-d00ac19450ef
 	github.com/shibukawa/configdir v0.0.0-20170330084843-e180dbdc8da0
 	github.com/skratchdot/open-golang v0.0.0-20190402232053-79abb63cd66e
 	github.com/spf13/cobra v0.0.5
