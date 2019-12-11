@@ -88,14 +88,13 @@ Now exchanging the code for a valid IdToken
 
 *If you have no tab opening in your browser you can manually copy the URL and put it in your browser*
 
-## Command completion for BASH
+## Command completion
 
-Cells Client provides a handy feature that provides completion on both available commands and path, both on local and remote machines.
+Cells Client provides a handy feature that provides completion on commands and paths; both on local and remote machines.
 
-This feature requires that you have `bash-completion` third party add-on installed on your workstation.
+To enable this feature, you must have `bash-completion` third party add-on installed on your workstation.
 
 ```sh
-## On Linux, you must insure the 'bash-completion' library is installed:
 # on Debian / Ubuntu
 sudo apt install bash-completion
 
@@ -108,24 +107,31 @@ brew install bash-completion
 
 _MacOS users should update their bash version to v5, (by default it is using v3)_
 
-Then to add the completion in a persistent manner:
+Then, to add the completion in a persistent manner:
 
-- Linux users: `cec completion bash | sudo tee /etc/bash_completion.d/cec`
-- MacOS users: `cec completion bash | sudo tee /usr/local/etc/bash_completion.d/cec`.
+```sh 
+# Linux users 
+cec completion bash | sudo tee /etc/bash_completion.d/cec
+# MacOS users 
+cec completion bash | sudo tee /usr/local/etc/bash_completion.d/cec
+```
 
-Otherwise you can source it to the current session with:
-`source <(cec completion bash)`
+You can also only _source_ the file in current session, the feature will be gone when you start a new shell.
 
-Note: if you want to use completion for remote paths while using `scp` sub command, you have prefix the _remote_ path with `cells//` rather than `cells://` - that is omit column character before the double slash. Typically:
+```sh 
+source <(cec completion bash)
+```
+
+Note: if you want to use completion for remote paths while using `scp` sub command, you have to prefix the _remote_ path with `cells//` rather than `cells://`; that is to omit the column character before the double slash. Typically:
 
 ```sh
 cec scp ./README.md cells//com <press the tab key>
-# will complete the path to 
+# Completes the path to 
 cec scp ./README.md cells//common-files/
 ...
 ```
 
-Note: when you update the Cells Client, you also have to update the completion file, typically on linux machines:
+Note: when you update the Cells Client, you also have to update the completion file, typically on Linux machines:
 
 ```sh
 cec completion bash | sudo tee /etc/bash_completion.d/cec
