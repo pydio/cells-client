@@ -115,7 +115,7 @@ brew install bash-completion
 (make sure to follow the instructions displayed on Homebrew)
 ```
 
-_MacOS users should update their bash version_
+_MacOS users should update their bash version to v5, (by default it is using v3)_
 
 Then to add the completion in a persistent manner:
 
