@@ -66,8 +66,9 @@ In case the passed version is *not* valid, the process exits with status 1.`,
 		if err != nil {
 			cm.Printf("[%s] is *not* a valid version\n", versionStr)
 			os.Exit(1)
-		} else {
-			cm.Printf("[%s] is a valid version\n", versionStr)
+			// do not output anything is case the version is correct.
+			// } else {
+			// 	cm.Printf("[%s] is a valid version\n", versionStr)
 		}
 	},
 }
