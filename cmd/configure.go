@@ -4,9 +4,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// var (
-// configAuthType string
-// )
+var (
+	skipKeyring bool
+)
 
 var configureCmd = &cobra.Command{
 	Use:   "configure",
@@ -42,8 +42,8 @@ In such case, do not use the 'client-auth' process.
 
 func init() {
 
-	// flags := configureCmd.PersistentFlags()
-	// helpMsg := fmt.Sprintf("Choose the authentication process you want to use: %s (default) or %s", authTypeOAuth, authTypeClientAuth)
-	// flags.StringVar(&configHost, "auth-type", "", helpMsg)
+	flags := configureCmd.PersistentFlags()
+	helpMsg := "Explicitly tell the tool to *NOT* try to use a keyring. Only use this flag if you really know what your are doing: some sensitive information will end up stored on your file system in clear text."
+	flags.BoolVar(&skipKeyring, "no-keyring", false, helpMsg)
 	RootCmd.AddCommand(configureCmd)
 }

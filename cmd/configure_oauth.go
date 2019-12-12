@@ -61,8 +61,10 @@ var configureOAuthCmd = &cobra.Command{
 		}
 
 		// Now save config!
-		if err := rest.ConfigToKeyring(newConf); err != nil {
-			fmt.Println(promptui.IconWarn + " Cannot save token in keyring! " + err.Error())
+		if !skipKeyring {
+			if err := rest.ConfigToKeyring(newConf); err != nil {
+				fmt.Println(promptui.IconWarn + " Cannot save token in keyring! " + err.Error())
+			}
 		}
 		filePath := rest.DefaultConfigFilePath()
 		data, _ := json.Marshal(newConf)

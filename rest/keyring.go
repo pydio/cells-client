@@ -71,12 +71,17 @@ func ConfigFromKeyring(conf *cells_sdk.SdkConfig) error {
 
 // ClearKeyring removes sensitive info from local keychain, if they are present.
 func ClearKeyring(c *cells_sdk.SdkConfig) error {
-	// Try to delete creds from keyring
-	var err error
-	if c.ClientKey != "" && c.User != "" {
-		err = keyring.Delete(keyringService, c.Url+"::"+keyringClientCredentialsKey)
-	} else {
-		err = keyring.Delete(keyringService, c.Url+"::"+keyringIdTokenKey)
+	// Best effort to remove known keys from keyring
+	// TODO maybe check if at least one of the two has been found and deleted and otherwise print at least a warning
+	if err := keyring.Delete(keyringService, c.Url+"::"+keyringClientCredentialsKey); err != nil {
+		if err.Error() != "secret not found in keyring" {
+			return err
+		}
 	}
-	return err
+	if err := keyring.Delete(keyringService, c.Url+"::"+keyringIdTokenKey); err != nil {
+		if err.Error() != "secret not found in keyring" {
+			return err
+		}
+	}
+	return nil
 }

@@ -13,6 +13,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var noKeyringDefined bool
+
 var clearCmd = &cobra.Command{
 	Use:   "clear",
 	Short: "Clear current configuration",
@@ -22,10 +24,13 @@ var clearCmd = &cobra.Command{
 		if s, err := ioutil.ReadFile(filePath); err == nil {
 			var c cells_sdk.SdkConfig
 			if err = json.Unmarshal(s, &c); err == nil {
-				if err := rest.ClearKeyring(&c); err == nil {
-					fmt.Println(promptui.IconGood + " Removed tokens from keychain")
-				} else {
-					fmt.Println(promptui.IconBad + " Error while removing token from keyring " + err.Error())
+				if !noKeyringDefined {
+					// First clean the keyring
+					if err := rest.ClearKeyring(&c); err == nil {
+						fmt.Println(promptui.IconGood + " Removed tokens from keychain")
+					} else {
+						fmt.Println(promptui.IconBad + " Error while removing token from keyring: " + err.Error())
+					}
 				}
 			}
 		}
@@ -37,5 +42,8 @@ var clearCmd = &cobra.Command{
 }
 
 func init() {
+	flags := clearCmd.PersistentFlags()
+	helpMsg := "Explicitly tell the tool to *NOT* try to use a keyring. Only use this flag if you really know what your are doing: some sensitive information will end up stored on your file system in clear text."
+	flags.BoolVar(&noKeyringDefined, "no-keyring", false, helpMsg)
 	RootCmd.AddCommand(clearCmd)
 }
