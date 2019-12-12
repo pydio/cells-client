@@ -3,8 +3,9 @@ package rest
 import (
 	"strings"
 
-	cells_sdk "github.com/pydio/cells-sdk-go"
 	"github.com/zalando/go-keyring"
+
+	cells_sdk "github.com/pydio/cells-sdk-go"
 )
 
 const (
