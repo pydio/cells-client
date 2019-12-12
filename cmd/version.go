@@ -73,6 +73,46 @@ In case the passed version is *not* valid, the process exits with status 1.`,
 	},
 }
 
+var irCmd = &cobra.Command{
+	Use:   "isrelease",
+	Short: "Return an error if the passed version is a snapshot",
+	Long: `Tries to parse the passed string version using the hashicorp/go-version library 
+and hence validates that it respects semantic versionning rules.
+
+It then insures that the passed string is not a pre-release, 
+that is that is not suffixed by "a hyphen and a series of dot separated identifiers 
+immediately following the patch version", see: https://semver.org
+
+In case the passed version is *not* a valid realease version, the process exits with status 1.`,
+	Example: `
+# A valid release version
+` + os.Args[0] + ` version isvalid 2.0.6
+
+# A *non* release version
+` + os.Args[0] + ` version isvalid 2.0.6-dev.20191205
+`,
+	Run: func(cm *cobra.Command, args []string) {
+		if len(args) != 1 {
+			cm.Printf("Please provide a single version to be parsed\n")
+			os.Exit(1)
+		}
+
+		versionStr := args[0]
+
+		v, err := hashivers.NewVersion(versionStr)
+		if err != nil {
+			cm.Printf("[%s] is *not* a valid version\n", versionStr)
+			os.Exit(1)
+		}
+
+		if v.Prerelease() != "" {
+			// This is a pre-release, throw an error
+			cm.Printf("[%s] is *not* a valid release version\n", versionStr)
+			os.Exit(1)
+		}
+	},
+}
+
 var igtCmd = &cobra.Command{
 	Use:   "isgreater",
 	Short: "Compares the two passed versions and returns an error if the first is *not* strictly greater than the second",
@@ -112,6 +152,7 @@ var igtCmd = &cobra.Command{
 
 func init() {
 	versionCmd.AddCommand(ivCmd)
+	versionCmd.AddCommand(irCmd)
 	versionCmd.AddCommand(igtCmd)
 	RootCmd.AddCommand(versionCmd)
 }
