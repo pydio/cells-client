@@ -61,11 +61,14 @@ even if 'parents' flags is set, trying to create a folder in an unknown/unexisti
 
 		for i := 1; i < len(parts)-1; i++ {
 			crt = path.Join(crt, parts[i])
-			if _, e := apiClient.TreeService.HeadNode(&tree_service.HeadNodeParams{Node: crt, Context: ctx}); e != nil && createAncestors {
-				dirs = append(dirs, &models.TreeNode{Path: crt})
-				paths = append(paths, crt)
-			} else {
-				log.Fatalf("Could not find folder at %s, double check and correct your path or use the '-p' flags if you want to force the creation of missing ancestors.", crt)
+			_, e := apiClient.TreeService.HeadNode(&tree_service.HeadNodeParams{Node: crt, Context: ctx})
+			if e != nil {
+				if createAncestors {
+					dirs = append(dirs, &models.TreeNode{Path: crt})
+					paths = append(paths, crt)
+				} else {
+					log.Fatalf("Could not find folder at %s, double check and correct your path or use the '-p' flags if you want to force the creation of missing ancestors.", crt)
+				}
 			}
 		}
 		// always create the leaf folder

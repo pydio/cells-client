@@ -17,7 +17,12 @@ package rest
 // "github.com/pydio/cells-sdk-go/client"
 // "github.com/pydio/cells-sdk-go/transport"
 
+// Keys to retrieve configuration via environment variables
 const (
-	// Keys to retrieve configuration via environment variables
-	KeyURL, KeyClientKey, KeyClientSecret, KeyUser, KeyPassword, KeySkipVerify = "TARGET_URL", "TARGET_CLIENT_KEY", "TARGET_CLIENT_SECRET", "TARGET_USER", "TARGET_PASSWORD", "TARGET_SKIP_VERIFY"
+	KeyURL          = "CELLS_CLIENT_TARGET_URL"
+	KeyClientKey    = "CELLS_CLIENT_TARGET_CLIENT_KEY"
+	KeyClientSecret = "CELLS_CLIENT_TARGET_CLIENT_SECRET"
+	KeyUser         = "CELLS_CLIENT_TARGET_USER"
+	KeyPassword     = "CELLS_CLIENT_TARGET_PWD"
+	KeySkipVerify   = "CELLS_CLIENT_TARGET_SKIP_VERIFY"
 )
