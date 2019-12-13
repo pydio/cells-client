@@ -117,7 +117,7 @@ Note that you can rename the file or base folder that you upload/download if:
 
 		refreshInterval := time.Millisecond * 10 // this is the default
 		if scpQuiet {
-			refreshInterval = time.Millisecond * 1000
+			refreshInterval = time.Millisecond * 3000
 		}
 		pool := NewBarsPool(len(nn) > 1, len(nn), refreshInterval)
 		pool.Start()
