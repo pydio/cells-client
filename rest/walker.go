@@ -47,7 +47,7 @@ func NewCrawler(target string, isSrcLocal bool) (*CrawlNode, error) {
 	} else {
 		n, b := StatNode(target)
 		if !b {
-			return nil, fmt.Errorf("not.found")
+			return nil, fmt.Errorf("no node found at %s", target)
 		}
 		return NewRemoteNode(n), nil
 	}
