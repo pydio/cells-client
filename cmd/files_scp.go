@@ -7,6 +7,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -35,8 +36,8 @@ const (
 )
 
 var (
-	scpCurrentPrefix   string
-	scpCreateAncestors bool
+	scpCurrentPrefix string
+	scpQuiet         bool
 )
 
 var scpFiles = &cobra.Command{
@@ -114,7 +115,11 @@ Note that you can rename the file or base folder that you upload/download if:
 
 		targetNode := NewTarget(targetPath, crawler, rename)
 
-		pool := NewBarsPool(len(nn) > 1, len(nn))
+		refreshInterval := time.Millisecond * 10 // this is the default
+		if scpQuiet {
+			refreshInterval = time.Millisecond * 1000
+		}
+		pool := NewBarsPool(len(nn) > 1, len(nn), refreshInterval)
 		pool.Start()
 
 		// CREATE FOLDERS
@@ -132,6 +137,7 @@ Note that you can rename the file or base folder that you upload/download if:
 		if len(errs) > 0 {
 			log.Fatal(errs)
 		}
+		fmt.Println("") // Add a line to reduce glitches in the terminal
 	},
 }
 
@@ -198,6 +204,6 @@ func targetToFullPath(from, to string) (string, bool, bool, error) {
 func init() {
 
 	flags := scpFiles.PersistentFlags()
-	flags.BoolVarP(&scpCreateAncestors, "parents", "p", false, "Force creation of non-existing ancestors on remote Cells server")
+	flags.BoolVarP(&scpQuiet, "quiet", "q", false, "Reduce the amount of logs")
 	RootCmd.AddCommand(scpFiles)
 }

@@ -352,9 +352,10 @@ type BarsPool struct {
 	nodesBar   *uiprogress.Bar
 }
 
-func NewBarsPool(showGlobal bool, totalNodes int) *BarsPool {
+func NewBarsPool(showGlobal bool, totalNodes int, refreshInterval time.Duration) *BarsPool {
 	b := &BarsPool{}
 	b.Progress = uiprogress.New()
+	b.Progress.SetRefreshInterval(refreshInterval)
 	b.showGlobal = showGlobal
 	if showGlobal {
 		b.nodesBar = b.AddBar(totalNodes)
