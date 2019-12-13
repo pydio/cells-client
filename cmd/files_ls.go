@@ -15,7 +15,6 @@ import (
 
 	"github.com/pydio/cells-sdk-go/client/meta_service"
 	"github.com/pydio/cells-sdk-go/models"
-	"github.com/pydio/cells/common"
 
 	"github.com/pydio/cells-client/rest"
 )
@@ -162,19 +161,18 @@ Note that you can only use *one* of the three above flags at a time.
 
 		table := tablewriter.NewWriter(os.Stdout)
 
+		hiddenRowNb := 0
 		// Process the results
-	processingLoop:
 		for i, node := range result.Payload.Nodes {
 
 			currPath := node.Path
 			currName := path.Base(currPath)
 
-			// First, filter out unwanted nodes
-			if currName == common.PYDIO_SYNC_HIDDEN_FILE_META {
-				continue
-			}
-
-			// fmt.Println(node.MetaStore)
+			// Useless, hidden foldersare not returned anyway
+			// // First, filter out unwanted nodes
+			// if currName == common.PYDIO_SYNC_HIDDEN_FILE_META {
+			// 	continue
+			// }
 
 			t := "File"
 			if node.MetaStore != nil && node.MetaStore["ws_scope"] == "\"ROOM\"" {
@@ -189,10 +187,12 @@ Note that you can only use *one* of the three above flags at a time.
 			if i == 0 {
 				// Do not list root of the repo
 				if currPath == "" && wsLevel {
-					continue processingLoop
+					hiddenRowNb++
+					continue // processingLoop
 				} else if lsRaw && (t == "Folder" || t == "Workspace") {
 					// We do not want to list parent folder or workspace in simple lists
-					continue processingLoop
+					hiddenRowNb++
+					continue
 				} else if node.Type == models.TreeNodeTypeCOLLECTION {
 					// replace path by "." notation
 					currName = "."
@@ -228,9 +228,14 @@ Note that you can only use *one* of the three above flags at a time.
 		}
 
 		// Add meta-info and table headers and render (if necessary)
+		rowNb := len(result.Payload.Nodes) - hiddenRowNb
+		legend := fmt.Sprintf("Listing: %d results for %s", rowNb, p)
+		if p == "" { // root of the server
+			legend = fmt.Sprintf("Listing %d workspaces", rowNb)
+		}
 		switch dt {
 		case details:
-			fmt.Printf("Listing: %d results for %s\n", len(result.Payload.Nodes), p)
+			fmt.Println(legend)
 			if wsLevel {
 				table.SetHeader([]string{"Type", "Uuid", "Name", "Label", "Description", "Permissions"})
 			} else {
@@ -241,7 +246,7 @@ Note that you can only use *one* of the three above flags at a time.
 		case raw: // Nothing to add: we just want the raw values that we already displayed while looping
 			break
 		default:
-			fmt.Printf("Listing: %d results for %s\n", len(result.Payload.Nodes), p)
+			fmt.Println(legend)
 			fmt.Println("Get more info by adding the -d (details) flag")
 			table.SetHeader([]string{"Type", "Name"})
 			table.Render()
