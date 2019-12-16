@@ -1,7 +1,9 @@
-# Changes between v2.0.0-rc1 and v2.0.0-rc2
+# Changes between v1.0.0 and v2.0.0
 
-[See Full Changelog](https://github.com/pydio/cells-client/compare/v2.0.0-rc1...v2.0.0-rc2)
+[See Full Changelog](https://github.com/pydio/cells-client/compare/v1.0.0...v2.0.0)
 
+- [#b4cded7](https://github.com/pydio/cells-client/commit/b4cded7a0e07e5c0b79f869bf4999a4d43b8c9b2): Better error message
+- [#b205b1f](https://github.com/pydio/cells-client/commit/b205b1f2670a7f982e7313832637dc276aba1feb): Release v2.0.0-rc2
 - [#22723e4](https://github.com/pydio/cells-client/commit/22723e49d108d4517d236e58b1a5799daf80db6a): Larger refresh interval in quiet mode
 - [#0f4ba24](https://github.com/pydio/cells-client/commit/0f4ba246ac7da9e496ab348632ed638757c4f674): Add a --quiet flag for scp
 - [#a2633ad](https://github.com/pydio/cells-client/commit/a2633ad1d660cdef2f9a6963444a4506a30f1b33): Better legend when listing the root of the server
@@ -12,3 +14,80 @@
 - [#1c3afec](https://github.com/pydio/cells-client/commit/1c3afec36707ae682b4e635ae05a9fa928f5c577): Some cleaning
 - [#e308980](https://github.com/pydio/cells-client/commit/e308980679b5ab8ee1b6e5587e3f7d4826bacfc3): Add CELLS_CLIENT namespace to env variables
 - [#17f2da1](https://github.com/pydio/cells-client/commit/17f2da109f0d705948cd520d945e96bb26429c76): Fix a few typos
+- [#b162557](https://github.com/pydio/cells-client/commit/b1625575cdb0e9c1596a126f81b1b6d4ac0af0f2): Release v2.0.0-rc1
+- [#b156136](https://github.com/pydio/cells-client/commit/b1561365b89b341d2de80c73ce9aec7bd27875ff): Use latest version of command generator
+- [#e77b1d7](https://github.com/pydio/cells-client/commit/e77b1d7022ef52b8c11e3638bd0c38f76d3262e3): Boldify
+- [#4234714](https://github.com/pydio/cells-client/commit/4234714a3e3695435c656ca74031b11250646c3c): Fix glitches on generated doc
+- [#c637750](https://github.com/pydio/cells-client/commit/c63775060624418b4ce89e75cb1e62021eb9c65d): Cosmetic changes
+- [#342cbcd](https://github.com/pydio/cells-client/commit/342cbcd735c7b170ed883e69d495db9b32cad993): Merge remote-tracking branch 'origin/master'
+- [#7d2da8b](https://github.com/pydio/cells-client/commit/7d2da8bccf1441cf793285f658ce6e9373a1eff9): Cosmetic changes (characters in description are messing up with the markdown)
+- [#132cc9d](https://github.com/pydio/cells-client/commit/132cc9de1226345e7874db3b13efa66e28810cb8): Add a tip for update
+- [#292c575](https://github.com/pydio/cells-client/commit/292c57511a4b316fd19b8175bf45fa7588afa50f): Merge
+- [#a9c7b92](https://github.com/pydio/cells-client/commit/a9c7b92a859d5684885268086fb90b0aaf3dbf96): Rather depends on Cells v2.0.1
+- [#810d974](https://github.com/pydio/cells-client/commit/810d974ed894da5aa6565be78b8cae13bb76bbcc): A few enhancements
+- [#c910850](https://github.com/pydio/cells-client/commit/c910850357b596df3aa209f9028584ebe13487ce): Cosmetic changes
+- [#40a2906](https://github.com/pydio/cells-client/commit/40a29062c1541499581e79330c98cc6f7bf82767): autocompletion fix (should only list when you type cells//[tab]
+- [#bc510dc](https://github.com/pydio/cells-client/commit/bc510dc946db7c2223b24e0c9382fe8510123eaf): Fix blocked bar when error on upload
+- [#4ba8169](https://github.com/pydio/cells-client/commit/4ba8169d4ab44ae46adddc94f25f7a626eaa0ef3): Some cleaning
+- [#7ed9492](https://github.com/pydio/cells-client/commit/7ed94922ef98bb7027f05e6bf790ee7651cfe867): Merge
+- [#a053d00](https://github.com/pydio/cells-client/commit/a053d005380ad19a71878731f0b093dd55b1d657): Add rename feature
+- [#201b3ae](https://github.com/pydio/cells-client/commit/201b3aec9e964d03220a6ef7ea24a0b9caed8b9b): removing useless tests
+- [#065e440](https://github.com/pydio/cells-client/commit/065e44025dbef66216fa4e855091e18ce28f357d): Updated command instruction with details for macOS bash users
+- [#8918f8b](https://github.com/pydio/cells-client/commit/8918f8bb98e709bc10b75d349ae5c6d3d40e3117): Color emphasis on the link to copy to retrieve the code for oauth authentication
+- [#3432dc6](https://github.com/pydio/cells-client/commit/3432dc6613fecf2784416dbd6c5a519dcb058cae): Handle relative path for local targets
+- [#eaf66d1](https://github.com/pydio/cells-client/commit/eaf66d11c070ee91e8db05b34bbf0475ad38e36e): Fix pg bar with empty file case
+- [#d466b18](https://github.com/pydio/cells-client/commit/d466b185b4118ed0bc78ec74a84db0ea3f8bec70): send errors in chan when using PgReader
+- [#58e742a](https://github.com/pydio/cells-client/commit/58e742a55376ed3415ec056f82f27377344ded7a): comments about possible rename
+- [#3e1ba9f](https://github.com/pydio/cells-client/commit/3e1ba9f6e2eb9fe93efe37167c8f879fef5bf6c6): Cosmetic changes
+- [#f1615a0](https://github.com/pydio/cells-client/commit/f1615a02595bd0debe21e9f1b27a39011e4ddf79): rootNode was created twice.
+- [#187fdae](https://github.com/pydio/cells-client/commit/187fdae8041bb22f9d73950a3fa94bf80359117a): Zsh hints for the completion.
+- [#1b757d2](https://github.com/pydio/cells-client/commit/1b757d24952efd259ebde90e623538856d928fec): Fix glitches on path
+- [#f781341](https://github.com/pydio/cells-client/commit/f7813410962fd5873288eb85f3ccfe9a0e226a90): configure_oauth.go if callbackport not available use copy method
+- [#7fb1697](https://github.com/pydio/cells-client/commit/7fb169788b3ede1ec11d44457ff3b67f4165571b): typo
+- [#55cabc3](https://github.com/pydio/cells-client/commit/55cabc3f08aa971ebc25263798789ac282ba83b0): Merge remote-tracking branch 'origin/master'
+- [#7f21611](https://github.com/pydio/cells-client/commit/7f2161138aee0c4b9dc8d00214e486832da6549f): Updated completion.go with macos instruction and cec path
+- [#8e470ef](https://github.com/pydio/cells-client/commit/8e470ef90cb97ed1812876f2df7663d5ab68ab94): Updating readme with completion and example for the oauth configuration
+- [#ce93fcd](https://github.com/pydio/cells-client/commit/ce93fcd309eafb55a9ea2c11f635426adc7e2369): Remove redundant flag
+- [#01d0f3d](https://github.com/pydio/cells-client/commit/01d0f3d508cf348ce57a3489cc273692c81147b9): Fix example command
+- [#2416455](https://github.com/pydio/cells-client/commit/24164554ce718c5c255564cbfdc2eddb22a554f0): Remove hard-coded value
+- [#6572d56](https://github.com/pydio/cells-client/commit/6572d560a48af8897945bde0832557606e1a4f99): Use keyrings for credentials, clean naming
+- [#8c126d5](https://github.com/pydio/cells-client/commit/8c126d53a0e65c006bd885d8e3d2f6add5e52f05): Various cleaning and enhancements
+- [#ebb2a5e](https://github.com/pydio/cells-client/commit/ebb2a5ea5b317c361865bba4b1d24724e01310f2): Enhance in-app documentation
+- [#85d9995](https://github.com/pydio/cells-client/commit/85d999525311d51004168ca0acf15ca777db60b6): Cosmetic changes
+- [#6b96e7e](https://github.com/pydio/cells-client/commit/6b96e7e19512f36452f771f1d46bbade5346dcbb): Clean documentation
+- [#8c545ea](https://github.com/pydio/cells-client/commit/8c545eabe5acb7c798d16d01ff8b04b38360d0a0): Better root comment
+- [#5a39d4a](https://github.com/pydio/cells-client/commit/5a39d4a151127f5693defc9cfce531a2cb2c7c44): Update promptui lib, trim URLs
+- [#bcc809c](https://github.com/pydio/cells-client/commit/bcc809c30a982998858d0896ef611491c21d0792): Better comments, do not create ancestors by default with mkdir
+- [#0d2a173](https://github.com/pydio/cells-client/commit/0d2a173faeb9d7cde3e08f23cb5a1749ba4b85ac): Enhance documentation
+- [#2852c7b](https://github.com/pydio/cells-client/commit/2852c7be2347b04d274774b645bb810108b0fbea): Refactor scp
+- [#78d5bc2](https://github.com/pydio/cells-client/commit/78d5bc22f83826f31277141295f73b656ebcbf6b): error handling
+- [#bd1a577](https://github.com/pydio/cells-client/commit/bd1a5777c4e4a5bf095cd243f3fb5a82e7ee6ecf): Merge remote-tracking branch 'origin/x' into x
+- [#d18a9c9](https://github.com/pydio/cells-client/commit/d18a9c98fd431f13f879ef07e8687099493c7e99): Handling path with .
+- [#3f2389d](https://github.com/pydio/cells-client/commit/3f2389d0fd50fe89c2f6e54d3cc95c37ca759afc): Update README.md
+- [#b7b8238](https://github.com/pydio/cells-client/commit/b7b8238761a8bb43bc7dc8bb9b51abd8088a6f38): Update README.md
+- [#bfa7d3b](https://github.com/pydio/cells-client/commit/bfa7d3b3ee4bd51cbb64fb0527cc84461eabd787): Cleaning
+- [#508652b](https://github.com/pydio/cells-client/commit/508652b90bdd25a8f1dabb17e6baebc4d69a7cfa): Cleaning
+- [#d213ef9](https://github.com/pydio/cells-client/commit/d213ef9a50017b350529b5e4b330767e8bc41a18): Cleaning
+- [#7c229ae](https://github.com/pydio/cells-client/commit/7c229ae303263ce0a771cb17f9f15a8734311d86): Cleaning up
+- [#fcb6247](https://github.com/pydio/cells-client/commit/fcb6247dc7e433ea9d4895f97f2a8d9db158f0e2): Updated scp command with recursive Dl & Upload
+- [#ccb7613](https://github.com/pydio/cells-client/commit/ccb76139a7926afa25635ca2b46210689d07cb3f): recursive scp
+- [#c75edb5](https://github.com/pydio/cells-client/commit/c75edb538c224a3274a3301343606a016961692b): test for path function
+- [#a71316b](https://github.com/pydio/cells-client/commit/a71316b7646c55bb1e41b4292c1e1df00d1671e5): recursive SCP (WIP)
+- [#694d414](https://github.com/pydio/cells-client/commit/694d41462ac7123665f2fdad7525f027870ed950): Added GetBulkMetaNode and TreeCreateNode (
+- [#58b6897](https://github.com/pydio/cells-client/commit/58b6897feee474e9679eee37dfa5f2f92a75abfd): datasource completion for resync command
+- [#4f4c5b5](https://github.com/pydio/cells-client/commit/4f4c5b50f06f122a9160a1d97683d3b8a45a7c60): Merge remote-tracking branch 'origin/x' into x
+- [#d12679a](https://github.com/pydio/cells-client/commit/d12679afcf765f70528aaa4e5607f96eea6f7f00): fix whitespace issue with auto completion
+- [#73cb99a](https://github.com/pydio/cells-client/commit/73cb99a28b7e62de83de321a8150279a189be935): Use latest version of the cells-sdk-go
+- [#6b8e6d8](https://github.com/pydio/cells-client/commit/6b8e6d8a15f1766679beb46e0f4fb640e5e49642): Delete toto
+- [#bac9779](https://github.com/pydio/cells-client/commit/bac97795f334f2f2b8ee7370d72f1663b923ecc7): Added ls to completion
+- [#95de7e4](https://github.com/pydio/cells-client/commit/95de7e4fd8a3fbb661fc91a48398f407e67d6545): added custom completion
+- [#eb402d1](https://github.com/pydio/cells-client/commit/eb402d1b182f0d7dda4665884fede66029b23fc5): refactoring + error check
+- [#60251f3](https://github.com/pydio/cells-client/commit/60251f34243f536cec3806447304163c258d2382): Typo
+- [#217bfca](https://github.com/pydio/cells-client/commit/217bfca774ded1fbaf9fe3f367cad39f30afc092): basic path completion (work in progress)
+- [#d299677](https://github.com/pydio/cells-client/commit/d2996776a497726276a9f17d19a3cbd0361c65e9): cp (copy nodes - ) command
+- [#448cece](https://github.com/pydio/cells-client/commit/448cece0174eecb211afed52cc18713b9d40e6d3): Mv (move nodes) command
+- [#7c6fc11](https://github.com/pydio/cells-client/commit/7c6fc11cc3f86abeb728302f419228f6a864c344): Rm command (delete files to -> recycle-bin)
+- [#65a716a](https://github.com/pydio/cells-client/commit/65a716a2319aec82caccfa2ce3c14557d160e85a): Renamed old cp to scp (remote copy or download)
+- [#0925da5](https://github.com/pydio/cells-client/commit/0925da51a2cc92f8a84afa5edaf642756c3f42b5): ListNodesPath method
+- [#450189b](https://github.com/pydio/cells-client/commit/450189b416e2357d655a6297fa861b77a09193e8): added job package (run, monitor)
+- [#63bf454](https://github.com/pydio/cells-client/commit/63bf4544b86e4c6ee88a2fc04acc26e0dbf32e54): CP example with I18n
