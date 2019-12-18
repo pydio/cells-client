@@ -196,7 +196,7 @@ Copying ./README.md to cells://common-files/
 ### 4/ Download a file from server
 
 ```sh
-$ ./cec scp cells://personal-files/IMG_9723.JPG ./
+$ cec scp cells://personal-files/IMG_9723.JPG ./
 Copying cells://personal-files/IMG_9723.JPG to ./
 Written 822601 bytes to file
 ```
