@@ -199,7 +199,7 @@ func (c *CrawlNode) MkdirAll(dd []*CrawlNode, pool *BarsPool) error {
 			mm = append(mm, &models.TreeNode{Path: newFolder, Type: models.TreeNodeTypeCOLLECTION})
 		}
 	}
-	if !c.IsLocal && !DryRun {
+	if !c.IsLocal && !DryRun && len(mm) > 0 {
 		e := TreeCreateNodes(mm)
 		if e != nil {
 			return e
