@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/aws/aws-sdk-go v1.25.12
+	github.com/coreos/go-systemd/v22 v22.0.0 // indirect
 	github.com/dustin/go-humanize v1.0.0
 	github.com/go-openapi/runtime v0.19.6 // indirect
 	github.com/go-openapi/strfmt v0.19.3
