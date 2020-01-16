@@ -164,6 +164,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/pydio/cells-sdk-go v0.0.0-20200107093532-13fbf6ac7d22 h1:HCA96WGkXYfH6dSfnhaOrxD6odieHwwoCnKqb7rgfOQ=
 github.com/pydio/cells-sdk-go v0.0.0-20200107093532-13fbf6ac7d22/go.mod h1:MshwURKmd3KJzgbaCenFhX3LC3RsVTRE2t02xPHaO3E=
+github.com/pydio/cells-sdk-go v0.0.0-20200116094522-fe0611dc32be h1:QeukzXSFoBwb7/u8Bz+0STLr3VaYhRDxpAUSTYLcjqA=
+github.com/pydio/cells-sdk-go v0.0.0-20200116094522-fe0611dc32be/go.mod h1:MshwURKmd3KJzgbaCenFhX3LC3RsVTRE2t02xPHaO3E=
 github.com/pydio/go v0.0.0-20191211170306-d00ac19450ef h1:5FyN7pndX4GyCAb0gdZgN78qJ1IGL1/Mj19bTijXgfk=
 github.com/pydio/go v0.0.0-20191211170306-d00ac19450ef/go.mod h1:H+DrbjBEehySj5ykZVFHF12kpfWtmKpsoyDZ16kUyqk=
 github.com/russross/blackfriday v1.5.2/go.mod h1:JO/DiYxRf+HjHt06OyowR9PTA263kcR/rfWxYHBV53g=

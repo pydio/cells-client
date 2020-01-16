@@ -17,7 +17,7 @@ require (
 	github.com/micro/go-log v0.1.0
 	github.com/olekukonko/tablewriter v0.0.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
-	github.com/pydio/cells-sdk-go v0.0.0-20200107093532-13fbf6ac7d22
+	github.com/pydio/cells-sdk-go v0.0.0-20200116094522-fe0611dc32be
 	github.com/pydio/go v0.0.0-20191211170306-d00ac19450ef
 	github.com/shibukawa/configdir v0.0.0-20170330084843-e180dbdc8da0
 	github.com/skratchdot/open-golang v0.0.0-20190402232053-79abb63cd66e

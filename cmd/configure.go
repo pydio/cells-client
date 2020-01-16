@@ -12,7 +12,7 @@ var configureCmd = &cobra.Command{
 	Use:   "configure",
 	Short: "Configure a connection to a running server and locally persist credentials for later use",
 	Long: `
-Launch an interractive process to configure a connection to a running Pydio Cells server instance.
+Launch an interactive process to configure a connection to a running Pydio Cells server instance.
 By default, we use a secure OAuth2 process based on 'Authorization Code' Grant.
 
 If necessary, you might use an alternative authorization process and/or execute this process non-interactively calling one of the defined sub-commands.
