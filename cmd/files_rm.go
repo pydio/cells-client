@@ -1,9 +1,11 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
-	"path"
 	"os"
+	"path"
+	"strings"
 	"sync"
 
 	"github.com/spf13/cobra"
@@ -41,9 +43,9 @@ Deleting specified files or folders. In fact, it moves specified files or folder
 		}
 		targetNodes := make([]string, 0)
 		for _, arg := range args {
-			_, exists := rest.StatNode(arg)
+			_, exists := rest.StatNode(strings.TrimRight(arg, "*"))
 			if !exists {
-				log.Fatalf("No node found at %v, could not delete\n", arg)
+				log.Printf("Node not found %v, could not delete\n", arg)
 			}
 			if path.Base(arg) == "*" {
 				nodes, err := rest.ListNodesPath(arg)
@@ -78,6 +80,8 @@ Deleting specified files or folders. In fact, it moves specified files or folder
 			}(id)
 		}
 		wg.Wait()
+
+		fmt.Println("Nodes have been moved to the Recycle Bin")
 	},
 }
 
