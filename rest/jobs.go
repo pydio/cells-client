@@ -131,7 +131,7 @@ func MonitorJob(JobID string) (err error) {
 			return
 		case models.JobsTaskStatusFinished:
 			// TODO remove this and add progress bar
-			fmt.Printf("Job : %s | Status : %s\n", JobID, status)
+			// fmt.Printf("Job : %s | Status : %s\n", JobID, status)
 			return
 		default:
 			return
