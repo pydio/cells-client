@@ -50,7 +50,7 @@ Deleting specified files or folders. In fact, it moves specified files or folder
 				if err != nil {
 					log.Fatalf("Could not list nodes inside %s, aborting. Cause: %s\n", path.Dir(arg), err.Error())
 				}
-				targetNodes = nodes
+				targetNodes = append(targetNodes, nodes...)
 			} else {
 				targetNodes = append(targetNodes, arg)
 			}
