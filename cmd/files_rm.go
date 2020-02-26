@@ -56,6 +56,11 @@ Deleting specified files or folders. In fact, it moves specified files or folder
 			}
 		}
 
+		if len(targetNodes) <= 0 {
+			log.Println("Nothing to delete")
+			return
+		}
+
 		jobUUID, err := rest.DeleteNode(targetNodes)
 		if err != nil {
 			log.Fatalf("could not delete nodes, cause: %s\n", err)
