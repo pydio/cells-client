@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 
 	"github.com/pydio/cells-client/rest"
@@ -27,7 +28,14 @@ var rmCmdExample = `# Path
 
 # Remove multiple files
 ` + os.Args[0] + ` rm common-files/file-1.txt common-files/file-2.txt
+
+# You can force the deletion with the -f --force flag (to avoid the Yes or No)
+` + os.Args[0] + ` rm -f common-files/file-1.txt
 `
+
+var (
+	force bool
+)
 
 var rmCmd = &cobra.Command{
 	Use:   "rm",
@@ -41,6 +49,16 @@ Deleting specified files or folders. In fact, it moves specified files or folder
 			cmd.Help()
 			log.Fatalln("missing targets to remove")
 		}
+
+		// Ask for user approval before deleting
+		p := promptui.Select{Label: "Are you sure", Items: []string{"No", "Yes"}}
+		if !force {
+			if _, resp, e := p.Run(); resp == "No" && e == nil {
+				log.Println("Nothing will be deleted")
+				return
+			}
+		}
+
 		targetNodes := make([]string, 0)
 		for _, arg := range args {
 			_, exists := rest.StatNode(strings.TrimRight(arg, "*"))
@@ -87,4 +105,5 @@ Deleting specified files or folders. In fact, it moves specified files or folder
 
 func init() {
 	RootCmd.AddCommand(rmCmd)
+	rmCmd.Flags().BoolVarP(&force, "force", "f", false, "Does not ask for user approval")
 }
