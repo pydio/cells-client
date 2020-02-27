@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -55,6 +56,9 @@ func OAuthExchangeCode(c *cells_sdk.SdkConfig, code, callbackUrl string) error {
 	values.Add("client_id", c.ClientKey)
 	if c.ClientSecret != "" {
 		values.Add("client_secret", c.ClientSecret)
+	}
+	if c.SkipVerify {
+		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}
 	resp, err := http.Post(tokenU.String(), "application/x-www-form-urlencoded", strings.NewReader(values.Encode()))
 	if err != nil {

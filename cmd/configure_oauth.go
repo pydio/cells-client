@@ -72,7 +72,7 @@ var configureOAuthCmd = &cobra.Command{
 		if err != nil {
 			fmt.Println(promptui.IconBad + " Cannot save configuration file! " + err.Error())
 		} else {
-			fmt.Printf("%s Configuration saved, you can now use the client to interract with %s.\n", promptui.IconGood, newConf.Url)
+			fmt.Printf("%s Configuration saved, you can now use the client to ht with %s.\n", promptui.IconGood, newConf.Url)
 		}
 	},
 }
@@ -80,7 +80,7 @@ var configureOAuthCmd = &cobra.Command{
 func (o *oAuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer close(o.done)
 	values := r.URL.Query()
-	//fmt.Println("Received values", values)
+	// fmt.Println("Received values", values)
 	if values.Get("state") != o.state {
 		o.err = fmt.Errorf("wrong state received")
 		return

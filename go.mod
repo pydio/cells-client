@@ -12,7 +12,7 @@ require (
 	github.com/gosuri/uilive v0.0.3 // indirect
 	github.com/gosuri/uiprogress v0.0.1
 	github.com/hashicorp/go-version v1.2.0
-	github.com/manifoldco/promptui v0.6.0
+	github.com/manifoldco/promptui v0.7.0
 	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/micro/go-log v0.1.0
 	github.com/olekukonko/tablewriter v0.0.1
@@ -23,11 +23,7 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20190402232053-79abb63cd66e
 	github.com/spf13/cobra v0.0.5
 	github.com/zalando/go-keyring v0.0.0-20190913082157-62750a1ff80d
-	golang.org/x/crypto v0.0.0-20190617133340-57b3e21c3d56 // indirect
-	golang.org/x/lint v0.0.0-20190930215403-16217165b5de // indirect
 	golang.org/x/net v0.0.0-20191126235420-ef20fe5d7933 // indirect
 	golang.org/x/sys v0.0.0-20191220142924-d4481acd189f // indirect
-	golang.org/x/tools v0.0.0-20191203051722-db047d72ee39 // indirect
-	gopkg.in/alecthomas/kingpin.v3-unstable v3.0.0-20191105091915-95d230a53780 // indirect
 	gopkg.in/yaml.v2 v2.2.3 // indirect
 )
