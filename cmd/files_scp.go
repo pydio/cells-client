@@ -54,13 +54,9 @@ Note that you can rename the file or base folder that you upload/download if:
 - last part of the target path is a new name that *does not exists*,  
 - parent path exists and is a folder a target location.
 `,
+	Args:    cobra.MinimumNArgs(2),
 	Example: scpFileExample,
 	Run: func(cmd *cobra.Command, args []string) {
-
-		if len(args) != 2 {
-			cmd.Help()
-			log.Fatal("Please provide at least a source *and* a destination target.")
-		}
 
 		from := args[0]
 		to := args[1]

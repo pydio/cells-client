@@ -26,11 +26,9 @@ var filesMvCmd = &cobra.Command{
 	Use:     "mv",
 	Short:   "Move and/or rename nodes on the server",
 	Example: filesMvCmdExample,
+	Args:    cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) < 2 {
-			cmd.Help()
-			log.Fatalln("You must specify a source *and* a target path.")
-		}
+
 		source := args[0]
 		target := args[1]
 

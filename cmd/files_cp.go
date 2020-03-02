@@ -29,11 +29,8 @@ Copy files from one location to another *within* a *single* Pydio Cells instance
 To copy files from your local machine to your server (and vice versa), rather see '` + os.Args[0] + ` scp' command.
 `,
 	Example: cpCmdExample,
+	Args:    cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) < 2 {
-			cmd.Help()
-			log.Fatalln("Missing Source and Target path")
-		}
 		source := args[0]
 		target := args[1]
 

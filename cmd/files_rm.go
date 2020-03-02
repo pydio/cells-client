@@ -44,11 +44,8 @@ var rmCmd = &cobra.Command{
 Deleting specified files or folders. In fact, it moves specified files or folders to the recycle bin that is at the root of the corresponding workspace.
 `,
 	Example: rmCmdExample,
+	Args:    cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) < 1 {
-			cmd.Help()
-			log.Fatalln("missing targets to remove")
-		}
 
 		// Ask for user approval before deleting
 		p := promptui.Select{Label: "Are you sure", Items: []string{"No", "Yes"}}
