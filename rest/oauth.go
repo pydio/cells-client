@@ -100,6 +100,9 @@ func RefreshIfRequired(conf *cells_sdk.SdkConfig) (bool, error) {
 	httpReq.Header.Add("Cache-Control", "no-cache")
 
 	client := http.DefaultClient
+	if conf.SkipVerify {
+		client.Transport = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+	}
 	res, err := client.Do(httpReq)
 	if err != nil {
 		return true, err
