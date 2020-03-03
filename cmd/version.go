@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"time"
 
 	hashivers "github.com/hashicorp/go-version"
@@ -13,7 +14,7 @@ import (
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "Show current version of this application (and some utils)",
+	Short: "Show the current version of this application (and some utils)",
 	Long: `
 The version command simply shows the version that is currently running.
 
@@ -36,7 +37,8 @@ It also provides various utility sub commands than comes handy when manipulating
 		fmt.Println("    " + fmt.Sprintf("%s (%s)", common.PackageName, sV))
 		fmt.Println("    " + fmt.Sprintf("Published on %s", t.Format(time.RFC822Z)))
 		fmt.Println("    " + fmt.Sprintf("Revision number %s", common.BuildRevision))
-		fmt.Println("")
+		fmt.Println("    " + fmt.Sprintf("OS %s ARCH %s", runtime.GOOS, runtime.GOARCH))
+		fmt.Println("    " + fmt.Sprintf("GOVERSION %s", runtime.Version()))
 	},
 }
 
