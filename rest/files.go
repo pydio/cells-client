@@ -155,8 +155,8 @@ func DeleteNode(paths []string) (jobUUIDs []string, e error) {
 	params.Body = &models.RestDeleteNodesRequest{
 		Nodes: nn,
 	}
-	res, e := client.TreeService.DeleteNodes(params)
-	if e != nil {
+	res, err := client.TreeService.DeleteNodes(params)
+	if err != nil {
 		e = err
 		return
 	}
