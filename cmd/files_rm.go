@@ -34,10 +34,7 @@ var rmCmdExample = `# Path
 `
 
 var (
-	force bool
-)
-
-const (
+	force        bool
 	wildcardChar = "%"
 )
 
@@ -68,6 +65,14 @@ var rmCmd = &cobra.Command{
 				dir, _ := path.Split(arg)
 				newArg := path.Join(dir, "*")
 				nodes, err := rest.ListNodesPath(newArg)
+
+				// Remove recycle_bin from targetedNodes
+				for i, c := range nodes {
+					if path.Base(c) == "recycle_bin" {
+						nodes = append(nodes[:i], nodes[i+1:]...)
+					}
+				}
+
 				if err != nil {
 					log.Fatalf("Could not list nodes inside %s, aborting. Cause: %s\n", path.Dir(arg), err.Error())
 				}
