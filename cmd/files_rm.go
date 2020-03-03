@@ -20,10 +20,10 @@ var rmCmdExample = `# Path
 # Remove a single file
 ` + os.Args[0] + ` rm common-files/target.txt
 
-# Remove recursively inside a folder
-` + os.Args[0] + ` rm common-files/folder/*
+# Remove recursively inside a folder (the wildcard is %)
+` + os.Args[0] + ` rm common-files/folder/%
 
-# Remove a folder and all its children (even if it is not empty) 
+# Remove a folder and all its children (even if it is not empty)
 ` + os.Args[0] + ` rm common-files/folder
 
 # Remove multiple files
@@ -37,12 +37,14 @@ var (
 	force bool
 )
 
+const (
+	wildcardChar = "%"
+)
+
 var rmCmd = &cobra.Command{
-	Use:   "rm",
-	Short: "Trash files or folders",
-	Long: `
-Deleting specified files or folders. In fact, it moves specified files or folders to the recycle bin that is at the root of the corresponding workspace.
-`,
+	Use:     "rm",
+	Short:   "Trash files or folders",
+	Long:    `Deleting specified files or folders. In fact, it moves specified files or folders to the recycle bin that is at the root of the corresponding workspace.`,
 	Example: rmCmdExample,
 	Args:    cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -58,12 +60,14 @@ Deleting specified files or folders. In fact, it moves specified files or folder
 
 		targetNodes := make([]string, 0)
 		for _, arg := range args {
-			_, exists := rest.StatNode(strings.TrimRight(arg, "*"))
+			_, exists := rest.StatNode(strings.TrimRight(arg, wildcardChar))
 			if !exists {
 				log.Printf("Node not found %v, could not delete\n", arg)
 			}
-			if path.Base(arg) == "*" {
-				nodes, err := rest.ListNodesPath(arg)
+			if path.Base(arg) == wildcardChar {
+				dir, _ := path.Split(arg)
+				newArg := path.Join(dir, "*")
+				nodes, err := rest.ListNodesPath(newArg)
 				if err != nil {
 					log.Fatalf("Could not list nodes inside %s, aborting. Cause: %s\n", path.Dir(arg), err.Error())
 				}
