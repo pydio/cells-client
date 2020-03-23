@@ -58,7 +58,7 @@ You can also go through the whole process in a non-interactive manner by using t
 		}
 		filePath := rest.DefaultConfigFilePath()
 		data, _ := json.Marshal(newConf)
-		err = ioutil.WriteFile(filePath, data, 0755)
+		err = ioutil.WriteFile(filePath, data, 0666)
 		if err != nil {
 			fmt.Println(promptui.IconBad + " Cannot save configuration file! " + err.Error())
 		} else {
