@@ -105,7 +105,7 @@ func SetUpEnvironment(configFilePath string, s3ConfigFilePath ...string) error {
 			ConfigToKeyring(&storeConfig)
 			// Save config to renew TokenExpireAt
 			confData, _ := json.Marshal(&storeConfig)
-			ioutil.WriteFile(configFilePath, confData, 0755)
+			ioutil.WriteFile(configFilePath, confData, 0666)
 		}
 	}
 
