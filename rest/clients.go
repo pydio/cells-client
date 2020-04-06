@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"sync"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/shibukawa/configdir"
@@ -128,7 +129,12 @@ func SetUpEnvironment(confPath string) error {
 	return nil
 }
 
+var refreshMux = &sync.Mutex{}
+
 func RefreshAndStoreIfRequired(c *cells_sdk.SdkConfig) bool {
+	refreshMux.Lock()
+	defer refreshMux.Unlock()
+
 	refreshed, err := RefreshIfRequired(c)
 	if err != nil {
 		log.Fatal("Could not refresh authentication token:", err)

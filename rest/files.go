@@ -3,7 +3,6 @@ package rest
 import (
 	"fmt"
 	"io"
-	"runtime/debug"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -336,29 +335,16 @@ func uploadManager(path string, content io.ReadSeeker, checkExists bool, errChan
 
 	sess.Config.S3DisableContentMD5Validation = aws.Bool(true)
 	uploader := s3manager.NewUploader(sess, func(u *s3manager.Uploader) {
-		u.Concurrency = 1
+		u.PartSize = 5 * 1024 * 1024
 		u.RequestOptions = []request.Option{func(r *request.Request) {
 			if ok := RefreshAndStoreIfRequired(DefaultConfig); ok {
-				// s3Client, _, _ = GetS3Client()
-				s3Config := getS3ConfigFromSdkConfig(*DefaultConfig)
-				debug.PrintStack()
-				apiKey, _ := oidc.RetrieveToken(DefaultConfig)
-				// cf := r.Config.WithCredentials(credentials.NewStaticCredentials(apiKey, s3Config.ApiSecret, ""))
-				sc := credentials.NewStaticCredentials(apiKey, s3Config.ApiSecret, "")
-
-				r.Config.Credentials = sc
-
-				// r.Config = *cf
-				sess.Config.WithCredentials(credentials.NewStaticCredentials(apiKey, s3Config.ApiSecret, ""))
-
+				//fmt.Println("REFRESHED\n")
 			}
-			fmt.Println("called options")
+			s3Config := getS3ConfigFromSdkConfig(*DefaultConfig)
+			apiKey, _ := oidc.RetrieveToken(DefaultConfig)
+			r.Config.WithCredentials(credentials.NewStaticCredentials(apiKey, s3Config.ApiSecret, ""))
 		}}
 	})
-
-	// uploader.UploadWithIterator()
-
-	// newReader := &checkerReader{content}
 
 	input := &s3manager.UploadInput{
 		Body:   aws.ReadSeekCloser(content),
@@ -369,16 +355,6 @@ func uploadManager(path string, content io.ReadSeeker, checkExists bool, errChan
 	if _, err := uploader.Upload(input); err != nil {
 		return err
 	}
-
-	// _, err = uploader.Upload(input, func(u *s3manager.Uploader) {
-	// 	u.PartSize = 124 * 1024 * 1024
-	// 	u.RequestOptions = []request.Option{func(r *request.Request) {
-	// 		r.Retryable = aws.Bool(true)
-	// 		if ok := RefreshAndStoreIfRequired(DefaultConfig); ok {
-	// 			s3Client, _, _ = GetS3Client()
-	// 		}
-	// 	}}
-	// })
 
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
