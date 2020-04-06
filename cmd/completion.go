@@ -8,13 +8,13 @@ import (
 
 var completionCmdExample = `1) Using Bash
 
-	# Add to current zsh session:
+	# Add to current bash session:
 		source <(` + os.Args[0] + ` completion bash)
 
 	# Debian/Ubuntu/CentOS
 		` + os.Args[0] + ` completion bash | sudo tee /etc/bash_completion.d/cec
 
-	# MacOS
+	# macOS
 		` + os.Args[0] + ` completion bash | tee /usr/local/etc/bash_completion.d/cec
 
 2) Zsh
@@ -25,17 +25,19 @@ var completionCmdExample = `1) Using Bash
 	# Debian/Ubuntu/CentOS:
 		` + os.Args[0] + ` completion zsh | sudo tee <path>/<to>/<your zsh completion folder>
 
-	# MacOS
+	# macOS
 		` + os.Args[0] + ` completion zsh | tee /Users/<your current user>/.zsh/completion/_cec
 
 
-
 #### You must insure the 'bash-completion' library is installed:
+	
 	# Debian / Ubuntu
 		sudo apt install bash-completion
+	
 	# RHEL / CentOS
 		sudo yum install bash-completion
-	# On MacOS (be sure to follow the instructions displayed on Homebrew)
+	
+	# On MacOS (after the installation make sure to follow the instructions displayed by Homebrew)
 		brew install bash-completion
 `
 
