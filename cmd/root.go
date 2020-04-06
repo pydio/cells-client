@@ -6,7 +6,6 @@ package cmd
 import (
 	"log"
 	"os"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -16,11 +15,12 @@ import (
 var configFile string
 
 // RootCmd is the parent of all commands defined in this package.
-// It takes care of the pre-configuration of the defaut connection to the SDK in its PersistentPreRun phase.
+// It takes care of the pre-configuration of the default connection to the SDK in its PersistentPreRun phase.
 var RootCmd = &cobra.Command{
 	Use:                    os.Args[0],
 	Short:                  "Connect to a Pydio Cells server using the command line",
-	BashCompletionFunction: bash_completion_func,
+	BashCompletionFunction: bashCompletionFunc,
+	Args:                   cobra.MinimumNArgs(1),
 	Long: `
 The Cells Client tool allows interacting with a Pydio Cells server instance directly via the command line. 
 It uses the Cells SDK for Go and the REST API under the hood.
@@ -34,14 +34,9 @@ This will guide you through a quick procedure to get you up and ready in no time
 `,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 
-		parts := strings.Split(cmd.CommandPath(), " ")
-		rc := ""
-		if len(parts) > 1 {
-			rc = parts[1]
-		}
-		switch rc {
+		switch cmd.Name() {
 		// These command and respective children do not need an already configured environment
-		case "", "configure", "version", "completion", "oauth", "clear", "doc":
+		case "help", "configure", "version", "completion", "oauth", "clear", "doc":
 			break
 		default:
 			e := rest.SetUpEnvironment(configFile)
@@ -56,7 +51,7 @@ This will guide you through a quick procedure to get you up and ready in no time
 	},
 }
 
-var bash_completion_func = `__` + os.Args[0] + `_custom_func() {
+var bashCompletionFunc = `__` + os.Args[0] + `_custom_func() {
   case ${last_command} in
   ` + os.Args[0] + `_mv | ` + os.Args[0] + `_cp | ` + os.Args[0] + `_rm | ` + os.Args[0] + `_ls)
     _path_completion
