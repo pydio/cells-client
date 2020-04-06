@@ -2,14 +2,38 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"runtime"
+	"text/template"
 	"time"
 
 	hashivers "github.com/hashicorp/go-version"
 	"github.com/spf13/cobra"
 
 	"github.com/pydio/cells-client/common"
+)
+
+var cellsVersionTpl = `Cells Client
+ Version: {{.Version}}
+ Built: {{.BuildTime}}
+ Git commit: {{.GitCommit}}
+ OS/Arch: {{.OS}}/{{.Arch}}
+ Go version: {{.GoVersion}}
+`
+
+type CellsClientVersion struct {
+	PackageLabel string
+	Version      string
+	BuildTime    string
+	GitCommit    string
+	OS           string
+	Arch         string
+	GoVersion    string
+}
+
+var (
+	format string
 )
 
 var versionCmd = &cobra.Command{
@@ -33,12 +57,32 @@ It also provides various utility sub commands than comes handy when manipulating
 			sV = v.String()
 		}
 
-		fmt.Println("")
-		fmt.Println("    " + fmt.Sprintf("%s (%s)", common.PackageName, sV))
-		fmt.Println("    " + fmt.Sprintf("Published on %s", t.Format(time.RFC822Z)))
-		fmt.Println("    " + fmt.Sprintf("Revision number %s", common.BuildRevision))
-		fmt.Println("    " + fmt.Sprintf("OS %s ARCH %s", runtime.GOOS, runtime.GOARCH))
-		fmt.Println("    " + fmt.Sprintf("GOVERSION %s", runtime.Version()))
+		cv := &CellsClientVersion{
+			Version:   sV,
+			BuildTime: t.Format(time.RFC822Z),
+			GitCommit: common.BuildRevision,
+			OS:        runtime.GOOS,
+			Arch:      runtime.GOARCH,
+			GoVersion: runtime.Version(),
+		}
+
+		var runningTmpl string
+
+		if format != "" {
+			runningTmpl = format
+		} else {
+			// Default version template
+			runningTmpl = cellsVersionTpl
+		}
+
+		tmpl, err := template.New("cells").Parse(runningTmpl)
+		if err != nil {
+			log.Fatalln("failed to parse template", err)
+		}
+
+		if err = tmpl.Execute(os.Stdout, cv); err != nil {
+			log.Fatalln("could not execute template", err)
+		}
 	},
 }
 
@@ -157,4 +201,6 @@ func init() {
 	versionCmd.AddCommand(irCmd)
 	versionCmd.AddCommand(igtCmd)
 	RootCmd.AddCommand(versionCmd)
+
+	versionCmd.Flags().StringVarP(&format, "format", "f", "", "Use go template to format version output")
 }
