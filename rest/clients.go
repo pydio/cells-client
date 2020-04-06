@@ -20,8 +20,20 @@ import (
 )
 
 var (
-	DefaultConfig *cells_sdk.SdkConfig
+	DefaultConfig  *cells_sdk.SdkConfig
+	configFilePath string
 )
+
+func GetConfigFilePath() string {
+	if configFilePath != "" {
+		return configFilePath
+	}
+	return DefaultConfigFilePath()
+}
+
+func SetConfigFilePath(confPath string) {
+	configFilePath = confPath
+}
 
 func DefaultConfigFilePath() string {
 
@@ -70,7 +82,11 @@ func GetApiClient(anonymous ...bool) (context.Context, *client.PydioCellsRest, e
 //  1) environment variables,
 //  2) config files whose path is passed as argument of the start command
 //  3) local config file (that are generated at first start with one of the 2 options above OR by calling the configure command.
-func SetUpEnvironment(configFilePath string, s3ConfigFilePath ...string) error {
+func SetUpEnvironment(confPath string) error {
+	// Use a config file
+	if confPath != "" {
+		SetConfigFilePath(confPath)
+	}
 
 	// Get config params from environment variables
 	c, err := getSdkConfigFromEnv()
@@ -80,11 +96,8 @@ func SetUpEnvironment(configFilePath string, s3ConfigFilePath ...string) error {
 
 	if c.Url == "" {
 
-		// Use a config file
-		if configFilePath == "" {
-			configFilePath = DefaultConfigFilePath()
-		}
-		s, err := ioutil.ReadFile(configFilePath)
+		confPath = GetConfigFilePath()
+		s, err := ioutil.ReadFile(confPath)
 		if err != nil {
 			return err
 		}
@@ -105,34 +118,31 @@ func SetUpEnvironment(configFilePath string, s3ConfigFilePath ...string) error {
 			ConfigToKeyring(&storeConfig)
 			// Save config to renew TokenExpireAt
 			confData, _ := json.Marshal(&storeConfig)
-			ioutil.WriteFile(configFilePath, confData, 0666)
+			ioutil.WriteFile(confPath, confData, 0666)
 		}
 	}
 
 	// Store the retrieved parameters in a public static singleton
 	DefaultConfig = &c
 
-	// cs3, err := getS3ConfigFromEnv()
-	// if err != nil {
-	// 	return err
-	// }
-
-	// if cs3.Bucket == "" && len(s3ConfigFilePath) > 0 {
-	// 	s, err := ioutil.ReadFile(s3ConfigFilePath[0])
-	// 	if err == nil {
-	// 		json.Unmarshal(s, &cs3)
-	// 	}
-	// }
-
-	// // Build S3 config directly
-	// if cs3.Bucket == "" {
-	// 	cs3 = getS3ConfigFromSdkConfig(c)
-	// }
-
-	// // Store the retrieved parameters in a public static singleton
-	// DefaultS3Config = &cs3
-
 	return nil
+}
+
+func RefreshAndStoreIfRequired(c *cells_sdk.SdkConfig) bool {
+	refreshed, err := RefreshIfRequired(c)
+	if err != nil {
+		log.Fatal("Could not refresh authentication token:", err)
+	}
+	if refreshed {
+		// Copy config as IdToken will be cleared
+		storeConfig := *c
+		ConfigToKeyring(&storeConfig)
+		// Save config to renew TokenExpireAt
+		confData, _ := json.Marshal(&storeConfig)
+		ioutil.WriteFile(GetConfigFilePath(), confData, 0666)
+	}
+
+	return refreshed
 }
 
 func getSdkConfigFromEnv() (cells_sdk.SdkConfig, error) {
