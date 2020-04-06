@@ -68,7 +68,7 @@ var configureOAuthCmd = &cobra.Command{
 		}
 		filePath := rest.DefaultConfigFilePath()
 		data, _ := json.Marshal(newConf)
-		err = ioutil.WriteFile(filePath, data, 0755)
+		err = ioutil.WriteFile(filePath, data, 0644)
 		if err != nil {
 			fmt.Println(promptui.IconBad + " Cannot save configuration file! " + err.Error())
 		} else {
