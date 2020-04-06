@@ -283,21 +283,18 @@ func (c *CrawlNode) upload(src *CrawlNode, bar *uiprogress.Bar) error {
 	// Handle corner case when trying to upload a file and *folder* with same name already exists at target path
 	if tn, b := StatNode(fp); b && tn.Type == models.TreeNodeTypeCOLLECTION {
 		// target root is not a folder, fail fast.
-		return fmt.Errorf("cannot upload file to %s, a folder with same same already exists at target path", fp)
+		return fmt.Errorf("cannot upload file to %s, a folder with same name already exists at target path", fp)
 	}
-	// TODO check size then choose if multipart upload or single
-	// if stats.Size() < 5 * 1024 * 1024 * 1024 {
-	// 	_, e = PutFile(fp, wrapper, false, errChan)
-	// }
-
 	wrapper.double = false
-	// if err := multiPartUpload(fp, wrapper, stats.Size(),errChan); err != nil {
-	// 	return err
-	// }
-	if err := uploadManager(fp, wrapper, false, errChan); err != nil {
-		return err
+	if stats.Size() < (100 * 1024 * 1024) {
+		if _, err := PutFile(fp, wrapper, false, errChan); err != nil {
+			return err
+		}
+	} else {
+		if err := UploadManager(fp, wrapper, false, errChan); err != nil {
+			return err
+		}
 	}
-
 	return nil
 }
 
