@@ -107,111 +107,6 @@ func PutFile(pathToFile string, content io.ReadSeeker, checkExists bool, errChan
 	return obj, nil
 }
 
-func multiPartUpload(path string, content io.ReadSeeker, size int64, errChan chan error) error {
-
-	s3Client, bucket, err := GetS3Client()
-	if err != nil {
-		errChan <- err
-		return err
-	}
-	// This his now handled inside the GetS3Client function
-	// s3Client.Config.S3DisableContentMD5Validation = aws.Bool(true)
-
-	multipartOutput, err := s3Client.CreateMultipartUpload(&s3.CreateMultipartUploadInput{
-		Bucket:      aws.String(bucket),
-		Key:         aws.String(path),
-		ContentType: aws.String("application/octet-stream"),
-	})
-	if err != nil {
-		errChan <- err
-		return err
-	}
-
-	var curr, partLength, partNumber int64
-	var remaining = size
-	var completedParts []*s3.CompletedPart
-	partLength = 50 * 1024 * 1024
-
-	for curr = 0; remaining != 0; curr += partLength {
-		if remaining < partLength {
-			partLength = remaining
-		}
-		// TODO refresh S3Client if required
-		if ok := RefreshAndStoreIfRequired(DefaultConfig); ok {
-			s3Client, _, _ = GetS3Client()
-			// This his now handled inside the GetS3Client function
-			// s3Client.Config.S3DisableContentMD5Validation = aws.Bool(true)
-		}
-		partNumber++
-
-		pr := &partReader{
-			ReadSeeker: content,
-			partLength: partLength,
-		}
-		part, err := s3Client.UploadPart(&s3.UploadPartInput{
-			Body:          aws.ReadSeekCloser(pr),
-			ContentLength: aws.Int64(partLength),
-			Bucket:        multipartOutput.Bucket,
-			Key:           multipartOutput.Key,
-			UploadId:      multipartOutput.UploadId,
-			PartNumber:    aws.Int64(partNumber),
-		})
-		if err != nil {
-			if _, err = s3Client.AbortMultipartUpload(&s3.AbortMultipartUploadInput{Bucket: multipartOutput.Bucket, Key: multipartOutput.Key, UploadId: multipartOutput.UploadId}); err != nil {
-				errChan <- err
-				return err
-			}
-			errChan <- err
-			return err
-		}
-		completedParts = append(completedParts, &s3.CompletedPart{ETag: part.ETag, PartNumber: aws.Int64(partNumber)})
-		remaining -= partLength
-	}
-
-	_, err = s3Client.CompleteMultipartUpload(&s3.CompleteMultipartUploadInput{
-		Bucket:          multipartOutput.Bucket,
-		Key:             multipartOutput.Key,
-		UploadId:        multipartOutput.UploadId,
-		MultipartUpload: &s3.CompletedMultipartUpload{Parts: completedParts},
-	})
-	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			switch aerr.Code() {
-			default:
-				errChan <- err
-				return aerr
-			}
-		}
-		errChan <- err
-		return err.(awserr.Error)
-	}
-	return nil
-}
-
-type partReader struct {
-	io.ReadSeeker
-	partLength int64
-	cur        int64
-}
-
-func (pr *partReader) Read(p []byte) (n int, err error) {
-	targetCurs := pr.cur + int64(len(p))
-	if targetCurs > pr.partLength {
-
-		remaining := targetCurs - pr.partLength
-		p2 := make([]byte, remaining)
-		n, err = pr.ReadSeeker.Read(p2)
-		if err != nil {
-			return
-		}
-		copy(p, p2)
-		err = io.EOF
-	} else {
-		n, err = pr.ReadSeeker.Read(p)
-	}
-	pr.cur += int64(n)
-	return
-}
 func StatNode(pathToFile string) (*models.TreeNode, bool) {
 
 	ctx, client, e := GetApiClient()
@@ -322,7 +217,7 @@ func TreeCreateNodes(nodes []*models.TreeNode) error {
 	return nil
 }
 
-func uploadManager(path string, content io.ReadSeeker, checkExists bool, errChan ...chan error) error {
+func UploadManager(path string, content io.ReadSeeker, checkExists bool, errChan ...chan error) error {
 	s3Client, bucketName, err := GetS3Client()
 	if err != nil {
 		return err
@@ -332,13 +227,13 @@ func uploadManager(path string, content io.ReadSeeker, checkExists bool, errChan
 	if err != nil {
 		return err
 	}
-
 	sess.Config.S3DisableContentMD5Validation = aws.Bool(true)
+
 	uploader := s3manager.NewUploader(sess, func(u *s3manager.Uploader) {
-		u.PartSize = 5 * 1024 * 1024
+		u.PartSize = 50 * 1024 * 1024
+		u.Concurrency = 3
 		u.RequestOptions = []request.Option{func(r *request.Request) {
 			if ok := RefreshAndStoreIfRequired(DefaultConfig); ok {
-				//fmt.Println("REFRESHED\n")
 			}
 			s3Config := getS3ConfigFromSdkConfig(*DefaultConfig)
 			apiKey, _ := oidc.RetrieveToken(DefaultConfig)
@@ -352,10 +247,7 @@ func uploadManager(path string, content io.ReadSeeker, checkExists bool, errChan
 		Key:    aws.String(path),
 	}
 
-	if _, err := uploader.Upload(input); err != nil {
-		return err
-	}
-
+	_, err = uploader.Upload(input)
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
 			errChan[0] <- aerr
