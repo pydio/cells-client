@@ -260,14 +260,14 @@ func (c *CrawlNode) CopyAll(dd []*CrawlNode, pool *BarsPool) (errs []error) {
 }
 
 func (c *CrawlNode) upload(src *CrawlNode, bar *uiprogress.Bar) error {
-	reader, e := os.Open(src.FullPath)
+	file, e := os.Open(src.FullPath)
 	if e != nil {
 		return e
 	}
-	stats, _ := reader.Stat()
+	stats, _ := file.Stat()
 	wrapper := &PgReader{
-		Reader: reader,
-		Seeker: reader,
+		Reader: file,
+		Seeker: file,
 		bar:    bar,
 		total:  int(stats.Size()),
 		double: true,
@@ -285,8 +285,20 @@ func (c *CrawlNode) upload(src *CrawlNode, bar *uiprogress.Bar) error {
 		// target root is not a folder, fail fast.
 		return fmt.Errorf("cannot upload file to %s, a folder with same same already exists at target path", fp)
 	}
-	_, e = PutFile(fp, wrapper, false, errChan)
-	return e
+	// TODO check size then choose if multipart upload or single
+	// if stats.Size() < 5 * 1024 * 1024 * 1024 {
+	// 	_, e = PutFile(fp, wrapper, false, errChan)
+	// }
+
+	wrapper.double = false
+	// if err := multiPartUpload(fp, wrapper, stats.Size(),errChan); err != nil {
+	// 	return err
+	// }
+	if err := uploadManager(fp, wrapper, false, errChan); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *CrawlNode) download(src *CrawlNode, bar *uiprogress.Bar) error {

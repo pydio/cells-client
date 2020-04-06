@@ -3,21 +3,36 @@ package rest
 import (
 	"fmt"
 	"io"
+	"runtime/debug"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/pydio/cells-sdk-go/client/tree_service"
 	"github.com/pydio/cells-sdk-go/models"
 	awstransport "github.com/pydio/cells-sdk-go/transport/aws"
+	"github.com/pydio/cells-sdk-go/transport/oidc"
 
 	"github.com/pydio/cells-client/common"
 )
 
 func GetS3Client() (*s3.S3, string, error) {
 	DefaultConfig.CustomHeaders = map[string]string{"User-Agent": "cells-client/" + common.Version}
+	if err := ConfigFromKeyring(DefaultConfig); err != nil {
+		return nil, "", err
+	}
 	s3Config := getS3ConfigFromSdkConfig(*DefaultConfig)
 	bucketName := s3Config.Bucket
 	s3Client, e := awstransport.GetS3CLient(DefaultConfig, &s3Config)
+	if e != nil {
+		return nil, "", e
+	}
+	s3Client.Config.S3DisableContentMD5Validation = aws.Bool(true)
 	return s3Client, bucketName, e
 }
 
@@ -91,9 +106,113 @@ func PutFile(pathToFile string, content io.ReadSeeker, checkExists bool, errChan
 		fmt.Println(" ## File correctly indexed")
 	}
 	return obj, nil
-
 }
 
+func multiPartUpload(path string, content io.ReadSeeker, size int64, errChan chan error) error {
+
+	s3Client, bucket, err := GetS3Client()
+	if err != nil {
+		errChan <- err
+		return err
+	}
+	// This his now handled inside the GetS3Client function
+	// s3Client.Config.S3DisableContentMD5Validation = aws.Bool(true)
+
+	multipartOutput, err := s3Client.CreateMultipartUpload(&s3.CreateMultipartUploadInput{
+		Bucket:      aws.String(bucket),
+		Key:         aws.String(path),
+		ContentType: aws.String("application/octet-stream"),
+	})
+	if err != nil {
+		errChan <- err
+		return err
+	}
+
+	var curr, partLength, partNumber int64
+	var remaining = size
+	var completedParts []*s3.CompletedPart
+	partLength = 50 * 1024 * 1024
+
+	for curr = 0; remaining != 0; curr += partLength {
+		if remaining < partLength {
+			partLength = remaining
+		}
+		// TODO refresh S3Client if required
+		if ok := RefreshAndStoreIfRequired(DefaultConfig); ok {
+			s3Client, _, _ = GetS3Client()
+			// This his now handled inside the GetS3Client function
+			// s3Client.Config.S3DisableContentMD5Validation = aws.Bool(true)
+		}
+		partNumber++
+
+		pr := &partReader{
+			ReadSeeker: content,
+			partLength: partLength,
+		}
+		part, err := s3Client.UploadPart(&s3.UploadPartInput{
+			Body:          aws.ReadSeekCloser(pr),
+			ContentLength: aws.Int64(partLength),
+			Bucket:        multipartOutput.Bucket,
+			Key:           multipartOutput.Key,
+			UploadId:      multipartOutput.UploadId,
+			PartNumber:    aws.Int64(partNumber),
+		})
+		if err != nil {
+			if _, err = s3Client.AbortMultipartUpload(&s3.AbortMultipartUploadInput{Bucket: multipartOutput.Bucket, Key: multipartOutput.Key, UploadId: multipartOutput.UploadId}); err != nil {
+				errChan <- err
+				return err
+			}
+			errChan <- err
+			return err
+		}
+		completedParts = append(completedParts, &s3.CompletedPart{ETag: part.ETag, PartNumber: aws.Int64(partNumber)})
+		remaining -= partLength
+	}
+
+	_, err = s3Client.CompleteMultipartUpload(&s3.CompleteMultipartUploadInput{
+		Bucket:          multipartOutput.Bucket,
+		Key:             multipartOutput.Key,
+		UploadId:        multipartOutput.UploadId,
+		MultipartUpload: &s3.CompletedMultipartUpload{Parts: completedParts},
+	})
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				errChan <- err
+				return aerr
+			}
+		}
+		errChan <- err
+		return err.(awserr.Error)
+	}
+	return nil
+}
+
+type partReader struct {
+	io.ReadSeeker
+	partLength int64
+	cur        int64
+}
+
+func (pr *partReader) Read(p []byte) (n int, err error) {
+	targetCurs := pr.cur + int64(len(p))
+	if targetCurs > pr.partLength {
+
+		remaining := targetCurs - pr.partLength
+		p2 := make([]byte, remaining)
+		n, err = pr.ReadSeeker.Read(p2)
+		if err != nil {
+			return
+		}
+		copy(p, p2)
+		err = io.EOF
+	} else {
+		n, err = pr.ReadSeeker.Read(p)
+	}
+	pr.cur += int64(n)
+	return
+}
 func StatNode(pathToFile string) (*models.TreeNode, bool) {
 
 	ctx, client, e := GetApiClient()
@@ -201,5 +320,73 @@ func TreeCreateNodes(nodes []*models.TreeNode) error {
 		return e
 	}
 	// TODO monitor jobs to wait for the index
+	return nil
+}
+
+func uploadManager(path string, content io.ReadSeeker, checkExists bool, errChan ...chan error) error {
+	s3Client, bucketName, err := GetS3Client()
+	if err != nil {
+		return err
+	}
+
+	sess, err := session.NewSession(&s3Client.Config)
+	if err != nil {
+		return err
+	}
+
+	sess.Config.S3DisableContentMD5Validation = aws.Bool(true)
+	uploader := s3manager.NewUploader(sess, func(u *s3manager.Uploader) {
+		u.Concurrency = 1
+		u.RequestOptions = []request.Option{func(r *request.Request) {
+			if ok := RefreshAndStoreIfRequired(DefaultConfig); ok {
+				// s3Client, _, _ = GetS3Client()
+				s3Config := getS3ConfigFromSdkConfig(*DefaultConfig)
+				debug.PrintStack()
+				apiKey, _ := oidc.RetrieveToken(DefaultConfig)
+				// cf := r.Config.WithCredentials(credentials.NewStaticCredentials(apiKey, s3Config.ApiSecret, ""))
+				sc := credentials.NewStaticCredentials(apiKey, s3Config.ApiSecret, "")
+
+				r.Config.Credentials = sc
+
+				// r.Config = *cf
+				sess.Config.WithCredentials(credentials.NewStaticCredentials(apiKey, s3Config.ApiSecret, ""))
+
+			}
+			fmt.Println("called options")
+		}}
+	})
+
+	// uploader.UploadWithIterator()
+
+	// newReader := &checkerReader{content}
+
+	input := &s3manager.UploadInput{
+		Body:   aws.ReadSeekCloser(content),
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(path),
+	}
+
+	if _, err := uploader.Upload(input); err != nil {
+		return err
+	}
+
+	// _, err = uploader.Upload(input, func(u *s3manager.Uploader) {
+	// 	u.PartSize = 124 * 1024 * 1024
+	// 	u.RequestOptions = []request.Option{func(r *request.Request) {
+	// 		r.Retryable = aws.Bool(true)
+	// 		if ok := RefreshAndStoreIfRequired(DefaultConfig); ok {
+	// 			s3Client, _, _ = GetS3Client()
+	// 		}
+	// 	}}
+	// })
+
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			errChan[0] <- aerr
+			return aerr
+		}
+		errChan[0] <- err
+		return err
+	}
 	return nil
 }
