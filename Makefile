@@ -16,7 +16,7 @@ main:
 	 .
 
 xgo:
-	${GOPATH}/bin/xgo -go 1.12 \
+	${GOPATH}/bin/xgo -go 1.13 \
 	 --image pydio/xgo:latest \
 	 --targets ${XGO_TARGETS} \
 	 -ldflags "-X github.com/pydio/cells-client/common.Version=${CELLS_CLIENT_VERSION}\
