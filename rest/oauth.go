@@ -31,6 +31,7 @@ func OAuthPrepareUrl(serverUrl, clientId, clientSecret, state string, browser bo
 	if clientSecret != "" {
 		values.Add("client_secret", clientSecret)
 	}
+	values.Add("scope", "openid email profile pydio offline")
 	values.Add("state", state)
 	if browser {
 		callbackUrl = "http://localhost:3000/servers/callback"
@@ -92,6 +93,7 @@ func RefreshIfRequired(conf *cells_sdk.SdkConfig) (bool, error) {
 		data.Add("client_secret", conf.ClientSecret)
 	}
 	data.Add("refresh_token", conf.RefreshToken)
+	data.Add("scope", "openid email profile pydio offline")
 	httpReq, err := http.NewRequest("POST", conf.Url+"/oidc/oauth2/token", strings.NewReader(data.Encode()))
 	if err != nil {
 		return true, err

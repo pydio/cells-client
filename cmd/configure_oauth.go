@@ -35,8 +35,9 @@ var (
 
 type oAuthHandler struct {
 	// Input
-	done  chan bool
-	state string
+	done   chan bool
+	closed bool
+	state  string
 	// Output
 	code string
 	err  error
@@ -72,15 +73,19 @@ var configureOAuthCmd = &cobra.Command{
 		if err != nil {
 			fmt.Println(promptui.IconBad + " Cannot save configuration file! " + err.Error())
 		} else {
-			fmt.Printf("%s Configuration saved, you can now use the client to ht with %s.\n", promptui.IconGood, newConf.Url)
+			fmt.Printf("%s Configuration saved, you can now use the client to interract with %s.\n", promptui.IconGood, newConf.Url)
 		}
 	},
 }
 
 func (o *oAuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	defer close(o.done)
+	defer func() {
+		if !o.closed {
+			o.closed = true
+			close(o.done)
+		}
+	}()
 	values := r.URL.Query()
-	// fmt.Println("Received values", values)
 	if values.Get("state") != o.state {
 		o.err = fmt.Errorf("wrong state received")
 		return
@@ -91,7 +96,12 @@ func (o *oAuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	o.code = values.Get("code")
 	w.Header().Set("Content-Type", "text/html")
-	w.Write([]byte(`<p>You can now close this window and go back to your shell!</p><script type="text/javascript">window.close();</script>`))
+	w.Write([]byte(`
+		<p style="display: flex;height: 100%;width: 100%;align-items: center;justify-content: center;font-family: sans-serif;color: #607D8B;font-size: 20px;">
+			You can now close this window and go back to your shell!
+		</p>
+		<script type="text/javascript">window.close();</script>
+	`))
 }
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -130,18 +140,22 @@ func oAuthInteractive(newConf *cells_sdk.SdkConfig) error {
 		}
 	}
 
-	// PROMPT CLIENT ID
-	p = promptui.Prompt{
-		Label:     "OAuth APP ID (found in your server pydio.json)",
-		Validate:  notEmpty,
-		Default:   "cells-client",
-		AllowEdit: true,
+	newConf.ClientKey = "cells-client"
+	pE := promptui.Select{Label: "Do you want to edit OAuth client data (defaults generally work)?", Items: []string{"Use defaults", "Edit OAuth client"}}
+	if _, v, e := pE.Run(); e == nil && v != "Use defaults" {
+		// PROMPT CLIENT ID
+		p = promptui.Prompt{
+			Label:     "OAuth APP ID (found in your server pydio.json)",
+			Validate:  notEmpty,
+			Default:   "cells-client",
+			AllowEdit: true,
+		}
+		if newConf.ClientKey, e = p.Run(); e != nil {
+			return e
+		}
+		p = promptui.Prompt{Label: "OAuth APP Secret (leave empty for a public client)", Default: "", Mask: '*'}
+		newConf.ClientSecret, _ = p.Run()
 	}
-	if newConf.ClientKey, e = p.Run(); e != nil {
-		return e
-	}
-	p = promptui.Prompt{Label: "OAuth APP Secret (leave empty for a public client)", Default: "", Mask: '*'}
-	newConf.ClientSecret, _ = p.Run()
 
 	openBrowser := true
 	p3 := promptui.Select{Label: "Can you open a browser on this computer? If not, you will make the authentication process by copy/pasting", Items: []string{"Yes", "No"}}
@@ -199,11 +213,11 @@ func oAuthInteractive(newConf *cells_sdk.SdkConfig) error {
 		}
 	}
 
-	fmt.Println("Now exchanging the code for a valid IdToken")
+	fmt.Println(promptui.IconGood + " Now exchanging the code for a valid IdToken")
 	if err := rest.OAuthExchangeCode(newConf, returnCode, callbackUrl); err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(promptui.IconGood + "Successfully Received Token!")
+	fmt.Println(promptui.IconGood + " Successfully Received Token!")
 
 	// Test a simple PING with this config before saving!
 	fmt.Println(promptui.IconWarn + " Testing this configuration before saving")
