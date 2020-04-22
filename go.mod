@@ -3,7 +3,7 @@ module github.com/pydio/cells-client
 go 1.13
 
 require (
-	github.com/aws/aws-sdk-go v1.30.7
+	github.com/aws/aws-sdk-go v1.30.8
 	github.com/dustin/go-humanize v1.0.0
 	github.com/go-openapi/runtime v0.19.15 // indirect
 	github.com/go-openapi/strfmt v0.19.5

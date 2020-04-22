@@ -170,7 +170,9 @@ func getSdkConfigFromEnv() (cells_sdk.SdkConfig, error) {
 		return c, err
 	}
 
-	if !(len(url) > 0 && len(clientKey) > 0 && len(clientSecret) > 0 && len(user) > 0 && len(password) > 0) {
+	// Client Key and Client Secret are not used anymore
+	// if !(len(url) > 0 && len(clientKey) > 0 && len(clientSecret) > 0 && len(user) > 0 && len(password) > 0) {
+	if !(len(url) > 0 && len(user) > 0 && len(password) > 0) {
 		return c, nil
 	}
 
