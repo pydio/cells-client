@@ -217,7 +217,7 @@ func TreeCreateNodes(nodes []*models.TreeNode) error {
 	return nil
 }
 
-func UploadManager(path string, content io.ReadSeeker, checkExists bool, errChan ...chan error) error {
+func uploadManager(path string, content io.ReadSeeker, checkExists bool, errChan ...chan error) error {
 	s3Client, bucketName, err := GetS3Client()
 	if err != nil {
 		return err
@@ -233,8 +233,10 @@ func UploadManager(path string, content io.ReadSeeker, checkExists bool, errChan
 		u.PartSize = 50 * 1024 * 1024
 		u.Concurrency = 3
 		u.RequestOptions = []request.Option{func(r *request.Request) {
-			if ok := RefreshAndStoreIfRequired(DefaultConfig); ok {
-			}
+
+			// We call log.fatal inside the method if there is an error, no need to manage that here.
+			RefreshAndStoreIfRequired(DefaultConfig)
+
 			s3Config := getS3ConfigFromSdkConfig(*DefaultConfig)
 			apiKey, _ := oidc.RetrieveToken(DefaultConfig)
 			r.Config.WithCredentials(credentials.NewStaticCredentials(apiKey, s3Config.ApiSecret, ""))

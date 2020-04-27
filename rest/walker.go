@@ -291,7 +291,7 @@ func (c *CrawlNode) upload(src *CrawlNode, bar *uiprogress.Bar) error {
 			return err
 		}
 	} else {
-		if err := UploadManager(fp, wrapper, false, errChan); err != nil {
+		if err := uploadManager(fp, wrapper, false, errChan); err != nil {
 			return err
 		}
 	}

@@ -145,7 +145,7 @@ func RefreshAndStoreIfRequired(c *cells_sdk.SdkConfig) bool {
 		ConfigToKeyring(&storeConfig)
 		// Save config to renew TokenExpireAt
 		confData, _ := json.Marshal(&storeConfig)
-		ioutil.WriteFile(GetConfigFilePath(), confData, 0666)
+		ioutil.WriteFile(GetConfigFilePath(), confData, 0600)
 	}
 
 	return refreshed

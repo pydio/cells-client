@@ -14,12 +14,12 @@ import (
 	"github.com/pydio/cells-client/common"
 )
 
-var cellsVersionTpl = `Cells Client
- Version: {{.Version}}
- Built: {{.BuildTime}}
- Git commit: {{.GitCommit}}
- OS/Arch: {{.OS}}/{{.Arch}}
- Go version: {{.GoVersion}}
+var cellsVersionTpl = `{{.PackageLabel}}
+ Version: 	{{.Version}}
+ Built: 	{{.BuildTime}}
+ Git commit: 	{{.GitCommit}}
+ OS/Arch: 	{{.OS}}/{{.Arch}}
+ Go version: 	{{.GoVersion}}
 `
 
 type CellsClientVersion struct {
@@ -38,7 +38,7 @@ var (
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "Show the current version of this application (and some utils)",
+	Short: "Show Cells Client version information",
 	Long: `
 The version command simply shows the version that is currently running.
 
