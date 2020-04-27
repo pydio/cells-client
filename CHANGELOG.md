@@ -1,20 +1,24 @@
-# Changes between v2.0.1 and v2.0.2
+# Changes between v2.0.2 and v2.0.3
 
-[See Full Changelog](https://github.com/pydio/cells-client/compare/v2.0.1...v2.0.2)
+[See Full Changelog](https://github.com/pydio/cells-client/compare/v2.0.2...v2.0.3)
 
-- [#880cb92](https://github.com/pydio/cells-client/commit/880cb929e80d721884bfba53ff8a9c65dcad0083): Merge remote-tracking branch 'origin/master'
-- [#21dce03](https://github.com/pydio/cells-client/commit/21dce03f72cb43f11f4a044f6570231b1b14f8a9): Cosmetic change
-- [#e1c5f81](https://github.com/pydio/cells-client/commit/e1c5f81efadbefb0729d0893608a60d6de9f6465): Ignore recycle_bin when using a wildcard
-- [#b38913e](https://github.com/pydio/cells-client/commit/b38913e36d9bb14bc9f6dbafac73720c2a7be7b3): Change wildcard character to % as CHANGELOG.html CHANGELOG.md cmd common go.mod go.sum LICENSE main.go Makefile README.md rest is a glob
-- [#260ef3c](https://github.com/pydio/cells-client/commit/260ef3c4a9e4607ff9259c4cd66121b8d5f9866f): Use cobra minimumArgs check
-- [#bd3b411](https://github.com/pydio/cells-client/commit/bd3b411b13140812d6bd8f78515bc1d0477ded26): Version more info
-- [#1f3effc](https://github.com/pydio/cells-client/commit/1f3effc88fb5ea3456163a5276246421cea6b9d1): Fix error handling
-- [#f219ae0](https://github.com/pydio/cells-client/commit/f219ae07f0a2922de639e81d2ec3d750caaf16bf): Make us of cobra minimumArgs check.
-- [#af54424](https://github.com/pydio/cells-client/commit/af54424f85cd1ea950d147240677e005ae73ca3f): Skip verify applied to refresh token.
-- [#7c46d5c](https://github.com/pydio/cells-client/commit/7c46d5ca9807ec53aca6a67f9282349475dfdd3b): Skip verify for oauth configuration was not wired.
-- [#83bd7e8](https://github.com/pydio/cells-client/commit/83bd7e889951710f058c8bcdbf4b91061b545fc7): Added a confirmation & --force flag for the ./cec rm command
-- [#4c17143](https://github.com/pydio/cells-client/commit/4c17143965de9c64a50cce7a94f20bc9c4636869): Removed message with job uuid (added a more explicit message if nodes are deleted)
-- [#04df236](https://github.com/pydio/cells-client/commit/04df236b2325419271aae4faa4c509243471c2a8): If target folder + CHANGELOG.html CHANGELOG.md cmd common go.mod go.sum LICENSE main.go Makefile README.md rest delete only the children
-- [#0a8c0d4](https://github.com/pydio/cells-client/commit/0a8c0d4398f7b5f5002b96b13b1721dffe0f2871): If there is nothing to delete be more verbose and do not attempt to delete the nil target
-- [#ce8a4ff](https://github.com/pydio/cells-client/commit/ce8a4ff323cd3f9dc25e3ec93975ffa18594d53f): Make sure to append the node to the same list when deleting multiple targets
-- [#827b33c](https://github.com/pydio/cells-client/commit/827b33c4c66ca31e31938a1a026460e03813768a): Update cells-sdk-go and remove need for id/secret parameters
+- [#f07c830](https://github.com/pydio/cells-client/commit/f07c83093d55e371afe29c39cabde412144f378e): Changed ./cec to cec in last example of README
+- [#1a63248](https://github.com/pydio/cells-client/commit/1a63248ecc9afd7db781605e917dc5fdc5406a5d): A few cosmetic changes after code review with JThabet
+- [#76840f5](https://github.com/pydio/cells-client/commit/76840f5afcf9e1b0c5105b9c4aedeb406f83caf2): Merge remote-tracking branch 'origin/master'
+- [#8cd204a](https://github.com/pydio/cells-client/commit/8cd204a4b2325e110d0aed8bcbf2ea126b9dcaa7): Remove useless quotes
+- [#53129bc](https://github.com/pydio/cells-client/commit/53129bc249976a3b7412397e9af2794b2302a83c): Remove blocking check on used env variables
+- [#8e020cc](https://github.com/pydio/cells-client/commit/8e020cc74f01cd213dcdce39a7c8f90133ae17f2): Add scopes that were implicit in legacy version
+- [#af825ab](https://github.com/pydio/cells-client/commit/af825ab70117f8c13871ae621e31a5c2e37f51ce): Bump go version to 1.13 in Makefile
+- [#65d9cf7](https://github.com/pydio/cells-client/commit/65d9cf7cc863efed160056cc6a27e2d1adfa9ed7): Update third party versions
+- [#491db0c](https://github.com/pydio/cells-client/commit/491db0c7dcbb30315be46fd3609381ddcf0f987a): cosmetic changes and cleanup for the completion command examples.
+- [#06e33e1](https://github.com/pydio/cells-client/commit/06e33e1b1282385d02bf760ce6b0caf40991c711): If file size is bigger than 100MB use multipart upload.
+- [#d4df905](https://github.com/pydio/cells-client/commit/d4df9050f3a140e517dfe02bfaee9c0f906c0b8f): Set concurrency to 3 and part size to 50 mb
+- [#0159dfd](https://github.com/pydio/cells-client/commit/0159dfdbf9b989b333a2d74f73ba690cba158d2e): Remove execution rights when creating config.json file
+- [#80473ce](https://github.com/pydio/cells-client/commit/80473ce4edbe853191c3ce45353359a8e0b05f26): Add lock on RefreshAndStoreIfRequired, always update request config for each part.
+- [#57bbd32](https://github.com/pydio/cells-client/commit/57bbd3220141e8b6a6a7524be9baaaa3ffadad3d): Work in progress, multi part upload (upload manager from aws sdk go)
+- [#fb8b7cc](https://github.com/pydio/cells-client/commit/fb8b7cca41b212f2b8df73d43fac15bbc27d34bb): Added a RefreshAndStoreIfRequired method to facilitate token refresh handling
+- [#8095817](https://github.com/pydio/cells-client/commit/8095817cdb367897b2765fb7b26501ff86c87a94): Check minimum args with cobra builtin
+- [#ab6e1d1](https://github.com/pydio/cells-client/commit/ab6e1d151a2f0bcad80d676a4e78543c0e68180a): go template for version command
+- [#896f231](https://github.com/pydio/cells-client/commit/896f23167cd39e03c53098e3af38fbdfb5f32a08): When refreshing should also writeFile with R/W rights the Execution rights are not required.
+- [#66800ce](https://github.com/pydio/cells-client/commit/66800ceb891f07fa9496565bb0faf3c7b59eb8ad): Config json file should only have R/W, no Execution.
+- [#366713b](https://github.com/pydio/cells-client/commit/366713b7e2da31e2303fa5bba6a89ebfbed64493): Changed ./cec to cec in last example of README
