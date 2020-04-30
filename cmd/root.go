@@ -34,7 +34,7 @@ This will guide you through a quick procedure to get you up and ready in no time
 `,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 
-		switch cmd.Name() {
+		switch os.Args[1] {
 		// These command and respective children do not need an already configured environment
 		case "help", "configure", "version", "completion", "oauth", "clear", "doc":
 			break
