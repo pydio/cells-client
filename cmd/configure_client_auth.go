@@ -68,19 +68,21 @@ You can also go through the whole process in a non-interactive manner by using t
 }
 
 func interactive(newConf *cells_sdk.SdkConfig) error {
+
 	var e error
+
 	// PROMPT URL
 	p := promptui.Prompt{Label: "Server Address (provide a valid URL)", Validate: validUrl}
 	if newConf.Url, e = p.Run(); e != nil {
 		return e
-	} else {
-		newConf.Url = strings.Trim(newConf.Url, " ")
 	}
+	newConf.Url = strings.Trim(newConf.Url, " ")
 
 	u, e := url.Parse(newConf.Url)
 	if e != nil {
 		return e
 	}
+
 	if u.Scheme == "https" {
 		// PROMPT SKIP VERIFY
 		p2 := promptui.Select{Label: "Skip SSL Verification? (not recommended)", Items: []string{"No", "Yes"}}
@@ -104,7 +106,7 @@ func interactive(newConf *cells_sdk.SdkConfig) error {
 		return e
 	}
 
-	// Test a simple PING with this config before saving!
+	// Test a simple PING with this config before saving
 	fmt.Println(promptui.IconWarn + " Testing this configuration before saving")
 	rest.DefaultConfig = newConf
 	if _, _, e := rest.GetApiClient(); e != nil {
@@ -128,10 +130,10 @@ func nonInteractive(conf *cells_sdk.SdkConfig) error {
 		return fmt.Errorf("URL %s is not valid: %s", conf.Url, err.Error())
 	}
 
-	// Test a simple PING with this config before saving!
+	// Test a simple ping with this config before saving
 	rest.DefaultConfig = conf
 	if _, _, e := rest.GetApiClient(); e != nil {
-		return fmt.Errorf("Could not connect to newly configured server failed, cause: ", e.Error())
+		return fmt.Errorf("Could not connect to newly configured server failed, cause: %s", e.Error())
 	}
 
 	return nil
@@ -142,18 +144,18 @@ func validUrl(input string) error {
 	// Here we only validate that the trimed input is valid, but do not modify it.
 	input = strings.Trim(input, " ")
 	if len(input) == 0 {
-		return fmt.Errorf("Field cannot be empty!")
+		return fmt.Errorf("Field cannot be empty")
 	}
 	u, e := url.Parse(input)
 	if e != nil || u == nil || u.Scheme == "" || u.Host == "" {
-		return fmt.Errorf("Provide a valid URL")
+		return fmt.Errorf("Please, provide a valid URL")
 	}
 	return nil
 }
 
 func notEmpty(input string) error {
 	if len(input) == 0 {
-		return fmt.Errorf("Field cannot be empty!")
+		return fmt.Errorf("Field cannot be empty")
 	}
 	return nil
 }
