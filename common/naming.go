@@ -6,3 +6,11 @@ var (
 	BuildRevision string
 	Version       string
 )
+
+const (
+	UpdatePackageType = "CellsClient"
+	UpdateChannel     = "dev"
+	// TODO DO NOT COMMIT THIS
+	UpdateServerUrl = ""
+	UpdatePublicKey = ``
+)

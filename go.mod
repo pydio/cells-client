@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/aws/aws-sdk-go v1.31.1
 	github.com/dustin/go-humanize v1.0.0
+	github.com/fatih/color v1.9.0
 	github.com/go-openapi/runtime v0.19.15 // indirect
 	github.com/go-openapi/strfmt v0.19.5
 	github.com/google/go-cmp v0.4.1 // indirect
