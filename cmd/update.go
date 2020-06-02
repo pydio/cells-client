@@ -82,13 +82,13 @@ To apply the actual update, re-run the command with a --version parameter.
 				for {
 					select {
 					case pg := <-pgChan:
-						color.New(color.FgBlue).Printf("\rDownloading binary: %v%%", math.Floor(pg*100))
+						fmt.Printf("\rDownloading binary: %v%%", math.Floor(pg*100))
 					case e := <-errorChan:
-						color.New(color.FgRed).Println("\rError while updating binary: " + e.Error())
+						fmt.Printf("\rError while updating binary: " + e.Error())
 						return
 					case <-doneChan:
-						color.New(color.FgBlack, color.Bold).Println("\rCells Client binary successfully upgraded")
-						fmt.Println("")
+						// TODO use another color or let the default color
+						fmt.Printf("\n\nCells Client binary successfully upgraded\n")
 						return
 					}
 				}
