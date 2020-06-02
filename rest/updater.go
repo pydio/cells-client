@@ -3,17 +3,27 @@ package rest
 import (
 	"bytes"
 	"context"
+	"crypto"
+	"crypto/rsa"
+	"encoding/asn1"
+	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"runtime"
 	"sort"
 	"strings"
 
 	"github.com/hashicorp/go-version"
+	update2 "github.com/inconshreveable/go-update"
+	"github.com/kardianos/osext"
+	"github.com/pydio/cells/common/utils/net"
 
 	"github.com/pydio/cells-client/common"
 )
@@ -59,7 +69,8 @@ type UpdatePackage struct {
 	// Hash type used for the signature
 	BinaryHashType string `json:"BinaryHashType,omitempty"`
 	// Size of the binary to download
-	BinarySize int64 `json:"BinarySize,omitempty"`
+	// BinarySize int64 `json:"BinarySize,omitempty"`
+	BinarySize string `json:"BinarySize,omitempty"`
 	// GOOS value used at build time
 	BinaryOS string `json:"BinaryOS,omitempty"`
 	// GOARCH value used at build time
@@ -117,28 +128,7 @@ func LoadUpdates(ctx context.Context) ([]*UpdatePackage, error) {
 		}
 		myClient = &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxyUrl)}}
 	}
-
 	response, err = myClient.Do(postRequest)
-
-	// if proxy := os.Getenv("CELLS_UPDATE_HTTP_PROXY"); proxy == "" {
-	// 	response, err = http.Post(strings.TrimRight(parsed.String(), "/")+"/", "application/json", reader)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// } else {
-	// 	postRequest, err := http.NewRequest("POST", strings.TrimRight(parsed.String(), "/")+"/", reader)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	postRequest.Header.Add("Content-type", "application/json")
-	//
-	// 	proxyUrl, err := url.Parse(proxy)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	myClient := &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxyUrl)}}
-	// 	response, err = myClient.Do(postRequest)
-	// }
 
 	if response.StatusCode != 200 {
 		rErr := fmt.Errorf("could not connect to the update server, error code was %d", response.StatusCode)
@@ -168,5 +158,93 @@ func LoadUpdates(ctx context.Context) ([]*UpdatePackage, error) {
 	})
 
 	return updateResponse.AvailableBinaries, nil
+
+}
+
+func ApplyUpdate(ctx context.Context, p *UpdatePackage, dryRun bool, pgChan chan float64, doneChan chan bool, errorChan chan error) {
+
+	defer func() {
+		close(doneChan)
+	}()
+
+	if resp, err := http.Get(p.BinaryURL); err != nil {
+		errorChan <- err
+		return
+	} else {
+		defer resp.Body.Close()
+		if resp.StatusCode != 200 {
+			plain, _ := ioutil.ReadAll(resp.Body)
+			errorChan <- fmt.Errorf("binary.download.error %s", string(plain))
+			return
+		}
+
+		targetPath := ""
+		if dryRun {
+			targetPath = filepath.Join(os.TempDir(), "pydio-update")
+		}
+		if p.BinaryChecksum == "" || p.BinarySignature == "" {
+			errorChan <- fmt.Errorf("missing checksum and signature infos")
+			return
+		}
+		checksum, e := base64.StdEncoding.DecodeString(p.BinaryChecksum)
+		if e != nil {
+			errorChan <- e
+			return
+		}
+		signature, e := base64.StdEncoding.DecodeString(p.BinarySignature)
+		if e != nil {
+			errorChan <- e
+			return
+		}
+
+		pKey := common.UpdatePublicKey
+		block, _ := pem.Decode([]byte(pKey))
+		if block == nil || block.Type != "PUBLIC KEY" {
+			log.Fatalf("failed to decode pubKey")
+		}
+		var pubKey rsa.PublicKey
+		if _, err := asn1.Unmarshal(block.Bytes, &pubKey); err != nil {
+			errorChan <- err
+			return
+		}
+
+		// Write previous version inside the same folder
+		if targetPath == "" {
+			exe, er := osext.Executable()
+			if er != nil {
+				errorChan <- err
+				return
+			}
+			targetPath = exe
+		}
+		// backupFile := targetPath + "-" + common.Version + "-rev-" + common.BuildStamp
+		backupFile := targetPath + "-" + common.Version + "-" + common.BuildStamp
+
+		reader := net.BodyWithProgressMonitor(resp, pgChan, nil)
+
+		er := update2.Apply(reader, update2.Options{
+			Checksum:    checksum,
+			Signature:   signature,
+			TargetPath:  targetPath,
+			OldSavePath: backupFile,
+			Hash:        crypto.SHA256,
+			PublicKey:   &pubKey,
+			Verifier:    update2.NewRSAVerifier(),
+		})
+		if er != nil {
+			errorChan <- er
+		}
+
+		// Now try to move previous version to the services folder. Do not break on error, just Warn in the logs.
+		// dataDir, _ := config.ServiceDataDir(common.SERVICE_GRPC_NAMESPACE_ + common.SERVICE_UPDATE)
+
+		// backupPath := filepath.Join("dataDir", filepath.Base(backupFile))
+		// if err := filesystem.SafeRenameFile(backupFile, backupPath); err != nil {
+		// 	// log.Logger(ctx).Warn("Update successfully applied but previous binary could not be moved to backup folder", zap.Error(err))
+		// 	log.Println("Update successfully applied but previous binary could not be moved to backup folder")
+		// }
+
+		return
+	}
 
 }

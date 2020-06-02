@@ -1,23 +1,3 @@
-/*
- * Copyright (c) 2018. Abstrium SAS <team (at) pydio.com>
- * This file is part of Pydio Cells.
- *
- * Pydio Cells is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Pydio Cells is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with Pydio Cells.  If not, see <http://www.gnu.org/licenses/>.
- *
- * The latest code can be found at <https://pydio.com>.
- */
-
 package cmd
 
 import (
@@ -107,13 +87,13 @@ To apply the actual update, re-run the command with a --version parameter.
 						color.New(color.FgRed).Println("\rError while updating binary: " + e.Error())
 						return
 					case <-doneChan:
-						color.New(color.FgBlack, color.Bold).Println("\rBinary successfully upgraded, you can restart cells now!")
+						color.New(color.FgBlack, color.Bold).Println("\rCells Client binary successfully upgraded")
 						fmt.Println("")
 						return
 					}
 				}
 			}()
-			// update2.ApplyUpdate(context.Background(), apply, configs, updateDryRun, pgChan, doneChan, errorChan)
+			rest.ApplyUpdate(context.Background(), apply, updateDryRun, pgChan, doneChan, errorChan)
 			wg.Wait()
 		}
 

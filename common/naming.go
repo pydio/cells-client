@@ -12,5 +12,5 @@ const (
 	UpdateChannel     = "dev"
 	// TODO DO NOT COMMIT THIS
 	UpdateServerUrl = ""
-	UpdatePublicKey = ``
+	UpdatePublicKey = ""
 )
