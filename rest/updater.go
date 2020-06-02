@@ -94,6 +94,10 @@ type UpdateResponse struct {
 func LoadUpdates(ctx context.Context) ([]*UpdatePackage, error) {
 
 	urlConf := common.UpdateServerUrl
+	if urlConf == "" {
+		return nil, fmt.Errorf("UpdateServerUrl empty")
+	}
+
 	parsed, e := url.Parse(urlConf)
 	if e != nil {
 		return nil, e
@@ -218,7 +222,9 @@ func ApplyUpdate(ctx context.Context, p *UpdatePackage, dryRun bool, pgChan chan
 			targetPath = exe
 		}
 		// backupFile := targetPath + "-" + common.Version + "-rev-" + common.BuildStamp
-		backupFile := targetPath + "-" + common.Version + "-" + common.BuildStamp
+
+		defaultConfPath := DefaultConfigFilePath()
+		backupFile := filepath.Join(filepath.Dir(defaultConfPath), "cec-"+common.Version+"-"+common.BuildStamp)
 
 		reader := net.BodyWithProgressMonitor(resp, pgChan, nil)
 
