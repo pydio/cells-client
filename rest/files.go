@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"crypto/md5"
 	"fmt"
 	"io"
 	"time"
@@ -217,7 +218,7 @@ func TreeCreateNodes(nodes []*models.TreeNode) error {
 	return nil
 }
 
-func uploadManager(path string, content io.ReadSeeker, checkExists bool, errChan ...chan error) error {
+func uploadManager(path string, content io.ReadSeeker, computeMD5 bool, errChan ...chan error) error {
 	s3Client, bucketName, err := GetS3Client()
 	if err != nil {
 		return err
@@ -231,9 +232,8 @@ func uploadManager(path string, content io.ReadSeeker, checkExists bool, errChan
 
 	uploader := s3manager.NewUploader(sess, func(u *s3manager.Uploader) {
 		u.PartSize = 50 * 1024 * 1024
-		u.Concurrency = 3
+		u.Concurrency = 10
 		u.RequestOptions = []request.Option{func(r *request.Request) {
-
 			// We call log.fatal inside the method if there is an error, no need to manage that here.
 			RefreshAndStoreIfRequired(DefaultConfig)
 
@@ -248,6 +248,16 @@ func uploadManager(path string, content io.ReadSeeker, checkExists bool, errChan
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(path),
 	}
+
+	if computeMD5 {
+		h := md5.New()
+		if _, err := io.Copy(h, content); err != nil {
+			return fmt.Errorf("could not copy md5: %v", err)
+		}
+		input.Metadata = map[string]*string{"content-md5": aws.String(fmt.Sprintf("%x", h.Sum(nil)))}
+	}
+
+	_, _ = content.Seek(0, io.SeekStart)
 
 	_, err = uploader.Upload(input)
 	if err != nil {

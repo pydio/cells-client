@@ -278,6 +278,7 @@ func (c *CrawlNode) upload(src *CrawlNode, bar *uiprogress.Bar) error {
 	if c.NewFileName != "" {
 		bname = c.NewFileName
 	}
+	var computeMD5 bool
 
 	fp := c.Join(c.FullPath, bname)
 	// Handle corner case when trying to upload a file and *folder* with same name already exists at target path
@@ -291,7 +292,11 @@ func (c *CrawlNode) upload(src *CrawlNode, bar *uiprogress.Bar) error {
 			return err
 		}
 	} else {
-		if err := uploadManager(fp, wrapper, false, errChan); err != nil {
+		// if the file is equal or bigger than 5GB we will compute the md5 and pass it as a custom metadata
+		if stats.Size() >= (5 * 1024 * 1024 * 1024) {
+			computeMD5 = true
+		}
+		if err := uploadManager(fp, wrapper, computeMD5, errChan); err != nil {
 			return err
 		}
 	}
