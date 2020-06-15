@@ -232,7 +232,7 @@ func uploadManager(path string, content io.ReadSeeker, computeMD5 bool, errChan 
 
 	uploader := s3manager.NewUploader(sess, func(u *s3manager.Uploader) {
 		u.PartSize = 50 * 1024 * 1024
-		u.Concurrency = 10
+		u.Concurrency = 3
 		u.RequestOptions = []request.Option{func(r *request.Request) {
 			// We call log.fatal inside the method if there is an error, no need to manage that here.
 			RefreshAndStoreIfRequired(DefaultConfig)
