@@ -48,7 +48,7 @@ Also note that this command also generates the yaml files that we use for pydio.
 			log.Fatal("Please provide a path to store output files")
 		} else {
 
-			docs.PydioDocsGeneratedBy = common.PackageName + " v" + common.Version
+			docs.PydioDocsGeneratedBy = common.PackageLabel + " v" + common.Version
 			err := docs.GenMarkdownTree(RootCmd, docPath)
 			if err != nil {
 				log.Fatal(err)

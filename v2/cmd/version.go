@@ -57,12 +57,13 @@ It also provides various utility sub commands than comes handy when manipulating
 		}
 
 		cv := &CellsClientVersion{
-			Version:   sV,
-			BuildTime: t.Format(time.RFC822Z),
-			GitCommit: common.BuildRevision,
-			OS:        runtime.GOOS,
-			Arch:      runtime.GOARCH,
-			GoVersion: runtime.Version(),
+			PackageLabel: common.PackageLabel,
+			Version:      sV,
+			BuildTime:    t.Format(time.RFC822Z),
+			GitCommit:    common.BuildRevision,
+			OS:           runtime.GOOS,
+			Arch:         runtime.GOARCH,
+			GoVersion:    runtime.Version(),
 		}
 
 		var runningTmpl string

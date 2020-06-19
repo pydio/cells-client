@@ -1,15 +1,15 @@
 package common
 
 var (
-	PackageName   = "Cells Client"
+	PackageType   string
+	PackageLabel  string
 	BuildStamp    string
 	BuildRevision string
 	Version       string
 )
 
 const (
-	UpdatePackageType = "CellsClient"
-	UpdateChannel     = "dev"
-	UpdateServerUrl   = ""
-	UpdatePublicKey   = "-----BEGIN PUBLIC KEY-----\nMIIBCgKCAQEAqtnEiO46Mw5mkRpA+CC970pU7a8R3ZYhEoS+iAkex+s0MUWWkw53\n0s3eMs0chmsMAfVm/OUnlvvgZwxpypondjFT4prB1XQildessFNBR+mGfJP4krUr\nQz4sQE3525AxTBj5/ulpuwGgYdp5vvRre6eq4yr40adA8p8/yZFM9AVLiz65fVwp\ngyyLBYUBXtWsGLza9CeYsUK88WOG1J5U+SjnKUeL+kAib+5AtDZZ9Tn/BQve5aXS\n8XTFWCty72rqhousfGn1Ek78wQpbv0pihS3QlKXbZhmEFbdqpvPZmgI/ZzXn6mBR\nSJyNaQWiMj2VJjBDIgGxSx60b7/Tk4lLQwIDAQAB\n-----END PUBLIC KEY-----"
+	UpdateChannel   = "stable"
+	UpdateServerUrl = "https://updatecells.pydio.com/"
+	UpdatePublicKey = "-----BEGIN PUBLIC KEY-----\nMIIBCgKCAQEAwh/ofjZTITlQc4h/qDZMR3RquBxlG7UTunDKLG85JQwRtU7EL90v\nlWxamkpSQsaPeqho5Q6OGkhJvZkbWsLBJv6LZg+SBhk6ZSPxihD+Kfx8AwCcWZ46\nDTpKpw+mYnkNH1YEAedaSfJM8d1fyU1YZ+WM3P/j1wTnUGRgebK9y70dqZEo2dOK\nn98v3kBP7uEN9eP/wig63RdmChjCpPb5gK1/WKnY4NFLQ60rPAOBsXurxikc9N/3\nEvbIB/1vQNqm7yEwXk8LlOC6Fp8W/6A0DIxr2BnZAJntMuH2ulUfhJgw0yJalMNF\nDR0QNzGVktdLOEeSe8BSrASe9uZY2SDbTwIDAQAB\n-----END PUBLIC KEY-----"
 )

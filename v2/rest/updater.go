@@ -108,7 +108,7 @@ func LoadUpdates(ctx context.Context) ([]*UpdatePackage, error) {
 
 	jsonReq, _ := json.Marshal(&UpdateRequest{
 		Channel:        common.UpdateChannel,
-		PackageName:    common.UpdatePackageType,
+		PackageName:    common.PackageType,
 		CurrentVersion: common.Version,
 		GOOS:           runtime.GOOS,
 		GOARCH:         runtime.GOARCH,
