@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"runtime"
@@ -177,7 +176,7 @@ var igtCmd = &cobra.Command{
 
 		v1Str := args[0]
 		v2Str := args[1]
-		fmt.Printf("Comparing versions %s & %s \n", v1Str, v2Str)
+		// fmt.Printf("Comparing versions %s & %s \n", v1Str, v2Str)
 
 		v1, err := hashivers.NewVersion(v1Str)
 		if err != nil {
