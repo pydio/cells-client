@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/manifoldco/promptui"
-	"github.com/pydio/cells-client/rest"
+	"github.com/pydio/cells-client/v2/rest"
 	cells_sdk "github.com/pydio/cells-sdk-go"
 	"github.com/spf13/cobra"
 )

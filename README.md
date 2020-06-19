@@ -34,13 +34,13 @@ Typically on Linux, you have to:
 You can verify that `cec` is correctly installed and configured by launching any command, for instance:  
 `cec version`
 
-###  Installing from source 
+### Installing from source
 
 If you want to install from source, you must have go version 1.12+ installed and configured on your machine and the necessary build utils (typically `make`, `gcc`, ...). You can then download the source code and use the Makefile to compile a binary for your OS:
 
 ```sh
 git clone https://github.com/pydio/cells-client.git
-cd ./cells-client
+cd ./cells-client/v2
 make dev
 ```
 
@@ -50,7 +50,7 @@ _Note: Cells Client uses the Go Modules mechanism to manage dependencies, so you
 
 This step is compulsory if you do not want to precise all configuration information each time you call the command, typically on your working station. It guides through a few steps to gather necessary information and store sensitive bits in your keyring _**if you have one configured and running on your machine**_.
 
-Default authentication mechanism is a OAuth _Authorization Code_ flow. 
+Default authentication mechanism is a OAuth _Authorization Code_ flow.
 
 ```sh
 # simply call
@@ -86,7 +86,7 @@ Now exchanging the code for a valid IdToken
 ✔ Configuration saved, you can now use the client to interract with https://cells.my-files.com.
 ```
 
-*If you have no tab opening in your browser you can manually copy the URL and put it in your browser*
+*If you have no tab opening in your browser you can manually copy the URL and put it in your browser*.
 
 ## Command completion
 
@@ -105,20 +105,20 @@ sudo yum install bash-completion
 brew install bash-completion
 ```
 
-_MacOS users should update their bash version to v5, (by default it is using v3)_
+_MacOS users should update their bash version to v5, (by default it is using v3)_.
 
 Then, to add the completion in a persistent manner:
 
-```sh 
-# Linux users 
+```sh
+# Linux users
 cec completion bash | sudo tee /etc/bash_completion.d/cec
-# MacOS users 
+# MacOS users
 cec completion bash | sudo tee /usr/local/etc/bash_completion.d/cec
 ```
 
 You can also only _source_ the file in current session, the feature will be gone when you start a new shell.
 
-```sh 
+```sh
 source <(cec completion bash)
 ```
 
@@ -126,7 +126,7 @@ Note: if you want to use completion for remote paths while using `scp` sub comma
 
 ```sh
 cec scp ./README.md cells//com <press the tab key>
-# Completes the path to 
+# Completes the path to
 cec scp ./README.md cells//common-files/
 ...
 ```

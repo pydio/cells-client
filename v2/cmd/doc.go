@@ -26,7 +26,7 @@ import (
 	"github.com/pydio/go/docs"
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-client/common"
+	"github.com/pydio/cells-client/v2/common"
 )
 
 var docPath string

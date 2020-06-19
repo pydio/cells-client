@@ -25,7 +25,7 @@ import (
 	"github.com/kardianos/osext"
 	"github.com/pydio/cells/common/utils/net"
 
-	"github.com/pydio/cells-client/common"
+	"github.com/pydio/cells-client/v2/common"
 )
 
 type UpdateRequest struct {

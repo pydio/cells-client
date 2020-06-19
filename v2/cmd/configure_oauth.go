@@ -20,7 +20,7 @@ import (
 
 	cells_sdk "github.com/pydio/cells-sdk-go"
 
-	"github.com/pydio/cells-client/rest"
+	"github.com/pydio/cells-client/v2/rest"
 )
 
 const authTypeOAuth = "oauth"

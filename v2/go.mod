@@ -1,4 +1,4 @@
-module github.com/pydio/cells-client
+module github.com/pydio/cells-client/v2
 
 go 1.13
 

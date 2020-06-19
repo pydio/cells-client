@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-client/rest"
+	"github.com/pydio/cells-client/v2/rest"
 )
 
 var filesMvCmdExample = `

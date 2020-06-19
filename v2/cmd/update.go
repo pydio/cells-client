@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
-	"github.com/pydio/cells-client/rest"
+	"github.com/pydio/cells-client/v2/rest"
 )
 
 var updateToVersion string

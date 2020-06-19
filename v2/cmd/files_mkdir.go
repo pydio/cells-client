@@ -10,7 +10,7 @@ import (
 	"github.com/micro/go-log"
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-client/rest"
+	"github.com/pydio/cells-client/v2/rest"
 	"github.com/pydio/cells-sdk-go/client/tree_service"
 	"github.com/pydio/cells-sdk-go/models"
 )

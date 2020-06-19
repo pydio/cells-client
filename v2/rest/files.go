@@ -18,7 +18,7 @@ import (
 	awstransport "github.com/pydio/cells-sdk-go/transport/aws"
 	"github.com/pydio/cells-sdk-go/transport/oidc"
 
-	"github.com/pydio/cells-client/common"
+	"github.com/pydio/cells-client/v2/common"
 )
 
 func GetS3Client() (*s3.S3, string, error) {

@@ -10,7 +10,7 @@ import (
 	hashivers "github.com/hashicorp/go-version"
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-client/common"
+	"github.com/pydio/cells-client/v2/common"
 )
 
 var cellsVersionTpl = `{{.PackageLabel}}
