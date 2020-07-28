@@ -108,6 +108,7 @@ const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 func RandString(n int) string {
 	b := make([]byte, n)
+	rand.Seed(time.Now().Unix())
 	for i := range b {
 		b[i] = letterBytes[rand.Intn(len(letterBytes))]
 	}
