@@ -231,6 +231,9 @@ func oAuthInteractive(newConf *cells_sdk.SdkConfig) error {
 		return fmt.Errorf("test connection failed")
 	}
 	fmt.Println("\r" + promptui.IconGood + fmt.Sprintf(" Successfully logged to server, token will be refreshed at %v", time.Unix(int64(newConf.TokenExpiresAt), 0)))
+	bold := color.New(color.Bold)
+
+	fmt.Println("\r"+promptui.IconGood+" "+"You are currently logged with user", bold.Sprintf("%s", rest.CurrentUser))
 	return nil
 }
 
