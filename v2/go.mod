@@ -31,4 +31,5 @@ require (
 	github.com/zalando/go-keyring v0.0.0-20200121091418-667557018717
 	go.uber.org/zap v1.15.0
 	golang.org/x/sys v0.0.0-20200615200032-f1bc736245b1 // indirect
+	gopkg.in/square/go-jose.v2 v2.5.1
 )
