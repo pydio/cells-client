@@ -91,13 +91,9 @@ type UpdateResponse struct {
 	AvailableBinaries []*UpdatePackage `json:"AvailableBinaries,omitempty"`
 }
 
-func LoadUpdates(ctx context.Context) ([]*UpdatePackage, error) {
+func LoadUpdates(ctx context.Context, channel string) ([]*UpdatePackage, error) {
 
 	urlConf := common.UpdateServerUrl
-	if urlConf == "" {
-		return nil, fmt.Errorf("UpdateServerUrl empty")
-	}
-
 	parsed, e := url.Parse(urlConf)
 	if e != nil {
 		return nil, e
@@ -107,7 +103,7 @@ func LoadUpdates(ctx context.Context) ([]*UpdatePackage, error) {
 	}
 
 	jsonReq, _ := json.Marshal(&UpdateRequest{
-		Channel:        common.UpdateChannel,
+		Channel:        channel,
 		PackageName:    common.PackageType,
 		CurrentVersion: common.Version,
 		GOOS:           runtime.GOOS,
@@ -133,7 +129,9 @@ func LoadUpdates(ctx context.Context) ([]*UpdatePackage, error) {
 		myClient = &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxyUrl)}}
 	}
 	response, err = myClient.Do(postRequest)
-
+	if err != nil {
+		return nil, err
+	}
 	if response.StatusCode != 200 {
 		rErr := fmt.Errorf("could not connect to the update server, error code was %d", response.StatusCode)
 		if response.StatusCode == 500 {
