@@ -21,7 +21,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-version"
-	update2 "github.com/inconshreveable/go-update"
+	updater "github.com/inconshreveable/go-update"
 	"github.com/kardianos/osext"
 	"github.com/pydio/cells/common/utils/net"
 
@@ -219,35 +219,24 @@ func ApplyUpdate(ctx context.Context, p *UpdatePackage, dryRun bool, pgChan chan
 			}
 			targetPath = exe
 		}
-		// backupFile := targetPath + "-" + common.Version + "-rev-" + common.BuildStamp
 
 		defaultConfPath := DefaultConfigFilePath()
 		backupFile := filepath.Join(filepath.Dir(defaultConfPath), "cec-rev-"+common.Version)
 		reader := net.BodyWithProgressMonitor(resp, pgChan, nil)
 
-		er := update2.Apply(reader, update2.Options{
+		er := updater.Apply(reader, updater.Options{
 			Checksum:    checksum,
 			Signature:   signature,
 			TargetPath:  targetPath,
 			OldSavePath: backupFile,
 			Hash:        crypto.SHA256,
 			PublicKey:   &pubKey,
-			Verifier:    update2.NewRSAVerifier(),
+			Verifier:    updater.NewRSAVerifier(),
 		})
 		if er != nil {
 			errorChan <- er
 		}
 
-		// Now try to move previous version to the services folder. Do not break on error, just Warn in the logs.
-		// dataDir, _ := config.ServiceDataDir(common.SERVICE_GRPC_NAMESPACE_ + common.SERVICE_UPDATE)
-
-		// backupPath := filepath.Join("dataDir", filepath.Base(backupFile))
-		// if err := filesystem.SafeRenameFile(backupFile, backupPath); err != nil {
-		// 	// log.Logger(ctx).Warn("Update successfully applied but previous binary could not be moved to backup folder", zap.Error(err))
-		// 	log.Println("Update successfully applied but previous binary could not be moved to backup folder")
-		// }
-
 		return
 	}
-
 }
