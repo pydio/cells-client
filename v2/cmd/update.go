@@ -11,13 +11,18 @@ import (
 	"github.com/fatih/color"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
-	"go.uber.org/zap"
 
+	"github.com/pydio/cells-client/v2/common"
 	"github.com/pydio/cells-client/v2/rest"
 )
 
-var updateToVersion string
-var updateDryRun bool
+var (
+	updateToVersion string
+	updateDryRun    bool
+	devChannel      bool
+	unstableChannel bool
+	defaultChannel  = common.UpdateStableChannel
+)
 
 var updateBinCmd = &cobra.Command{
 	Use:   "update",
@@ -27,9 +32,16 @@ To apply the actual update, re-run the command with a --version parameter.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		binaries, e := rest.LoadUpdates(context.Background())
+		// if set it will use the selected channel to list and perform the update
+		if devChannel {
+			defaultChannel = common.UpdateDevChannel
+		} else if unstableChannel {
+			defaultChannel = common.UpdateUnstableChannel
+		}
+
+		binaries, e := rest.LoadUpdates(context.Background(), defaultChannel)
 		if e != nil {
-			log.Fatal("Cannot retrieve available updates", zap.Error(e))
+			log.Fatal("Cannot retrieve available updates", e)
 		}
 		if len(binaries) == 0 {
 			c := color.New(color.FgRed)
@@ -70,7 +82,7 @@ To apply the actual update, re-run the command with a --version parameter.
 			}
 
 			c := color.New(color.FgBlack)
-			c.Println("Updating binary now")
+			fmt.Println("Updating binary now")
 			c.Println("")
 			pgChan := make(chan float64)
 			errorChan := make(chan error)
@@ -106,5 +118,7 @@ func init() {
 
 	updateBinCmd.Flags().StringVarP(&updateToVersion, "version", "v", "", "Pass a version number to apply the upgrade")
 	updateBinCmd.Flags().BoolVarP(&updateDryRun, "dry-run", "d", false, "If set, this flag will grab the package and save it to the tmp directory instead of replacing current binary")
+	updateBinCmd.Flags().BoolVarP(&devChannel, "dev", "", false, "If set this flag will use the dev channel to load the updates")
+	updateBinCmd.Flags().BoolVarP(&unstableChannel, "unstable", "", false, "If set this flag will use the unstable channel to load the updates")
 
 }
