@@ -29,7 +29,6 @@ require (
 	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/spf13/cobra v1.0.0
 	github.com/zalando/go-keyring v0.1.0
-	go.uber.org/zap v1.16.0
 	golang.org/x/sys v0.0.0-20200831180312-196b9ba8737a // indirect
 	gopkg.in/square/go-jose.v2 v2.5.1
 )
