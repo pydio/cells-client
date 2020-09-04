@@ -222,8 +222,7 @@ func ApplyUpdate(ctx context.Context, p *UpdatePackage, dryRun bool, pgChan chan
 		// backupFile := targetPath + "-" + common.Version + "-rev-" + common.BuildStamp
 
 		defaultConfPath := DefaultConfigFilePath()
-		backupFile := filepath.Join(filepath.Dir(defaultConfPath), "cec-"+common.Version+"-"+common.BuildStamp)
-
+		backupFile := filepath.Join(filepath.Dir(defaultConfPath), "cec-rev-"+common.Version)
 		reader := net.BodyWithProgressMonitor(resp, pgChan, nil)
 
 		er := update2.Apply(reader, update2.Options{
