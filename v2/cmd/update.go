@@ -79,9 +79,8 @@ To apply the actual update, re-run the command with a --version parameter.
 				log.Fatal("Cannot find the requested version")
 			}
 
-			c := color.New(color.FgBlack)
-			fmt.Println("Updating binary now")
-			c.Println("")
+			// fmt.Println("Updating binary now")
+			fmt.Printf("Starting upgrade\n\n")
 			pgChan := make(chan float64)
 			errorChan := make(chan error)
 			doneChan := make(chan bool)
@@ -98,7 +97,9 @@ To apply the actual update, re-run the command with a --version parameter.
 						return
 					case <-doneChan:
 						// TODO use another color or let the default color
-						fmt.Printf("\n\nCells Client binary successfully upgraded\n")
+						fmt.Printf("\nChecking downloaded file integrity\n")
+						fmt.Println("Replacing binary now")
+						fmt.Printf("\n\nCells Client has been upgraded to version %v\n", apply.Version)
 						return
 					}
 				}
