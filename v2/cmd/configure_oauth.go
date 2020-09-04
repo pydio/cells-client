@@ -233,7 +233,8 @@ func oAuthInteractive(newConf *cells_sdk.SdkConfig) error {
 	fmt.Println("\r" + promptui.IconGood + fmt.Sprintf(" Successfully logged to server, token will be refreshed at %v", time.Unix(int64(newConf.TokenExpiresAt), 0)))
 	bold := color.New(color.Bold)
 
-	fmt.Println("\r"+promptui.IconGood+" "+"You are currently logged with user", bold.Sprintf("%s", rest.CurrentUser))
+	fmt.Println("\r"+promptui.IconGood+" "+"You are logged-in as user:", bold.Sprintf("%s", rest.CurrentUser))
+	newConf.User = rest.CurrentUser
 	return nil
 }
 
@@ -262,7 +263,7 @@ func oAuthNonInteractive(conf *cells_sdk.SdkConfig) error {
 	if _, _, e := rest.GetApiClient(); e != nil {
 		return fmt.Errorf("test connection to newly configured server failed")
 	}
-
+	conf.User = rest.CurrentUser
 	return nil
 }
 
