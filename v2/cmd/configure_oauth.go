@@ -234,7 +234,6 @@ func oAuthInteractive(newConf *cells_sdk.SdkConfig) error {
 	bold := color.New(color.Bold)
 
 	fmt.Println("\r"+promptui.IconGood+" "+"You are logged-in as user:", bold.Sprintf("%s", rest.CurrentUser))
-	newConf.User = rest.CurrentUser
 	return nil
 }
 
