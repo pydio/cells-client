@@ -1,10 +1,9 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
-	"text/tabwriter"
 
+	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 
 	"github.com/pydio/cells-client/v2/rest"
@@ -18,11 +17,11 @@ Displays the current active config, show the users and the cells instance
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		t := tabwriter.NewWriter(os.Stdout, 5, 0, 3, ' ', tabwriter.TabIndent)
-		fmt.Fprintln(t, "URL\tUser")
-		fmt.Fprintf(t, "%v\t%v", rest.DefaultConfig.Url, rest.DefaultConfig.User)
-		fmt.Fprintln(t)
-		t.Flush()
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetHeader([]string{"Login", "URL"})
+		table.Append([]string{rest.DefaultConfig.User, rest.DefaultConfig.Url})
+		table.Render()
+
 	},
 }
 
