@@ -172,7 +172,7 @@ func (c *CrawlNode) MkdirAll(dd []*CrawlNode, pool *BarsPool) error {
 		if _, e := os.Stat(c.FullPath); e != nil {
 			if DryRun {
 				fmt.Println("MkDir: \t", c.FullPath)
-			} else if e1 := os.MkdirAll(c.FullPath, 0755); e1 != nil {
+			} else if e1 := os.MkdirAll(c.FullPath, 0666); e1 != nil {
 				return e1
 			}
 		}
@@ -190,7 +190,7 @@ func (c *CrawlNode) MkdirAll(dd []*CrawlNode, pool *BarsPool) error {
 			continue
 		}
 		if c.IsLocal {
-			if e := os.MkdirAll(newFolder, 0755); e != nil {
+			if e := os.MkdirAll(newFolder, 0666); e != nil {
 				return e
 			} else {
 				pool.Done()
@@ -318,7 +318,7 @@ func (c *CrawlNode) download(src *CrawlNode, bar *uiprogress.Bar) error {
 		bname = c.NewFileName
 	}
 	downloadToLocation := c.Join(c.FullPath, bname)
-	writer, e := os.OpenFile(downloadToLocation, os.O_CREATE|os.O_WRONLY, 0755)
+	writer, e := os.OpenFile(downloadToLocation, os.O_CREATE|os.O_WRONLY, 0666)
 	if e != nil {
 		return e
 	}
