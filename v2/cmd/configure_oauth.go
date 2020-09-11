@@ -67,7 +67,7 @@ var configureOAuthCmd = &cobra.Command{
 				fmt.Println(promptui.IconWarn + " Cannot save token in keyring! " + err.Error())
 			}
 		}
-		filePath := rest.DefaultConfigFilePath()
+		filePath := rest.GetConfigFilePath()
 		data, _ := json.Marshal(newConf)
 		err = ioutil.WriteFile(filePath, data, 0644)
 		if err != nil {

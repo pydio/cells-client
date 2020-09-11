@@ -29,14 +29,14 @@ func GetConfigFilePath() string {
 	if configFilePath != "" {
 		return configFilePath
 	}
-	return DefaultConfigFilePath()
+	return defaultConfigFilePath()
 }
 
 func SetConfigFilePath(confPath string) {
 	configFilePath = confPath
 }
 
-func DefaultConfigFilePath() string {
+func defaultConfigFilePath() string {
 
 	vendor := "Pydio"
 	if runtime.GOOS == "linux" {

@@ -220,7 +220,7 @@ func ApplyUpdate(ctx context.Context, p *UpdatePackage, dryRun bool, pgChan chan
 			targetPath = exe
 		}
 
-		defaultConfPath := DefaultConfigFilePath()
+		defaultConfPath := GetConfigFilePath()
 		backupFile := filepath.Join(filepath.Dir(defaultConfPath), "cec-rev-"+common.Version)
 		reader := net.BodyWithProgressMonitor(resp, pgChan, nil)
 
