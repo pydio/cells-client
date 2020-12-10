@@ -22,7 +22,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pydio/cells v2.1.5+incompatible
-	github.com/pydio/cells-sdk-go v0.0.0-20200703103424-21853672813d
+	github.com/pydio/cells-sdk-go v0.0.0-20201210092509-27b99c47c1b4
 	github.com/pydio/go v0.0.0-20191211170306-d00ac19450ef
 	github.com/shibukawa/configdir v0.0.0-20170330084843-e180dbdc8da0
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
