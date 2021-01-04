@@ -21,7 +21,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-version"
-	updater "github.com/inconshreveable/go-update"
+	update2 "github.com/inconshreveable/go-update"
 	"github.com/kardianos/osext"
 	"github.com/pydio/cells/common/utils/net"
 
@@ -91,9 +91,13 @@ type UpdateResponse struct {
 	AvailableBinaries []*UpdatePackage `json:"AvailableBinaries,omitempty"`
 }
 
-func LoadUpdates(ctx context.Context, channel string) ([]*UpdatePackage, error) {
+func LoadUpdates(ctx context.Context) ([]*UpdatePackage, error) {
 
 	urlConf := common.UpdateServerUrl
+	if urlConf == "" {
+		return nil, fmt.Errorf("UpdateServerUrl empty")
+	}
+
 	parsed, e := url.Parse(urlConf)
 	if e != nil {
 		return nil, e
@@ -103,7 +107,7 @@ func LoadUpdates(ctx context.Context, channel string) ([]*UpdatePackage, error) 
 	}
 
 	jsonReq, _ := json.Marshal(&UpdateRequest{
-		Channel:        channel,
+		Channel:        common.UpdateChannel,
 		PackageName:    common.PackageType,
 		CurrentVersion: common.Version,
 		GOOS:           runtime.GOOS,
@@ -129,9 +133,7 @@ func LoadUpdates(ctx context.Context, channel string) ([]*UpdatePackage, error) 
 		myClient = &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxyUrl)}}
 	}
 	response, err = myClient.Do(postRequest)
-	if err != nil {
-		return nil, err
-	}
+
 	if response.StatusCode != 200 {
 		rErr := fmt.Errorf("could not connect to the update server, error code was %d", response.StatusCode)
 		if response.StatusCode == 500 {
@@ -219,24 +221,36 @@ func ApplyUpdate(ctx context.Context, p *UpdatePackage, dryRun bool, pgChan chan
 			}
 			targetPath = exe
 		}
+		// backupFile := targetPath + "-" + common.Version + "-rev-" + common.BuildStamp
 
-		defaultConfPath := GetConfigFilePath()
-		backupFile := filepath.Join(filepath.Dir(defaultConfPath), "cec-rev-"+common.Version)
+		defaultConfPath := DefaultConfigFilePath()
+		backupFile := filepath.Join(filepath.Dir(defaultConfPath), "cec-"+common.Version+"-"+common.BuildStamp)
+
 		reader := net.BodyWithProgressMonitor(resp, pgChan, nil)
 
-		er := updater.Apply(reader, updater.Options{
+		er := update2.Apply(reader, update2.Options{
 			Checksum:    checksum,
 			Signature:   signature,
 			TargetPath:  targetPath,
 			OldSavePath: backupFile,
 			Hash:        crypto.SHA256,
 			PublicKey:   &pubKey,
-			Verifier:    updater.NewRSAVerifier(),
+			Verifier:    update2.NewRSAVerifier(),
 		})
 		if er != nil {
 			errorChan <- er
 		}
 
+		// Now try to move previous version to the services folder. Do not break on error, just Warn in the logs.
+		// dataDir, _ := config.ServiceDataDir(common.SERVICE_GRPC_NAMESPACE_ + common.SERVICE_UPDATE)
+
+		// backupPath := filepath.Join("dataDir", filepath.Base(backupFile))
+		// if err := filesystem.SafeRenameFile(backupFile, backupPath); err != nil {
+		// 	// log.Logger(ctx).Warn("Update successfully applied but previous binary could not be moved to backup folder", zap.Error(err))
+		// 	log.Println("Update successfully applied but previous binary could not be moved to backup folder")
+		// }
+
 		return
 	}
+
 }

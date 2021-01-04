@@ -67,7 +67,7 @@ var configureOAuthCmd = &cobra.Command{
 				fmt.Println(promptui.IconWarn + " Cannot save token in keyring! " + err.Error())
 			}
 		}
-		filePath := rest.GetConfigFilePath()
+		filePath := rest.DefaultConfigFilePath()
 		data, _ := json.Marshal(newConf)
 		err = ioutil.WriteFile(filePath, data, 0644)
 		if err != nil {
@@ -108,7 +108,6 @@ const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 func RandString(n int) string {
 	b := make([]byte, n)
-	rand.Seed(time.Now().Unix())
 	for i := range b {
 		b[i] = letterBytes[rand.Intn(len(letterBytes))]
 	}
@@ -231,9 +230,6 @@ func oAuthInteractive(newConf *cells_sdk.SdkConfig) error {
 		return fmt.Errorf("test connection failed")
 	}
 	fmt.Println("\r" + promptui.IconGood + fmt.Sprintf(" Successfully logged to server, token will be refreshed at %v", time.Unix(int64(newConf.TokenExpiresAt), 0)))
-	bold := color.New(color.Bold)
-
-	fmt.Println("\r"+promptui.IconGood+" "+"You are logged-in as user:", bold.Sprintf("%s", rest.CurrentUser))
 	return nil
 }
 
@@ -262,7 +258,7 @@ func oAuthNonInteractive(conf *cells_sdk.SdkConfig) error {
 	if _, _, e := rest.GetApiClient(); e != nil {
 		return fmt.Errorf("test connection to newly configured server failed")
 	}
-	conf.User = rest.CurrentUser
+
 	return nil
 }
 

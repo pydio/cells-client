@@ -42,7 +42,6 @@ Please, provide the '-p' flag with a path to define where to put the generated f
 
 Also note that this command also generates the yaml files that we use for pydio.com documentation format.
 `,
-	Hidden: true,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if docPath == "" {

@@ -11,18 +11,13 @@ import (
 	"github.com/fatih/color"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 
-	"github.com/pydio/cells-client/v2/common"
 	"github.com/pydio/cells-client/v2/rest"
 )
 
-var (
-	updateToVersion string
-	updateDryRun    bool
-	devChannel      bool
-	unstableChannel bool
-	defaultChannel  = common.UpdateStableChannel
-)
+var updateToVersion string
+var updateDryRun bool
 
 var updateBinCmd = &cobra.Command{
 	Use:   "update",
@@ -32,14 +27,9 @@ To apply the actual update, re-run the command with a --version parameter.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		// if set it will use the selected channel to list and perform the update
-		if devChannel {
-			defaultChannel = common.UpdateDevChannel
-		}
-
-		binaries, e := rest.LoadUpdates(context.Background(), defaultChannel)
+		binaries, e := rest.LoadUpdates(context.Background())
 		if e != nil {
-			log.Fatal("Cannot retrieve available updates", e)
+			log.Fatal("Cannot retrieve available updates", zap.Error(e))
 		}
 		if len(binaries) == 0 {
 			c := color.New(color.FgRed)
@@ -79,8 +69,9 @@ To apply the actual update, re-run the command with a --version parameter.
 				log.Fatal("Cannot find the requested version")
 			}
 
-			// fmt.Println("Updating binary now")
-			fmt.Printf("Starting upgrade\n\n")
+			c := color.New(color.FgBlack)
+			c.Println("Updating binary now")
+			c.Println("")
 			pgChan := make(chan float64)
 			errorChan := make(chan error)
 			doneChan := make(chan bool)
@@ -97,9 +88,7 @@ To apply the actual update, re-run the command with a --version parameter.
 						return
 					case <-doneChan:
 						// TODO use another color or let the default color
-						fmt.Printf("\nChecking downloaded file integrity\n")
-						fmt.Println("Replacing binary now")
-						fmt.Printf("\n\nCells Client has been upgraded to version %v\n", apply.Version)
+						fmt.Printf("\n\nCells Client binary successfully upgraded\n")
 						return
 					}
 				}
@@ -117,7 +106,5 @@ func init() {
 
 	updateBinCmd.Flags().StringVarP(&updateToVersion, "version", "v", "", "Pass a version number to apply the upgrade")
 	updateBinCmd.Flags().BoolVarP(&updateDryRun, "dry-run", "d", false, "If set, this flag will grab the package and save it to the tmp directory instead of replacing current binary")
-	updateBinCmd.Flags().BoolVarP(&devChannel, "dev", "", false, "If set this flag will use the dev channel to load the updates")
-	updateBinCmd.Flags().BoolVarP(&unstableChannel, "unstable", "", false, "If set this flag will use the unstable channel to load the updates")
 
 }

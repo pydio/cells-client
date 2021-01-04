@@ -121,11 +121,7 @@ Note that you can only use *one* of the three above flags at a time.
 			log.Fatal(err)
 		}
 
-		var exists bool
-		if p != "" {
-			_, exists = rest.StatNode(p)
-		}
-
+		_, exists := rest.StatNode(p)
 		if lsExists {
 			// Only check existence and return
 			cmd.Println(exists)
