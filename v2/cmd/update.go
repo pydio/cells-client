@@ -11,7 +11,6 @@ import (
 	"github.com/fatih/color"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
-	"go.uber.org/zap"
 
 	"github.com/pydio/cells-client/v2/rest"
 )
@@ -29,7 +28,7 @@ To apply the actual update, re-run the command with a --version parameter.
 
 		binaries, e := rest.LoadUpdates(context.Background())
 		if e != nil {
-			log.Fatal("Cannot retrieve available updates", zap.Error(e))
+			log.Fatalf("Cannot retrieve available updates: %s", e.Error())
 		}
 		if len(binaries) == 0 {
 			c := color.New(color.FgRed)
