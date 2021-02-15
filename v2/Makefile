@@ -1,4 +1,4 @@
-DEV_VERSION=2.0.5-dev
+DEV_VERSION=2.1.0-dev
 ENV=env GOOS=linux
 TODAY:=$(shell date -u +%Y-%m-%dT%H:%M:%S)
 TIMESTAMP:=$(shell date -u +%Y%m%d%H%M%S)
@@ -16,7 +16,7 @@ main:
 	 .
 
 xgo:
-	${GOPATH}/bin/xgo -go 1.13 \
+	${GOPATH}/bin/xgo -go 1.15 \
 	 --image pydio/xgo:latest \
 	 --targets ${XGO_TARGETS} \
 	 -ldflags "-X github.com/pydio/cells-client/v2/common.Version=${CELLS_CLIENT_VERSION}\
@@ -29,8 +29,8 @@ xgo:
 dev:
 	go build\
 	 -tags dev\
-	 -ldflags "-X github.com/pydio/cells-client/v2/common.Version=2.0.0-alpha\
-	 -X github.com/pydio/cells-client/v2/common.BuildStamp=2020-06-01T00:00:00\
+	 -ldflags "-X github.com/pydio/cells-client/v2/common.Version=${DEV_VERSION}\
+	 -X github.com/pydio/cells-client/v2/common.BuildStamp=2021-01-01T00:00:00\
 	 -X github.com/pydio/cells-client/v2/common.BuildRevision=dev"\
 	 -o cec\
 	 .
