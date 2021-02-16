@@ -18,7 +18,6 @@ require (
 	github.com/gosuri/uiprogress v0.0.1
 	github.com/hashicorp/go-version v1.2.1
 	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf
-	github.com/jaytaylor/go-hostsfile v0.0.0-20201026230151-f581673a59cf // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/manifoldco/promptui v0.8.0

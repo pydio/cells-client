@@ -4,7 +4,9 @@ TODAY:=$(shell date -u +%Y-%m-%dT%H:%M:%S)
 TIMESTAMP:=$(shell date -u +%Y%m%d%H%M%S)
 GITREV:=$(shell git rev-parse HEAD)
 CELLS_CLIENT_VERSION?=${DEV_VERSION}.${TIMESTAMP}
+
 XGO_TARGETS?="linux/amd64,darwin/amd64,windows/amd64"
+XGO_IMAGE?=pydio/xgo:latest
 
 
 main:
@@ -17,7 +19,7 @@ main:
 
 xgo:
 	${GOPATH}/bin/xgo -go 1.15 \
-	 --image pydio/xgo:latest \
+	 --image ${XGO_IMAGE} \
 	 --targets ${XGO_TARGETS} \
 	 -ldflags "-X github.com/pydio/cells-client/v2/common.Version=${CELLS_CLIENT_VERSION}\
 	 -X github.com/pydio/cells-client/v2/common.BuildStamp=${TODAY}\
