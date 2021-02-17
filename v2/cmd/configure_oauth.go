@@ -18,8 +18,6 @@ import (
 	"github.com/skratchdot/open-golang/open"
 	"github.com/spf13/cobra"
 
-	cells_sdk "github.com/pydio/cells-sdk-go"
-
 	"github.com/pydio/cells-client/v2/rest"
 )
 
@@ -50,8 +48,8 @@ var configureOAuthCmd = &cobra.Command{
 	Run: func(cm *cobra.Command, args []string) {
 
 		var err error
-		newConf := &cells_sdk.SdkConfig{}
-
+		// newConf := &cells_sdk.SdkConfig{}
+		newConf := new(rest.CecConfig)
 		if oAuthUrl != "" && oAuthIdToken != "" {
 			err = oAuthNonInteractive(newConf)
 		} else {
@@ -115,7 +113,7 @@ func RandString(n int) string {
 	return string(b)
 }
 
-func oAuthInteractive(newConf *cells_sdk.SdkConfig) error {
+func oAuthInteractive(newConf *rest.CecConfig) error {
 	var e error
 	// PROMPT URL
 	p := promptui.Prompt{
@@ -215,7 +213,7 @@ func oAuthInteractive(newConf *cells_sdk.SdkConfig) error {
 	}
 
 	fmt.Println(promptui.IconGood + " Now exchanging the code for a valid IdToken")
-	if err := rest.OAuthExchangeCode(newConf, returnCode, callbackUrl); err != nil {
+	if err := rest.OAuthExchangeCode(&newConf.SdkConfig, returnCode, callbackUrl); err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println(promptui.IconGood + " Successfully Received Token!")
@@ -243,7 +241,7 @@ func isPortAvailable(port int, timeout int) bool {
 	return true
 }
 
-func oAuthNonInteractive(conf *cells_sdk.SdkConfig) error {
+func oAuthNonInteractive(conf *rest.CecConfig) error {
 
 	conf.Url = oAuthUrl
 	conf.IdToken = oAuthIdToken

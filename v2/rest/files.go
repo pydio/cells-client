@@ -26,9 +26,9 @@ func GetS3Client() (*s3.S3, string, error) {
 	if err := ConfigFromKeyring(DefaultConfig); err != nil {
 		return nil, "", err
 	}
-	s3Config := getS3ConfigFromSdkConfig(*DefaultConfig)
+	s3Config := getS3ConfigFromSdkConfig(DefaultConfig)
 	bucketName := s3Config.Bucket
-	s3Client, e := awstransport.GetS3CLient(DefaultConfig, &s3Config)
+	s3Client, e := awstransport.GetS3CLient(&DefaultConfig.SdkConfig, &s3Config)
 	if e != nil {
 		return nil, "", e
 	}
@@ -237,8 +237,8 @@ func uploadManager(path string, content io.ReadSeeker, computeMD5 bool, errChan 
 			// We call log.fatal inside the method if there is an error, no need to manage that here.
 			RefreshAndStoreIfRequired(DefaultConfig)
 
-			s3Config := getS3ConfigFromSdkConfig(*DefaultConfig)
-			apiKey, _ := oidc.RetrieveToken(DefaultConfig)
+			s3Config := getS3ConfigFromSdkConfig(DefaultConfig)
+			apiKey, _ := oidc.RetrieveToken(&DefaultConfig.SdkConfig)
 			r.Config.WithCredentials(credentials.NewStaticCredentials(apiKey, s3Config.ApiSecret, ""))
 		}}
 	})

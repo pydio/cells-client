@@ -12,7 +12,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/pydio/cells-client/v2/rest"
-	cells_sdk "github.com/pydio/cells-sdk-go"
 )
 
 const authTypeClientAuth = "client-auth"
@@ -39,7 +38,8 @@ You can also go through the whole process in a non-interactive manner by using t
 	Run: func(cm *cobra.Command, args []string) {
 
 		var err error
-		newConf := &cells_sdk.SdkConfig{}
+		// newConf := &rest.CecConfig{}
+		newConf := new(rest.CecConfig)
 
 		if notEmpty(configHost) == nil && notEmpty(configUser) == nil && notEmpty(configPwd) == nil {
 			err = nonInteractive(newConf)
@@ -67,7 +67,7 @@ You can also go through the whole process in a non-interactive manner by using t
 	},
 }
 
-func interactive(newConf *cells_sdk.SdkConfig) error {
+func interactive(newConf *rest.CecConfig) error {
 
 	var e error
 
@@ -118,7 +118,7 @@ func interactive(newConf *cells_sdk.SdkConfig) error {
 	return nil
 }
 
-func nonInteractive(conf *cells_sdk.SdkConfig) error {
+func nonInteractive(conf *rest.CecConfig) error {
 
 	conf.Url = configHost
 	conf.User = configUser

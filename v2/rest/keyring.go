@@ -15,7 +15,7 @@ const (
 )
 
 // ConfigToKeyring tries to store tokens in local keychain and remove them from the conf
-func ConfigToKeyring(conf *cells_sdk.SdkConfig) error {
+func ConfigToKeyring(conf *CecConfig) error {
 
 	// We use OAuth2 grant flow
 	if conf.IdToken != "" && conf.RefreshToken != "" {
@@ -43,7 +43,7 @@ func ConfigToKeyring(conf *cells_sdk.SdkConfig) error {
 }
 
 // ConfigFromKeyring tries to find sensitive info inside local keychain and feed the conf.
-func ConfigFromKeyring(conf *cells_sdk.SdkConfig) error {
+func ConfigFromKeyring(conf *CecConfig) error {
 
 	// If only client key and user name, consider Client Secret and password are in the keyring
 	if conf.ClientKey != "" && conf.ClientSecret == "" && conf.User != "" && conf.Password == "" {

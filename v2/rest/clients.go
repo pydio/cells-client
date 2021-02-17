@@ -21,9 +21,15 @@ import (
 )
 
 var (
-	DefaultConfig  *cells_sdk.SdkConfig
+	// DefaultConfig  *cells_sdk.SdkConfig
+	DefaultConfig  *CecConfig
 	configFilePath string
 )
+
+type CecConfig struct {
+	cells_sdk.SdkConfig
+	SkipKeyring bool
+}
 
 func GetConfigFilePath() string {
 	if configFilePath != "" {
@@ -68,7 +74,7 @@ func GetApiClient(anonymous ...bool) (context.Context, *client.PydioCellsRest, e
 		anon = true
 	}
 	DefaultConfig.CustomHeaders = map[string]string{"User-Agent": "cells-client/" + common.Version}
-	c, t, e := transport.GetRestClientTransport(DefaultConfig, anon)
+	c, t, e := transport.GetRestClientTransport(&DefaultConfig.SdkConfig, anon)
 	if e != nil {
 		return nil, nil, e
 	}
@@ -131,7 +137,7 @@ func SetUpEnvironment(confPath string) error {
 
 var refreshMux = &sync.Mutex{}
 
-func RefreshAndStoreIfRequired(c *cells_sdk.SdkConfig) bool {
+func RefreshAndStoreIfRequired(c *CecConfig) bool {
 	refreshMux.Lock()
 	defer refreshMux.Unlock()
 
@@ -151,9 +157,10 @@ func RefreshAndStoreIfRequired(c *cells_sdk.SdkConfig) bool {
 	return refreshed
 }
 
-func getSdkConfigFromEnv() (cells_sdk.SdkConfig, error) {
+func getSdkConfigFromEnv() (CecConfig, error) {
 
-	var c cells_sdk.SdkConfig
+	// var c CecConfig
+	c := new(CecConfig)
 
 	// Check presence of environment variables
 	url := os.Getenv(KeyURL)
@@ -167,13 +174,13 @@ func getSdkConfigFromEnv() (cells_sdk.SdkConfig, error) {
 	}
 	skipVerify, err := strconv.ParseBool(skipVerifyStr)
 	if err != nil {
-		return c, err
+		return *c, err
 	}
 
 	// Client Key and Client Secret are not used anymore
 	// if !(len(url) > 0 && len(clientKey) > 0 && len(clientSecret) > 0 && len(user) > 0 && len(password) > 0) {
 	if !(len(url) > 0 && len(user) > 0 && len(password) > 0) {
-		return c, nil
+		return *c, nil
 	}
 
 	c.Url = url
@@ -186,10 +193,10 @@ func getSdkConfigFromEnv() (cells_sdk.SdkConfig, error) {
 	// Note: this cannot be set via env variable. Enhance?
 	c.UseTokenCache = true
 
-	return c, nil
+	return *c, nil
 }
 
-func getS3ConfigFromSdkConfig(sConf cells_sdk.SdkConfig) cells_sdk.S3Config {
+func getS3ConfigFromSdkConfig(sConf *CecConfig) cells_sdk.S3Config {
 	var c cells_sdk.S3Config
 	c.Bucket = "io"
 	c.ApiKey = "gateway"
