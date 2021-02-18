@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -18,14 +19,17 @@ import (
 	cells_sdk "github.com/pydio/cells-sdk-go"
 	"github.com/pydio/cells-sdk-go/client"
 	"github.com/pydio/cells-sdk-go/transport"
+	sdk_http "github.com/pydio/cells-sdk-go/transport/http"
+	"github.com/pydio/cells-sdk-go/transport/oidc"
 )
 
 var (
-	// DefaultConfig  *cells_sdk.SdkConfig
+	// DefaultConfig  stores the current active config.
 	DefaultConfig  *CecConfig
 	configFilePath string
 )
 
+// CecConfig extends the default SdkConfig with custom parameters.
 type CecConfig struct {
 	cells_sdk.SdkConfig
 	SkipKeyring bool
@@ -81,6 +85,25 @@ func GetApiClient(anonymous ...bool) (context.Context, *client.PydioCellsRest, e
 	cl := client.New(t, strfmt.Default)
 	return c, cl, nil
 
+}
+
+// AuthenticatedGet performs an authenticated GET request for the passed URI (that must start with a '/')
+func AuthenticatedGet(uri string) (*http.Response, error) {
+	currURL := DefaultConfig.SdkConfig.Url + uri
+	httpClient := sdk_http.GetHttpClient(&DefaultConfig.SdkConfig)
+
+	req, err := http.NewRequest("GET", currURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	token, err := oidc.RetrieveToken(&DefaultConfig.SdkConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+token)
+	return httpClient.Do(req)
 }
 
 // SetUpEnvironment retrieves parameters and stores them in the DefaultConfig of the SDK.
