@@ -36,6 +36,10 @@ var configureTokenAuthCmd = &cobra.Command{
 		p = promptui.Prompt{Label: "Server URL", Validate: validUrl}
 		newConf.Url, err = p.Run()
 		if err != nil {
+			if err == promptui.ErrInterrupt {
+				fmt.Println("Operation aborted by user")
+				return
+			}
 			fmt.Println(promptui.IconBad + "URL is not valid" + err.Error())
 			return
 		}
@@ -43,6 +47,9 @@ var configureTokenAuthCmd = &cobra.Command{
 		p = promptui.Prompt{Label: "Token"}
 		newConf.IdToken, err = p.Run()
 		if err != nil {
+			if err == promptui.ErrInterrupt {
+				fmt.Println("Operation aborted by user")
+			}
 			return
 		}
 
