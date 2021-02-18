@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 )
 
@@ -24,19 +25,24 @@ If you want to forget a connection, the config file can be wiped out by calling 
 If no keyring is defined in the local machine, all information is stored in *clear text* in a config file of the Cells Client working directory.
 In such case, do not use the 'client-auth' process.
 `,
-	Run: func(cm *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, args []string) {
 
-		// Call OAuth grant flow by default
-		configureOAuthCmd.Run(cm, args)
+		s := promptui.Select{Label: "Select authentication method", Size: 3, Items: []string{"Personal Access Token (unique token generated server-side)", "OAuth2 login (requires a browser access)", "Client Auth (direct login/password, less secure)"}}
+		n, _, err := s.Run()
+		if err != nil {
+			return
+		}
 
-		// switch configAuthType {
-		// case authTypeClientAuth:
-		// configureClientAuthCmd.Run(cm, args)
-		// break
-		// case authTypeOAuth:
-		// default:
-		// configureOAuthCmd.Run(cm, args)
-		// }
+		switch n {
+		case 0:
+			configureTokenAuthCmd.Run(cmd, args)
+		case 1:
+			configureOAuthCmd.Run(cmd, args)
+		case 2:
+			configureClientAuthCmd.Run(cmd, args)
+		default:
+			return
+		}
 	},
 }
 
