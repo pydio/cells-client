@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 
 	"github.com/manifoldco/promptui"
@@ -68,7 +69,7 @@ func saveConfig(config *rest.CecConfig) error {
 		return err
 	}
 
-	if err := os.WriteFile(file, data, 0600); err != nil {
+	if err := ioutil.WriteFile(file, data, 0600); err != nil {
 		return err
 	}
 	return nil
