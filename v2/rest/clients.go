@@ -89,9 +89,8 @@ func GetApiClient(anonymous ...bool) (context.Context, *client.PydioCellsRest, e
 
 // AuthenticatedGet performs an authenticated GET request for the passed URI (that must start with a '/')
 func AuthenticatedGet(uri string) (*http.Response, error) {
-	currURL := DefaultConfig.SdkConfig.Url + uri
-	httpClient := sdk_http.GetHttpClient(&DefaultConfig.SdkConfig)
 
+	currURL := DefaultConfig.SdkConfig.Url + uri
 	req, err := http.NewRequest("GET", currURL, nil)
 	if err != nil {
 		return nil, err
@@ -103,6 +102,7 @@ func AuthenticatedGet(uri string) (*http.Response, error) {
 	}
 
 	req.Header.Set("Authorization", "Bearer "+token)
+	httpClient := sdk_http.GetHttpClient(&DefaultConfig.SdkConfig)
 	return httpClient.Do(req)
 }
 
