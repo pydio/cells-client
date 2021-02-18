@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 )
@@ -30,6 +32,9 @@ In such case, do not use the 'client-auth' process.
 		s := promptui.Select{Label: "Select authentication method", Size: 3, Items: []string{"Personal Access Token (unique token generated server-side)", "OAuth2 login (requires a browser access)", "Client Auth (direct login/password, less secure)"}}
 		n, _, err := s.Run()
 		if err != nil {
+			if err == promptui.ErrInterrupt {
+				fmt.Println("Operation aborted by user")
+			}
 			return
 		}
 

@@ -38,7 +38,6 @@ You can also go through the whole process in a non-interactive manner by using t
 	Run: func(cm *cobra.Command, args []string) {
 
 		var err error
-		// newConf := &rest.CecConfig{}
 		newConf := new(rest.CecConfig)
 
 		if notEmpty(configHost) == nil && notEmpty(configUser) == nil && notEmpty(configPwd) == nil {
