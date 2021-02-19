@@ -1,9 +1,7 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"strings"
 
@@ -55,9 +53,8 @@ You can also go through the whole process in a non-interactive manner by using t
 				fmt.Println(promptui.IconWarn + " Cannot save token in keyring! " + err.Error())
 			}
 		}
-		filePath := rest.DefaultConfigFilePath()
-		data, _ := json.Marshal(newConf)
-		err = ioutil.WriteFile(filePath, data, 0600)
+
+		err = saveConfig(newConf)
 		if err != nil {
 			fmt.Println(promptui.IconBad + " Cannot save configuration file! " + err.Error())
 		} else {
