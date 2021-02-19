@@ -109,7 +109,9 @@ func SetUpEnvironment(confPath string) error {
 			return err
 		}
 		// Retrieves sensible info from the keyring if one is present
-		ConfigFromKeyring(&c)
+		if !c.SkipKeyring {
+			ConfigFromKeyring(&c)
+		}
 
 		// Refresh token if required
 		if refreshed, err := RefreshIfRequired(&c); refreshed {
@@ -118,9 +120,11 @@ func SetUpEnvironment(confPath string) error {
 			}
 			// Copy config as IdToken will be cleared
 			storeConfig := c
-			ConfigToKeyring(&storeConfig)
+			if !c.SkipKeyring {
+				ConfigToKeyring(&storeConfig)
+			}
 			// Save config to renew TokenExpireAt
-			confData, _ := json.Marshal(&storeConfig)
+			confData, _ := json.MarshalIndent(&storeConfig, "", "\t")
 			ioutil.WriteFile(confPath, confData, 0666)
 		}
 	}
@@ -177,9 +181,11 @@ func RefreshAndStoreIfRequired(c *CecConfig) bool {
 	if refreshed {
 		// Copy config as IdToken will be cleared
 		storeConfig := *c
-		ConfigToKeyring(&storeConfig)
+		if !c.SkipKeyring {
+			ConfigToKeyring(&storeConfig)
+		}
 		// Save config to renew TokenExpireAt
-		confData, _ := json.Marshal(&storeConfig)
+		confData, _ := json.MarshalIndent(&storeConfig, "", "\t")
 		ioutil.WriteFile(GetConfigFilePath(), confData, 0600)
 	}
 
