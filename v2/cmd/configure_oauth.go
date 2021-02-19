@@ -2,9 +2,7 @@ package cmd
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"net"
 	"net/http"
@@ -56,18 +54,22 @@ var configureOAuthCmd = &cobra.Command{
 			err = oAuthInteractive(newConf)
 		}
 		if err != nil {
+			if err == promptui.ErrInterrupt {
+				fmt.Println("Operation aborted by user")
+				return
+			}
 			log.Fatal(err)
 		}
 
+		newConf.SkipKeyring = skipKeyring
 		// Now save config!
 		if !skipKeyring {
 			if err := rest.ConfigToKeyring(newConf); err != nil {
 				fmt.Println(promptui.IconWarn + " Cannot save token in keyring! " + err.Error())
 			}
 		}
-		filePath := rest.DefaultConfigFilePath()
-		data, _ := json.Marshal(newConf)
-		err = ioutil.WriteFile(filePath, data, 0644)
+
+		err = saveConfig(newConf)
 		if err != nil {
 			fmt.Println(promptui.IconBad + " Cannot save configuration file! " + err.Error())
 		} else {
