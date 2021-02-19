@@ -69,12 +69,10 @@ var configureTokenAuthCmd = &cobra.Command{
 
 func saveConfig(config *rest.CecConfig) error {
 	file := rest.GetConfigFilePath()
-
 	data, err := json.MarshalIndent(config, "", "\t")
 	if err != nil {
 		return err
 	}
-
 	if err := ioutil.WriteFile(file, data, 0600); err != nil {
 		return err
 	}
