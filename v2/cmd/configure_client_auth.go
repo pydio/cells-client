@@ -44,9 +44,13 @@ You can also go through the whole process in a non-interactive manner by using t
 			err = interactive(newConf)
 		}
 		if err != nil {
+			if err == promptui.ErrInterrupt {
+				fmt.Println("Operation aborted by User")
+				return
+			}
 			log.Fatal(err)
 		}
-
+		newConf.SkipKeyring = skipKeyring
 		// Now save config!
 		if !skipKeyring {
 			if err := rest.ConfigToKeyring(newConf); err != nil {
