@@ -35,39 +35,6 @@ type CecConfig struct {
 	SkipKeyring bool
 }
 
-func GetConfigFilePath() string {
-	if configFilePath != "" {
-		return configFilePath
-	}
-	return DefaultConfigFilePath()
-}
-
-func SetConfigFilePath(confPath string) {
-	configFilePath = confPath
-}
-
-func DefaultConfigFilePath() string {
-
-	vendor := "Pydio"
-	if runtime.GOOS == "linux" {
-		vendor = "pydio"
-	}
-	appName := "cells-client"
-	configDirs := configdir.New(vendor, appName)
-	folders := configDirs.QueryFolders(configdir.Global)
-	if len(folders) == 0 {
-		folders = configDirs.QueryFolders(configdir.Local)
-	}
-	f := folders[0].Path
-	if err := os.MkdirAll(f, 0777); err != nil {
-		log.Fatal("Could not create local data dir - please check that you have the correct permissions for the folder -", f)
-	}
-
-	f = filepath.Join(f, "config.json")
-
-	return f
-}
-
 // GetApiClient connects to the Pydio Cells server defined by this config, by sending an authentication
 // request to the OIDC service to get a valid JWT (or taking the JWT from cache).
 // It also returns a context to be used in subsequent requests.
@@ -87,7 +54,7 @@ func GetApiClient(anonymous ...bool) (context.Context, *client.PydioCellsRest, e
 
 }
 
-// AuthenticatedGet performs an authenticated GET request for the passed URI (that must start with a '/')
+// AuthenticatedGet performs an authenticated GET request for the passed URI (that must start with a '/').
 func AuthenticatedGet(uri string) (*http.Response, error) {
 
 	currURL := DefaultConfig.SdkConfig.Url + uri
@@ -96,12 +63,18 @@ func AuthenticatedGet(uri string) (*http.Response, error) {
 		return nil, err
 	}
 
-	token, err := oidc.RetrieveToken(&DefaultConfig.SdkConfig)
+	return AuthenticatedRequest(req, &DefaultConfig.SdkConfig)
+}
+
+// AuthenticatedRequest performs the passed request after adding an authorization Header.
+func AuthenticatedRequest(req *http.Request, sdkConfig *cells_sdk.SdkConfig) (*http.Response, error) {
+
+	token, err := oidc.RetrieveToken(sdkConfig)
 	if err != nil {
 		return nil, err
 	}
-
 	req.Header.Set("Authorization", "Bearer "+token)
+
 	httpClient := sdk_http.GetHttpClient(&DefaultConfig.SdkConfig)
 	return httpClient.Do(req)
 }
@@ -156,6 +129,39 @@ func SetUpEnvironment(confPath string) error {
 	DefaultConfig = &c
 
 	return nil
+}
+
+func GetConfigFilePath() string {
+	if configFilePath != "" {
+		return configFilePath
+	}
+	return DefaultConfigFilePath()
+}
+
+func SetConfigFilePath(confPath string) {
+	configFilePath = confPath
+}
+
+func DefaultConfigFilePath() string {
+
+	vendor := "Pydio"
+	if runtime.GOOS == "linux" {
+		vendor = "pydio"
+	}
+	appName := "cells-client"
+	configDirs := configdir.New(vendor, appName)
+	folders := configDirs.QueryFolders(configdir.Global)
+	if len(folders) == 0 {
+		folders = configDirs.QueryFolders(configdir.Local)
+	}
+	f := folders[0].Path
+	if err := os.MkdirAll(f, 0777); err != nil {
+		log.Fatal("Could not create local data dir - please check that you have the correct permissions for the folder -", f)
+	}
+
+	f = filepath.Join(f, "config.json")
+
+	return f
 }
 
 var refreshMux = &sync.Mutex{}
