@@ -51,12 +51,6 @@ You can also go through the whole process in a non-interactive manner by using t
 			log.Fatal(err)
 		}
 		newConf.SkipKeyring = skipKeyring
-		// Now save config!
-		if !skipKeyring {
-			if err := rest.ConfigToKeyring(newConf); err != nil {
-				fmt.Println(promptui.IconWarn + " Cannot save token in keyring! " + err.Error())
-			}
-		}
 
 		err = saveConfig(newConf)
 		if err != nil {

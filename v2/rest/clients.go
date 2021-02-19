@@ -109,10 +109,8 @@ func SetUpEnvironment(confPath string) error {
 			return err
 		}
 		// Retrieves sensible info from the keyring if one is present
-		if !c.SkipKeyring {
-			ConfigFromKeyring(&c)
-		}
-
+		ConfigFromKeyring(&c)
+		
 		// Refresh token if required
 		if refreshed, err := RefreshIfRequired(&c); refreshed {
 			if err != nil {

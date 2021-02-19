@@ -1,9 +1,12 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 
 	"github.com/manifoldco/promptui"
+	"github.com/pydio/cells-client/v2/rest"
 	"github.com/spf13/cobra"
 )
 
@@ -51,10 +54,36 @@ In such case, do not use the 'client-auth' process.
 	},
 }
 
+// saveConfig handle file and/or keyring storage depending on user preference and system.
+func saveConfig(config *rest.CecConfig) error {
+
+	// TODO insure config is OK 
+	// LS ? Retrieve UserName 
+
+	
+	if !config.SkipKeyring {
+		if err := rest.ConfigToKeyring(config); err != nil {
+			return err
+		}
+	}
+
+	file := rest.GetConfigFilePath()
+	data, err := json.MarshalIndent(config, "", "\t")
+	if err != nil {
+		return err
+	}
+	if err := ioutil.WriteFile(file, data, 0600); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func init() {
 
 	flags := configureCmd.PersistentFlags()
 	helpMsg := "Explicitly tell the tool to *NOT* try to use a keyring. Only use this flag if you really know what your are doing: some sensitive information will end up stored on your file system in clear text."
 	flags.BoolVar(&skipKeyring, "no-keyring", false, helpMsg)
 	RootCmd.AddCommand(configureCmd)
+
 }

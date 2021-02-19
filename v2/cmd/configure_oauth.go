@@ -46,7 +46,6 @@ var configureOAuthCmd = &cobra.Command{
 	Run: func(cm *cobra.Command, args []string) {
 
 		var err error
-		// newConf := &cells_sdk.SdkConfig{}
 		newConf := new(rest.CecConfig)
 		if oAuthUrl != "" && oAuthIdToken != "" {
 			err = oAuthNonInteractive(newConf)
@@ -60,14 +59,7 @@ var configureOAuthCmd = &cobra.Command{
 			}
 			log.Fatal(err)
 		}
-
 		newConf.SkipKeyring = skipKeyring
-		// Now save config!
-		if !skipKeyring {
-			if err := rest.ConfigToKeyring(newConf); err != nil {
-				fmt.Println(promptui.IconWarn + " Cannot save token in keyring! " + err.Error())
-			}
-		}
 
 		err = saveConfig(newConf)
 		if err != nil {

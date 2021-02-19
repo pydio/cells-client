@@ -39,6 +39,7 @@ func ConfigToKeyring(conf *CecConfig) error {
 		conf.Password = ""
 	}
 
+	// TODO handle PAT
 	return nil
 }
 
