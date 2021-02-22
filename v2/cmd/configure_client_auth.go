@@ -9,6 +9,7 @@ import (
 	"github.com/micro/go-log"
 	"github.com/spf13/cobra"
 
+	"github.com/pydio/cells-client/v2/common"
 	"github.com/pydio/cells-client/v2/rest"
 )
 
@@ -36,7 +37,10 @@ You can also go through the whole process in a non-interactive manner by using t
 	Run: func(cm *cobra.Command, args []string) {
 
 		var err error
-		newConf := new(rest.CecConfig)
+		newConf := &rest.CecConfig{
+			SkipKeyring: skipKeyring,
+			AuthType:    common.ClientAuthType,
+		}
 
 		if notEmpty(configHost) == nil && notEmpty(configUser) == nil && notEmpty(configPwd) == nil {
 			err = nonInteractive(newConf)
@@ -50,7 +54,6 @@ You can also go through the whole process in a non-interactive manner by using t
 			}
 			log.Fatal(err)
 		}
-		newConf.SkipKeyring = skipKeyring
 
 		err = saveConfig(newConf)
 		if err != nil {
@@ -106,7 +109,7 @@ func interactive(newConf *rest.CecConfig) error {
 	if _, _, e := rest.GetApiClient(); e != nil {
 		fmt.Println("\r" + promptui.IconBad + " Could not connect to server, please recheck your configuration")
 		fmt.Println("Cause: " + e.Error())
-		return fmt.Errorf("Test connection failed.")
+		return fmt.Errorf("test connection failed")
 	}
 	fmt.Println("\r" + promptui.IconGood + " Successfully logged to server")
 	return nil
@@ -135,8 +138,8 @@ func nonInteractive(conf *rest.CecConfig) error {
 
 func validUrl(input string) error {
 	// Warning: trim must also be performed when retrieving the final value.
-	// Here we only validate that the trimed input is valid, but do not modify it.
-	input = strings.Trim(input, " ")
+	// Here we only validate that the trimmed input is valid, but do not modify it.
+	input = strings.TrimSpace(input)
 	if len(input) == 0 {
 		return fmt.Errorf("Field cannot be empty")
 	}
