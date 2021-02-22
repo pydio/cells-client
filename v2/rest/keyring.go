@@ -6,19 +6,21 @@ import (
 	"github.com/zalando/go-keyring"
 
 	cells_sdk "github.com/pydio/cells-sdk-go"
+
+	"github.com/pydio/cells-client/v2/common"
 )
 
 const (
 	keyringService              = "com.pydio.cells-client"
 	keyringIdTokenKey           = "IdToken"
 	keyringClientCredentialsKey = "ClientCredentials"
+	keyringPersonalToken        = "PersonalToken"
 )
 
 // ConfigToKeyring tries to store tokens in local keychain and remove them from the conf
 func ConfigToKeyring(conf *CecConfig) error {
-
-	// We use OAuth2 grant flow
-	if conf.IdToken != "" && conf.RefreshToken != "" {
+	switch conf.AuthType {
+	case common.OAuthType:
 		key := conf.Url + "::" + keyringIdTokenKey
 		value := conf.IdToken + "__//__" + conf.RefreshToken
 		if e := keyring.Set(keyringService, key, value); e != nil {
@@ -26,10 +28,7 @@ func ConfigToKeyring(conf *CecConfig) error {
 		}
 		conf.IdToken = ""
 		conf.RefreshToken = ""
-	}
-
-	// We use client credentials
-	if conf.ClientSecret != "" && conf.Password != "" {
+	case common.ClientAuthType:
 		key := conf.Url + "::" + keyringClientCredentialsKey
 		value := conf.ClientSecret + "__//__" + conf.Password
 		if e := keyring.Set(keyringService, key, value); e != nil {
@@ -37,28 +36,21 @@ func ConfigToKeyring(conf *CecConfig) error {
 		}
 		conf.ClientSecret = ""
 		conf.Password = ""
+	case common.PersonalTokenType:
+		key := conf.Url + "::" + keyringPersonalToken
+		value := conf.IdToken
+		if e := keyring.Set(keyringService, key, value); e != nil {
+			return e
+		}
+		conf.IdToken = ""
 	}
-
-	// TODO handle PAT
 	return nil
 }
 
 // ConfigFromKeyring tries to find sensitive info inside local keychain and feed the conf.
 func ConfigFromKeyring(conf *CecConfig) error {
-
-	// If only client key and user name, consider Client Secret and password are in the keyring
-	if conf.ClientKey != "" && conf.ClientSecret == "" && conf.User != "" && conf.Password == "" {
-		if value, e := keyring.Get(keyringService, conf.Url+"::"+keyringClientCredentialsKey); e == nil {
-			parts := strings.Split(value, "__//__")
-			conf.ClientSecret = parts[0]
-			conf.Password = parts[1]
-		} else {
-			return e
-		}
-	}
-
-	// If no token, no user and no client key, consider tokens are stored in keyring
-	if conf.IdToken == "" && conf.RefreshToken == "" && conf.User == "" && conf.Password == "" {
+	switch conf.AuthType {
+	case common.OAuthType:
 		if value, e := keyring.Get(keyringService, conf.Url+"::"+keyringIdTokenKey); e == nil {
 			parts := strings.Split(value, "__//__")
 			conf.IdToken = parts[0]
@@ -66,9 +58,25 @@ func ConfigFromKeyring(conf *CecConfig) error {
 		} else {
 			return e
 		}
+	case common.ClientAuthType:
+		if value, e := keyring.Get(keyringService, conf.Url+"::"+keyringClientCredentialsKey); e == nil {
+			parts := strings.Split(value, "__//__")
+			conf.ClientSecret = parts[0]
+			conf.Password = parts[1]
+		} else {
+			return e
+		}
+	case common.PersonalTokenType:
+		if value, e := keyring.Get(keyringService, conf.Url+"::"+keyringIdTokenKey); e == nil {
+			conf.IdToken = value
+		} else {
+			return e
+		}
 	}
 	return nil
 }
+
+// TODO create methods to properly concatenate or split the values inside the keyring
 
 // ClearKeyring removes sensitive info from local keychain, if they are present.
 func ClearKeyring(c *cells_sdk.SdkConfig) error {
