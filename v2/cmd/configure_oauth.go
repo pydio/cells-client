@@ -16,6 +16,7 @@ import (
 	"github.com/skratchdot/open-golang/open"
 	"github.com/spf13/cobra"
 
+	"github.com/pydio/cells-client/v2/common"
 	"github.com/pydio/cells-client/v2/rest"
 )
 
@@ -46,7 +47,11 @@ var configureOAuthCmd = &cobra.Command{
 	Run: func(cm *cobra.Command, args []string) {
 
 		var err error
-		newConf := new(rest.CecConfig)
+		newConf := &rest.CecConfig{
+			SkipKeyring: skipKeyring,
+			AuthType:    common.OAuthType,
+		}
+
 		if oAuthUrl != "" && oAuthIdToken != "" {
 			err = oAuthNonInteractive(newConf)
 		} else {
@@ -59,7 +64,6 @@ var configureOAuthCmd = &cobra.Command{
 			}
 			log.Fatal(err)
 		}
-		newConf.SkipKeyring = skipKeyring
 
 		err = saveConfig(newConf)
 		if err != nil {
@@ -119,7 +123,7 @@ func oAuthInteractive(newConf *rest.CecConfig) error {
 	if newConf.Url, e = p.Run(); e != nil {
 		return e
 	} else {
-		newConf.Url = strings.Trim(newConf.Url, " ")
+		newConf.Url = strings.TrimSpace(newConf.Url)
 	}
 	u, e := url.Parse(newConf.Url)
 	if e != nil {
