@@ -15,12 +15,13 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/shibukawa/configdir"
 
-	"github.com/pydio/cells-client/v2/common"
 	cells_sdk "github.com/pydio/cells-sdk-go"
 	"github.com/pydio/cells-sdk-go/client"
 	"github.com/pydio/cells-sdk-go/transport"
 	sdk_http "github.com/pydio/cells-sdk-go/transport/http"
 	"github.com/pydio/cells-sdk-go/transport/oidc"
+
+	"github.com/pydio/cells-client/v2/common"
 )
 
 var (
@@ -33,6 +34,7 @@ var (
 type CecConfig struct {
 	cells_sdk.SdkConfig
 	SkipKeyring bool
+	AuthType    string
 }
 
 // GetApiClient connects to the Pydio Cells server defined by this config, by sending an authentication
@@ -110,7 +112,7 @@ func SetUpEnvironment(confPath string) error {
 		}
 		// Retrieves sensible info from the keyring if one is present
 		ConfigFromKeyring(&c)
-		
+
 		// Refresh token if required
 		if refreshed, err := RefreshIfRequired(&c); refreshed {
 			if err != nil {
