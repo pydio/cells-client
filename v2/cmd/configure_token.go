@@ -2,10 +2,12 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 
+	"github.com/pydio/cells-client/v2/common"
 	"github.com/pydio/cells-client/v2/rest"
 )
 
@@ -22,19 +24,21 @@ var configureTokenAuthCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 		var p promptui.Prompt
-		newConf := new(rest.CecConfig)
+		newConf := &rest.CecConfig{
+			SkipKeyring: skipKeyring,
+			AuthType:    common.PersonalTokenType,
+		}
 
-		newConf.SkipKeyring = skipKeyring
-
+		// non interactive
 		if token != "" && serverURL != "" {
-
 			newConf.IdToken = token
 			newConf.Url = serverURL
-
-		} else { // No Flags : prompt user
+		} else { // interactive
 
 			p = promptui.Prompt{Label: "Server URL", Validate: validUrl}
 			newConf.Url, err = p.Run()
+			// clean spaces in the URL
+			newConf.Url = strings.TrimSpace(newConf.Url)
 			if err != nil {
 				if err == promptui.ErrInterrupt {
 					fmt.Println("Operation aborted by user")
