@@ -72,6 +72,25 @@ func ConfigFromKeyring(conf *CecConfig) error {
 		} else {
 			return e
 		}
+	default:
+		// default case is intended for backwards compatibility
+		if conf.ClientKey != "" && conf.ClientSecret == "" && conf.User != "" && conf.Password == "" { // client auth
+			if value, e := keyring.Get(keyringService, conf.Url+"::"+keyringClientCredentialsKey); e == nil {
+				parts := strings.Split(value, "__//__")
+				conf.ClientSecret = parts[0]
+				conf.Password = parts[1]
+			} else {
+				return e
+			}
+		} else if conf.IdToken == "" && conf.RefreshToken == "" && conf.User == "" && conf.Password == "" { // oauth
+			if value, e := keyring.Get(keyringService, conf.Url+"::"+keyringIdTokenKey); e == nil {
+				parts := strings.Split(value, "__//__")
+				conf.IdToken = parts[0]
+				conf.RefreshToken = parts[1]
+			} else {
+				return e
+			}
+		}
 	}
 	return nil
 }
