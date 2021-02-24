@@ -5,8 +5,6 @@ import (
 
 	"github.com/zalando/go-keyring"
 
-	cells_sdk "github.com/pydio/cells-sdk-go"
-
 	"github.com/pydio/cells-client/v2/common"
 )
 
@@ -67,7 +65,7 @@ func ConfigFromKeyring(conf *CecConfig) error {
 			return e
 		}
 	case common.PersonalTokenType:
-		if value, e := keyring.Get(keyringService, conf.Url+"::"+keyringIdTokenKey); e == nil {
+		if value, e := keyring.Get(keyringService, conf.Url+"::"+keyringPersonalToken); e == nil {
 			conf.IdToken = value
 		} else {
 			return e
@@ -98,18 +96,30 @@ func ConfigFromKeyring(conf *CecConfig) error {
 // TODO create methods to properly concatenate or split the values inside the keyring
 
 // ClearKeyring removes sensitive info from local keychain, if they are present.
-func ClearKeyring(c *cells_sdk.SdkConfig) error {
+func ClearKeyring(config *CecConfig) error {
 	// Best effort to remove known keys from keyring
 	// TODO maybe check if at least one of the two has been found and deleted and otherwise print at least a warning
-	if err := keyring.Delete(keyringService, c.Url+"::"+keyringClientCredentialsKey); err != nil {
-		if err.Error() != "secret not found in keyring" {
-			return err
+
+	switch config.AuthType {
+	case common.OAuthType:
+		if err := keyring.Delete(keyringService, config.Url+"::"+keyringIdTokenKey); err != nil {
+			if err.Error() != "secret not found in keyring" {
+				return err
+			}
+		}
+	case common.ClientAuthType:
+		if err := keyring.Delete(keyringService, config.Url+"::"+keyringClientCredentialsKey); err != nil {
+			if err.Error() != "secret not found in keyring" {
+				return err
+			}
+		}
+	case common.PersonalTokenType:
+		if err := keyring.Delete(keyringService, config.Url+"::"+keyringPersonalToken); err != nil {
+			if err.Error() != "secret not found in keyring" {
+				return err
+			}
 		}
 	}
-	if err := keyring.Delete(keyringService, c.Url+"::"+keyringIdTokenKey); err != nil {
-		if err.Error() != "secret not found in keyring" {
-			return err
-		}
-	}
+
 	return nil
 }
