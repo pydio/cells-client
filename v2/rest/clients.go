@@ -64,13 +64,11 @@ func AuthenticatedGet(uri string) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return AuthenticatedRequest(req, &DefaultConfig.SdkConfig)
 }
 
 // AuthenticatedRequest performs the passed request after adding an authorization Header.
 func AuthenticatedRequest(req *http.Request, sdkConfig *cells_sdk.SdkConfig) (*http.Response, error) {
-
 	token, err := oidc.RetrieveToken(sdkConfig)
 	if err != nil {
 		return nil, err
@@ -111,7 +109,9 @@ func SetUpEnvironment(confPath string) error {
 			return err
 		}
 		// Retrieves sensible info from the keyring if one is present
-		ConfigFromKeyring(&c)
+		if err := ConfigFromKeyring(&c); err != nil {
+			return err
+		}
 
 		// Refresh token if required
 		if refreshed, err := RefreshIfRequired(&c); refreshed {
@@ -121,7 +121,9 @@ func SetUpEnvironment(confPath string) error {
 			// Copy config as IdToken will be cleared
 			storeConfig := c
 			if !c.SkipKeyring {
-				ConfigToKeyring(&storeConfig)
+				if err := ConfigToKeyring(&storeConfig); err != nil {
+					return err
+				}
 			}
 			// Save config to renew TokenExpireAt
 			confData, _ := json.MarshalIndent(&storeConfig, "", "\t")
@@ -182,7 +184,9 @@ func RefreshAndStoreIfRequired(c *CecConfig) bool {
 		// Copy config as IdToken will be cleared
 		storeConfig := *c
 		if !c.SkipKeyring {
-			ConfigToKeyring(&storeConfig)
+			if err := ConfigToKeyring(&storeConfig); err != nil {
+				return false
+			}
 		}
 		// Save config to renew TokenExpireAt
 		confData, _ := json.MarshalIndent(&storeConfig, "", "\t")
