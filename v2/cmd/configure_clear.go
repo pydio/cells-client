@@ -8,9 +8,9 @@ import (
 	"os"
 
 	"github.com/manifoldco/promptui"
-	"github.com/pydio/cells-client/v2/rest"
-	cells_sdk "github.com/pydio/cells-sdk-go"
 	"github.com/spf13/cobra"
+
+	"github.com/pydio/cells-client/v2/rest"
 )
 
 var noKeyringDefined bool
@@ -22,11 +22,11 @@ var clearCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		filePath := rest.DefaultConfigFilePath()
 		if s, err := ioutil.ReadFile(filePath); err == nil {
-			var c cells_sdk.SdkConfig
-			if err = json.Unmarshal(s, &c); err == nil {
-				if !noKeyringDefined {
+			config := new(rest.CecConfig)
+			if err = json.Unmarshal(s, &config); err == nil {
+				if !config.SkipKeyring {
 					// First clean the keyring
-					if err := rest.ClearKeyring(&c); err == nil {
+					if err := rest.ClearKeyring(config); err == nil {
 						fmt.Println(promptui.IconGood + " Removed tokens from keychain")
 					} else {
 						fmt.Println(promptui.IconBad + " Error while removing token from keyring: " + err.Error())
