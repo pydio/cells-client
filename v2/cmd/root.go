@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -19,17 +20,21 @@ import (
 	"github.com/pydio/cells-client/v2/rest"
 )
 
-var (
+const (
 	// EnvPrefix represents the prefix used to insure we have a reserved namespacce for cec specific ENV vars.
 	EnvPrefix = "CEC"
 	// EnvPrefixOld represents the legacy prefix for environment variables, kept for backward compat.
 	EnvPrefixOld = "CELLS_CLIENT"
 
-	// These command and respective children do not need an already configured environment.
-	infoCommands = []string{"help", "configure", "version", "completion", "oauth", "clear", "doc", "update", "token", "--help"}
+	unconfiguredMsg = "unconfigured"
 )
 
-var configFile string
+var (
+	configFile string
+
+	// These commands and respective children do not need an already configured environment.
+	infoCommands = []string{"help", "configure", "version", "completion", "oauth", "clear", "doc", "update", "token", "--help"}
+)
 
 // RootCmd is the parent of all commands defined in this package.
 // It takes care of the pre-configuration of the default connection to the SDK in its PersistentPreRun phase.
@@ -63,7 +68,11 @@ This will guide you through a quick procedure to get you up and ready in no time
 		if needSetup {
 			e := setUpEnvironment(configFile)
 			if e != nil {
-				log.Fatalf("cannot read config file, please make sure to run '%s configure' first. (Error: %s)\n", os.Args[0], e.Error())
+				if e.Error() != unconfiguredMsg {
+					log.Fatalf("unexpected error during initialisation phase: %s", e.Error())
+				}
+				// TODO Directly launch necessary configure command
+				log.Fatalf("No configuration has been found, please make sure to run '%s configure' first.\n", os.Args[0])
 			}
 		}
 	},
@@ -132,6 +141,10 @@ func setUpEnvironment(confPath string) error {
 	if c.Url == "" {
 
 		confPath = rest.GetConfigFilePath()
+		if _, err := os.Stat(confPath); os.IsNotExist(err) {
+			return fmt.Errorf(unconfiguredMsg)
+		}
+
 		s, err := ioutil.ReadFile(confPath)
 		if err != nil {
 			return err

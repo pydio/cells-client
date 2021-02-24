@@ -4,7 +4,6 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-client/v2/common"
 	"github.com/pydio/cells-client/v2/rest"
 )
 
@@ -15,14 +14,10 @@ var infoCmd = &cobra.Command{
 
 		dc := rest.DefaultConfig
 
-		login, _ := rest.RetrieveCurrentSessionLogin()
-		// if err != nil {
-		// 	log.Fatal(err)
-		// }
 		t := tablewriter.NewWriter(cmd.OutOrStdout())
-		t.SetHeader([]string{"username", "url", "type"})
+		t.SetHeader([]string{"Username", "URL", "Type"})
 		t.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-		t.Append([]string{login, dc.Url, dc.AuthType})
+		t.Append([]string{dc.User, dc.Url, dc.AuthType})
 		t.Render()
 	},
 }
@@ -31,12 +26,13 @@ func init() {
 	RootCmd.AddCommand(infoCmd)
 }
 
-func loginFromConfig(cfg *rest.CecConfig) (login string) {
-	switch cfg.AuthType {
-	case common.PersonalTokenType, common.OAuthType:
-		login, _ = rest.RetrieveCurrentSessionLogin()
-	case common.ClientAuthType:
-		return cfg.User
-	}
-	return ""
-}
+// Useless, we rely on the configure command to retrieve and store username
+// func loginFromConfig(cfg *rest.CecConfig) (login string) {
+// 	switch cfg.AuthType {
+// 	case common.PatType, common.OAuthType:
+// 		login, _ = rest.RetrieveCurrentSessionLogin()
+// 	case common.ClientAuthType:
+// 		return cfg.User
+// 	}
+// 	return ""
+// }

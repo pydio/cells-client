@@ -11,11 +11,11 @@ var (
 
 const (
 	// OAuthType uses OAuth2 credentil retrival flow.
-	OAuthType = "oauth"
+	OAuthType = "OAuth2"
 	// PatType relies on a Personal Access Token generated on the server for a given user.
-	PatType = "personal-access-token"
+	PatType = "Personal Access Token"
 	// ClientAuthType is the legacy authenticaion method, based on user password.
-	ClientAuthType = "client-credentials"
+	ClientAuthType = "Client Credentials"
 
 	// UpdateServerURL gives access to Pydio's update server.
 	UpdateServerURL = "https://updatecells.pydio.com/"
@@ -27,4 +27,3 @@ const (
 	// UpdateDevChannel enable updating before the official release for testing purposes.
 	UpdateDevChannel = "dev"
 )
-
