@@ -11,15 +11,8 @@ import (
 	"github.com/pydio/cells-client/v2/rest"
 )
 
-const authTypeToken = "token"
-
-var (
-	token     string
-	serverURL string
-)
-
-var configureTokenAuthCmd = &cobra.Command{
-	Use:   authTypeToken,
+var withPatCmd = &cobra.Command{
+	Use:   "token",
 	Short: "Configure Authentication using the personal token",
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
@@ -30,8 +23,8 @@ var configureTokenAuthCmd = &cobra.Command{
 		}
 
 		// non interactive
-		if token != "" && serverURL != "" {
-			newConf.IdToken = token
+		if idToken != "" && serverURL != "" {
+			newConf.IdToken = idToken
 			newConf.Url = serverURL
 		} else { // interactive
 
@@ -68,7 +61,5 @@ var configureTokenAuthCmd = &cobra.Command{
 }
 
 func init() {
-	configureCmd.AddCommand(configureTokenAuthCmd)
-	configureTokenAuthCmd.Flags().StringVarP(&token, "token", "t", "", "personal token")
-	configureTokenAuthCmd.Flags().StringVarP(&serverURL, "url", "u", "", "Server serverURL")
+	configureCmd.AddCommand(withPatCmd)
 }

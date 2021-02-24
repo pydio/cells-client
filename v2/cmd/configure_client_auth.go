@@ -15,12 +15,12 @@ import (
 
 const authTypeClientAuth = "client-auth"
 
-var (
-	configHost       string
-	configUser       string
-	configPwd        string
-	configSkipVerify bool
-)
+// var (
+// 	configHost       string
+// 	configUser       string
+// 	configPwd        string
+// 	configSkipVerify bool
+// )
 
 var configureClientAuthCmd = &cobra.Command{
 	Use:   authTypeClientAuth,
@@ -42,7 +42,7 @@ You can also go through the whole process in a non-interactive manner by using t
 			AuthType:    common.ClientAuthType,
 		}
 
-		if notEmpty(configHost) == nil && notEmpty(configUser) == nil && notEmpty(configPwd) == nil {
+		if notEmpty(serverURL) == nil && notEmpty(login) == nil && notEmpty(password) == nil {
 			err = nonInteractive(newConf)
 		} else {
 			err = interactive(newConf)
@@ -117,10 +117,10 @@ func interactive(newConf *rest.CecConfig) error {
 
 func nonInteractive(conf *rest.CecConfig) error {
 
-	conf.Url = configHost
-	conf.User = configUser
-	conf.Password = configPwd
-	conf.SkipVerify = configSkipVerify
+	conf.Url = serverURL
+	conf.User = login
+	conf.Password = password
+	conf.SkipVerify = skipVerify
 
 	// Insure values are legal
 	if err := validUrl(conf.Url); err != nil {
@@ -159,12 +159,12 @@ func notEmpty(input string) error {
 
 func init() {
 
-	flags := configureClientAuthCmd.PersistentFlags()
+	// flags := configureClientAuthCmd.PersistentFlags()
 
-	flags.StringVarP(&configHost, "url", "u", "", "HTTP URL to server")
-	flags.StringVarP(&configUser, "login", "l", "", "User login")
-	flags.StringVarP(&configPwd, "password", "p", "", "User password")
-	flags.BoolVar(&configSkipVerify, "skipVerify", false, "Skip SSL certificate verification (not recommended)")
+	// flags.StringVarP(&configHost, "url", "u", "", "HTTP URL to server")
+	// flags.StringVarP(&configUser, "login", "l", "", "User login")
+	// flags.StringVarP(&configPwd, "password", "p", "", "User password")
+	// flags.BoolVar(&configSkipVerify, "skipVerify", false, "Skip SSL certificate verification (not recommended)")
 
 	configureCmd.AddCommand(configureClientAuthCmd)
 }

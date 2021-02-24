@@ -23,10 +23,6 @@ import (
 const authTypeOAuth = "oauth"
 
 var (
-	oAuthUrl        string
-	oAuthIdToken    string
-	oAuthSkipVerify bool
-
 	callbackPort = 3000
 )
 
@@ -52,7 +48,7 @@ var configureOAuthCmd = &cobra.Command{
 			AuthType:    common.OAuthType,
 		}
 
-		if oAuthUrl != "" && oAuthIdToken != "" {
+		if serverURL != "" && idToken != "" {
 			err = oAuthNonInteractive(newConf)
 		} else {
 			err = oAuthInteractive(newConf)
@@ -241,9 +237,9 @@ func isPortAvailable(port int, timeout int) bool {
 
 func oAuthNonInteractive(conf *rest.CecConfig) error {
 
-	conf.Url = oAuthUrl
-	conf.IdToken = oAuthIdToken
-	conf.SkipVerify = configSkipVerify
+	conf.Url = serverURL
+	conf.IdToken = idToken
+	conf.SkipVerify = skipVerify
 
 	// Insure values are legal
 	if err := validUrl(conf.Url); err != nil {
@@ -261,11 +257,11 @@ func oAuthNonInteractive(conf *rest.CecConfig) error {
 
 func init() {
 
-	flags := configureOAuthCmd.PersistentFlags()
+	// flags := configureOAuthCmd.PersistentFlags()
 
-	flags.StringVarP(&oAuthUrl, "url", "u", "", "HTTP URL to server")
-	flags.StringVarP(&oAuthIdToken, "idToken", "t", "", "Valid IdToken")
-	flags.BoolVar(&oAuthSkipVerify, "skipVerify", false, "Skip SSL certificate verification (not recommended)")
+	// flags.StringVarP(&oAuthUrl, "url", "u", "", "HTTP URL to server")
+	// flags.StringVarP(&oAuthIdToken, "idToken", "t", "", "Valid IdToken")
+	// flags.BoolVar(&oAuthSkipVerify, "skipVerify", false, "Skip SSL certificate verification (not recommended)")
 
 	configureCmd.AddCommand(configureOAuthCmd)
 }

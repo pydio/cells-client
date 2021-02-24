@@ -6,12 +6,21 @@ import (
 	"io/ioutil"
 
 	"github.com/manifoldco/promptui"
+	"github.com/ory/viper"
 	"github.com/pydio/cells-client/v2/rest"
 	"github.com/spf13/cobra"
 )
 
 var (
+	serverURL string
+	idToken   string
+	authType  string
+	login     string
+	password  string
+
 	skipKeyring bool
+	skipVerify  bool
+	noCache     bool
 )
 
 var configureCmd = &cobra.Command{
@@ -30,6 +39,22 @@ If you want to forget a connection, the config file can be wiped out by calling 
 If no keyring is defined in the local machine, all information is stored in *clear text* in a config file of the Cells Client working directory.
 In such case, do not use the 'client-auth' process.
 `,
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+
+		// Manually bind to viper instead of flags.StringVar, flags.BoolVar, etc
+		serverURL = viper.GetString("url")
+		idToken = viper.GetString("authType")
+		authType = viper.GetString("login")
+		login = viper.GetString("idToken")
+		password = viper.GetString("password")
+
+		skipKeyring = viper.GetBool("skip-keyring")
+		skipVerify = viper.GetBool("skip-verify")
+		noCache = viper.GetBool("no-cache")
+
+		return nil
+	},
+
 	Run: func(cmd *cobra.Command, args []string) {
 
 		s := promptui.Select{Label: "Select authentication method", Size: 3, Items: []string{"Personal Access Token (unique token generated server-side)", "OAuth2 login (requires a browser access)", "Client Auth (direct login/password, less secure)"}}
@@ -43,7 +68,7 @@ In such case, do not use the 'client-auth' process.
 
 		switch n {
 		case 0:
-			configureTokenAuthCmd.Run(cmd, args)
+			withPatCmd.Run(cmd, args)
 		case 1:
 			configureOAuthCmd.Run(cmd, args)
 		case 2:
@@ -87,8 +112,17 @@ func saveConfig(config *rest.CecConfig) error {
 func init() {
 	flags := configureCmd.PersistentFlags()
 
-	helpMsg := "Explicitly tell the tool to *NOT* try to use a keyring, even if present. Only use this flag if you really know what your are doing: some sensitive information will end up stored on your file system in clear text."
-	flags.BoolVar(&skipKeyring, "skip-keyring", false, helpMsg)
+	flags.StringP("url", "u", "", "Server serverURL")
+	flags.StringP("authType", "a", "", "Authorizaton mechanism used: Personnal Access Token (Default), OAuth2 flow or Client Credentials")
+	flags.StringP("login", "l", "", "User login")
+	flags.StringP("idToken", "t", "", "Valid IdToken")
+	flags.StringP("password", "p", "", "User password")
+
+	flags.Bool("skip-verify", false, "Skip SSL certificate verification (not recommended)")
+	// Duplicate
+	flags.Bool("skipVerify", false, "Skip SSL certificate verification (not recommended)")
+	flags.Bool("skip-keyring", false, "Explicitly tell the tool to *NOT* try to use a keyring, even if present. Warning: sensitive information will be stored in clear text.")
+	flags.Bool("no-cache", false, "Force token refresh at each call. This might slow down scripts with many calls.")
 
 	RootCmd.AddCommand(configureCmd)
 }
