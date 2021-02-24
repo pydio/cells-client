@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"sync"
 
 	"github.com/go-openapi/strfmt"
@@ -81,60 +80,6 @@ func AuthenticatedRequest(req *http.Request, sdkConfig *cells_sdk.SdkConfig) (*h
 	return httpClient.Do(req)
 }
 
-// SetUpEnvironment retrieves parameters and stores them in the DefaultConfig of the SDK.
-// It also puts the sensible info in the server keyring if one is present.
-// Note the precedence order (for each start of the app):
-//  1) environment variables,
-//  2) config files whose path is passed as argument of the start command
-//  3) local config file (that are generated at first start with one of the 2 options above OR by calling the configure command.
-func SetUpEnvironment(confPath string) error {
-	// Use a config file
-	if confPath != "" {
-		SetConfigFilePath(confPath)
-	}
-
-	// Get config params from environment variables
-	c, err := getSdkConfigFromEnv()
-	if err != nil {
-		return err
-	}
-
-	if c.Url == "" {
-
-		confPath = GetConfigFilePath()
-		s, err := ioutil.ReadFile(confPath)
-		if err != nil {
-			return err
-		}
-		err = json.Unmarshal(s, &c)
-		if err != nil {
-			return err
-		}
-		// Retrieves sensible info from the keyring if one is present
-		ConfigFromKeyring(&c)
-
-		// Refresh token if required
-		if refreshed, err := RefreshIfRequired(&c); refreshed {
-			if err != nil {
-				log.Fatal("Could not refresh authentication token:", err)
-			}
-			// Copy config as IdToken will be cleared
-			storeConfig := c
-			if !c.SkipKeyring {
-				ConfigToKeyring(&storeConfig)
-			}
-			// Save config to renew TokenExpireAt
-			confData, _ := json.MarshalIndent(&storeConfig, "", "\t")
-			ioutil.WriteFile(confPath, confData, 0666)
-		}
-	}
-
-	// Store the retrieved parameters in a public static singleton
-	DefaultConfig = &c
-
-	return nil
-}
-
 func GetConfigFilePath() string {
 	if configFilePath != "" {
 		return configFilePath
@@ -190,45 +135,6 @@ func RefreshAndStoreIfRequired(c *CecConfig) bool {
 	}
 
 	return refreshed
-}
-
-func getSdkConfigFromEnv() (CecConfig, error) {
-
-	// var c CecConfig
-	c := new(CecConfig)
-
-	// Check presence of environment variables
-	url := os.Getenv(KeyURL)
-	clientKey := os.Getenv(KeyClientKey)
-	clientSecret := os.Getenv(KeyClientSecret)
-	user := os.Getenv(KeyUser)
-	password := os.Getenv(KeyPassword)
-	skipVerifyStr := os.Getenv(KeySkipVerify)
-	if skipVerifyStr == "" {
-		skipVerifyStr = "false"
-	}
-	skipVerify, err := strconv.ParseBool(skipVerifyStr)
-	if err != nil {
-		return *c, err
-	}
-
-	// Client Key and Client Secret are not used anymore
-	// if !(len(url) > 0 && len(clientKey) > 0 && len(clientSecret) > 0 && len(user) > 0 && len(password) > 0) {
-	if !(len(url) > 0 && len(user) > 0 && len(password) > 0) {
-		return *c, nil
-	}
-
-	c.Url = url
-	c.ClientKey = clientKey
-	c.ClientSecret = clientSecret
-	c.User = user
-	c.Password = password
-	c.SkipVerify = skipVerify
-
-	// Note: this cannot be set via env variable. Enhance?
-	c.UseTokenCache = true
-
-	return *c, nil
 }
 
 func getS3ConfigFromSdkConfig(sConf *CecConfig) cells_sdk.S3Config {

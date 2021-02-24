@@ -57,10 +57,15 @@ In such case, do not use the 'client-auth' process.
 // saveConfig handle file and/or keyring storage depending on user preference and system.
 func saveConfig(config *rest.CecConfig) error {
 
-	// TODO insure config is OK 
-	// LS ? Retrieve UserName 
+	// TODO insure config is OK
+	// LS ? Retrieve UserName
 
-	
+	uname, e := rest.RetrieveCurrentSessionLogin()
+	if e != nil {
+		return fmt.Errorf("could not connect to distant server with provided parameters. Discarding change")
+	}
+	config.User = uname
+
 	if !config.SkipKeyring {
 		if err := rest.ConfigToKeyring(config); err != nil {
 			return err
@@ -80,10 +85,10 @@ func saveConfig(config *rest.CecConfig) error {
 }
 
 func init() {
-
 	flags := configureCmd.PersistentFlags()
-	helpMsg := "Explicitly tell the tool to *NOT* try to use a keyring. Only use this flag if you really know what your are doing: some sensitive information will end up stored on your file system in clear text."
-	flags.BoolVar(&skipKeyring, "no-keyring", false, helpMsg)
-	RootCmd.AddCommand(configureCmd)
 
+	helpMsg := "Explicitly tell the tool to *NOT* try to use a keyring, even if present. Only use this flag if you really know what your are doing: some sensitive information will end up stored on your file system in clear text."
+	flags.BoolVar(&skipKeyring, "skip-keyring", false, helpMsg)
+
+	RootCmd.AddCommand(configureCmd)
 }

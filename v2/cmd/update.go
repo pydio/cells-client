@@ -35,8 +35,6 @@ To apply the actual update, re-run the command with a --version parameter.
 		// if set it will use the selected channel to list and perform the update
 		if devChannel {
 			defaultChannel = common.UpdateDevChannel
-		} else if unstableChannel {
-			defaultChannel = common.UpdateUnstableChannel
 		}
 
 		binaries, e := rest.LoadUpdates(context.Background(), defaultChannel)

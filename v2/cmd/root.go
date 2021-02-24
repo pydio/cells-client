@@ -1,15 +1,32 @@
-// Package cmd implements some basic examples of what can be achieved when combining
-// the use of the Go SDK for Cells with the powerful Cobra framework to implement CLI
-// client applications for Cells.
+// Package cmd implements some basic use case to manage your files on your remote server
+// via the  command line of your local workstation or any server you can access with SSH.
+// It also demonstrates what can be achieved when combining the use of the Go SDK for Cells
+// with the powerful Cobra framework to implement CLI client applications for Cells.
 package cmd
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 
+	"github.com/ory/viper"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 
 	"github.com/pydio/cells-client/v2/rest"
+)
+
+var (
+	// EnvPrefix represents the prefix used to insure we have a reserved namespacce for cec specific ENV vars.
+	EnvPrefix = "CEC"
+	// EnvPrefixOld represents the legacy prefix for environment variables, kept for backward compat.
+	EnvPrefixOld = "CELLS_CLIENT"
+
+	// These command and respective children do not need an already configured environment.
+	infoCommands = []string{"help", "configure", "version", "completion", "oauth", "clear", "doc", "update", "token", "--help"}
 )
 
 var configFile string
@@ -34,21 +51,157 @@ This will guide you through a quick procedure to get you up and ready in no time
 `,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 
-		switch os.Args[1] {
-		// These command and respective children do not need an already configured environment
-		case "help", "configure", "version", "completion", "oauth", "clear", "doc", "update", "token":
-			break
-		default:
-			e := rest.SetUpEnvironment(configFile)
+		needSetup := len(os.Args) > 1 // no args
+
+		for _, skip := range infoCommands { // reserved info commands
+			if os.Args[1] == skip {
+				needSetup = false
+				break
+			}
+		}
+
+		if needSetup {
+			e := setUpEnvironment(configFile)
 			if e != nil {
 				log.Fatalf("cannot read config file, please make sure to run '%s configure' first. (Error: %s)\n", os.Args[0], e.Error())
 			}
 		}
-
 	},
+
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Help()
 	},
+}
+
+func init() {
+	initEnvPrefixes()
+	viper.SetEnvPrefix(EnvPrefix)
+	viper.AutomaticEnv()
+
+	flags := RootCmd.PersistentFlags()
+	flags.StringVarP(&configFile, "config", "c", "", "Path to the configuration file")
+
+	bindViperFlags(flags, map[string]string{})
+}
+
+func initEnvPrefixes() {
+	prefOld := strings.ToUpper(EnvPrefixOld) + "_"
+	prefNew := strings.ToUpper(EnvPrefix) + "_"
+	//log.Println("... iterating over ENV vars")
+	for _, pair := range os.Environ() {
+		//log.Printf("- %s \n", pair)
+		if strings.HasPrefix(pair, prefOld) {
+			parts := strings.Split(pair, "=")
+			if len(parts) == 2 && parts[1] != "" {
+				os.Setenv(prefNew+strings.TrimPrefix(parts[0], prefOld), parts[1])
+			}
+		}
+	}
+}
+
+// bindViperFlags visits all flags in FlagSet and bind their key to the corresponding viper variable.
+func bindViperFlags(flags *pflag.FlagSet, replaceKeys map[string]string) {
+	flags.VisitAll(func(flag *pflag.Flag) {
+		key := flag.Name
+		if replace, ok := replaceKeys[flag.Name]; ok {
+			key = replace
+		}
+		viper.BindPFlag(key, flag)
+	})
+}
+
+// SetUpEnvironment retrieves parameters and stores them in the DefaultConfig of the SDK.
+// It also puts the sensitive bits in the server's keyring if one is present.
+// Note the precedence order (for each start of the app):
+//  1) flags
+// 	2) environment variables,
+//  3) config files whose path is passed as argument of the start command
+//  4) local config file (that are generated at first start with one of the 2 options above OR by calling the configure command.
+func setUpEnvironment(confPath string) error {
+	// Use a config file
+	if confPath != "" {
+		rest.SetConfigFilePath(confPath)
+	}
+
+	// Get config params from environment variables
+	c, err := getSdkConfigFromEnv()
+	if err != nil {
+		return err
+	}
+
+	if c.Url == "" {
+
+		confPath = rest.GetConfigFilePath()
+		s, err := ioutil.ReadFile(confPath)
+		if err != nil {
+			return err
+		}
+		err = json.Unmarshal(s, &c)
+		if err != nil {
+			return err
+		}
+		// Retrieves sensible info from the keyring if one is present
+		rest.ConfigFromKeyring(&c)
+
+		// Refresh token if required
+		if refreshed, err := rest.RefreshIfRequired(&c); refreshed {
+			if err != nil {
+				log.Fatal("Could not refresh authentication token:", err)
+			}
+			// Copy config as IdToken will be cleared
+			storeConfig := c
+			if !c.SkipKeyring {
+				rest.ConfigToKeyring(&storeConfig)
+			}
+			// Save config to renew TokenExpireAt
+			confData, _ := json.MarshalIndent(&storeConfig, "", "\t")
+			ioutil.WriteFile(confPath, confData, 0666)
+		}
+	}
+
+	// Store current computed config in a public static singleton
+	rest.DefaultConfig = &c
+
+	return nil
+}
+
+func getSdkConfigFromEnv() (rest.CecConfig, error) {
+
+	// var c CecConfig
+	c := new(rest.CecConfig)
+
+	// Check presence of environment variables
+	url := os.Getenv(rest.KeyURL)
+	clientKey := os.Getenv(rest.KeyClientKey)
+	clientSecret := os.Getenv(rest.KeyClientSecret)
+	user := os.Getenv(rest.KeyUser)
+	password := os.Getenv(rest.KeyPassword)
+	skipVerifyStr := os.Getenv(rest.KeySkipVerify)
+	if skipVerifyStr == "" {
+		skipVerifyStr = "false"
+	}
+	skipVerify, err := strconv.ParseBool(skipVerifyStr)
+	if err != nil {
+		return *c, err
+	}
+
+	// Client Key and Client Secret are not used anymore
+	// if !(len(url) > 0 && len(clientKey) > 0 && len(clientSecret) > 0 && len(user) > 0 && len(password) > 0) {
+	if !(len(url) > 0 && len(user) > 0 && len(password) > 0) {
+		return *c, nil
+	}
+
+	c.Url = url
+	c.ClientKey = clientKey
+	c.ClientSecret = clientSecret
+	c.User = user
+	c.Password = password
+	c.SkipVerify = skipVerify
+
+	// Note: this cannot be set via env variable. Enhance?
+	c.UseTokenCache = true
+
+	return *c, nil
 }
 
 var bashCompletionFunc = `__` + os.Args[0] + `_custom_func() {
@@ -132,8 +285,3 @@ _datasources_completion() {
   COMPREPLY=($(compgen -W "${dsopts[@]}" -- "$cur"))
 }
 `
-
-func init() {
-	flags := RootCmd.PersistentFlags()
-	flags.StringVarP(&configFile, "config", "c", "", "Path to the configuration file")
-}

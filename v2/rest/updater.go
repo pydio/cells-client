@@ -93,7 +93,7 @@ type UpdateResponse struct {
 
 func LoadUpdates(ctx context.Context, channel string) ([]*UpdatePackage, error) {
 
-	urlConf := common.UpdateServerUrl
+	urlConf := common.UpdateServerURL
 	parsed, e := url.Parse(urlConf)
 	if e != nil {
 		return nil, e

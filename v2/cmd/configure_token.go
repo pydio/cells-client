@@ -26,7 +26,7 @@ var configureTokenAuthCmd = &cobra.Command{
 		var p promptui.Prompt
 		newConf := &rest.CecConfig{
 			SkipKeyring: skipKeyring,
-			AuthType:    common.PersonalTokenType,
+			AuthType:    common.PatType,
 		}
 
 		// non interactive
