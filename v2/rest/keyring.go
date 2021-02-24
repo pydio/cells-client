@@ -6,8 +6,6 @@ import (
 
 	"github.com/zalando/go-keyring"
 
-	cells_sdk "github.com/pydio/cells-sdk-go"
-
 	"github.com/pydio/cells-client/v2/common"
 )
 
@@ -102,7 +100,7 @@ func splitValue(value string) []string {
 }
 
 // ClearKeyring removes sensitive info from local keychain, if they are present.
-func ClearKeyring(c *cells_sdk.SdkConfig) error {
+func ClearKeyring(c *CecConfig) error {
 	// Best effort to remove known keys from keyring
 	if err := keyring.Delete(keyringService, key(c.Url, c.User)); err != nil {
 		if err.Error() != "secret not found in keyring" {
@@ -122,5 +120,6 @@ func ClearKeyring(c *cells_sdk.SdkConfig) error {
 			return err
 		}
 	}
+
 	return nil
 }

@@ -63,13 +63,11 @@ func AuthenticatedGet(uri string) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return AuthenticatedRequest(req, &DefaultConfig.SdkConfig)
 }
 
 // AuthenticatedRequest performs the passed request after adding an authorization Header.
 func AuthenticatedRequest(req *http.Request, sdkConfig *cells_sdk.SdkConfig) (*http.Response, error) {
-
 	token, err := oidc.RetrieveToken(sdkConfig)
 	if err != nil {
 		return nil, err
@@ -127,7 +125,9 @@ func RefreshAndStoreIfRequired(c *CecConfig) bool {
 		// Copy config as IdToken will be cleared
 		storeConfig := *c
 		if !c.SkipKeyring {
-			ConfigToKeyring(&storeConfig)
+			if err := ConfigToKeyring(&storeConfig); err != nil {
+				return false
+			}
 		}
 		// Save config to renew TokenExpireAt
 		confData, _ := json.MarshalIndent(&storeConfig, "", "\t")
