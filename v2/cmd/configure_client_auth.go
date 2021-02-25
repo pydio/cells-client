@@ -13,8 +13,6 @@ import (
 	"github.com/pydio/cells-client/v2/rest"
 )
 
-const authTypeClientAuth = "client-auth"
-
 // var (
 // 	configHost       string
 // 	configUser       string
@@ -23,7 +21,7 @@ const authTypeClientAuth = "client-auth"
 // )
 
 var configureClientAuthCmd = &cobra.Command{
-	Use:   authTypeClientAuth,
+	Use:   "client-auth",
 	Short: "Connect to the server directly using the Client Credentials",
 	Long: `
 Launch an interactive process to gather necessary client information to configure a connection to a running Pydio Cells server instance.

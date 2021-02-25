@@ -28,7 +28,7 @@ If no keyring is defined in the local machine, all information is stored in *cle
 In such case, do not use the 'client-auth' process.
 `,
 	// PreRunE: func(cmd *cobra.Command, args []string) error {
-
+		
 	// 	fmt.Println("[DEBUG] flags: ")
 	// 	fmt.Printf("- serverURL: %s\n", serverURL)
 	// 	fmt.Printf("- authType: %s\n", authType)
@@ -69,24 +69,36 @@ In such case, do not use the 'client-auth' process.
 // saveConfig handle file and/or keyring storage depending on user preference and system.
 func saveConfig(config *rest.CecConfig) error {
 
+	var err error
+	oldConfig := rest.DefaultConfig
+	defer func() {
+		if err != nil {
+			rest.DefaultConfig = oldConfig
+		}
+	}()
+
+	rest.DefaultConfig = config
+
 	uname, e := rest.RetrieveCurrentSessionLogin()
 	if e != nil {
+		err = e
 		return fmt.Errorf("could not connect to distant server with provided parameters. Discarding change")
 	}
 	config.User = uname
 
 	if !config.SkipKeyring {
-		if err := rest.ConfigToKeyring(config); err != nil {
+		if err = rest.ConfigToKeyring(config); err != nil {
 			return err
 		}
 	}
 
 	file := rest.GetConfigFilePath()
-	data, err := json.MarshalIndent(config, "", "\t")
-	if err != nil {
-		return err
+	data, e := json.MarshalIndent(config, "", "\t")
+	if e != nil {
+		err = e
+		return e
 	}
-	if err := ioutil.WriteFile(file, data, 0600); err != nil {
+	if err = ioutil.WriteFile(file, data, 0600); err != nil {
 		return err
 	}
 

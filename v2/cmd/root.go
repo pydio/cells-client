@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/url"
 	"os"
 	"strings"
 
@@ -78,7 +79,15 @@ This will guide you through a quick procedure to get you up and ready in no time
 		// Manually bind to viper instead of flags.StringVar, flags.BoolVar, etc
 		// => This is useful to ease implementation of retrocompatibility
 		configFilePath = viper.GetString("config") + "/config.json"
-		serverURL = viper.GetString("url")
+		tmpURLStr := viper.GetString("url")
+		// Clean URL string
+		if tmpURLStr != "" {
+			tmpURL, err := url.Parse(tmpURLStr)
+			if err != nil {
+				log.Fatalf("server URL %s seems to be unvalid, please double check and adapt. Cause: %s", tmpURLStr, err.Error())
+			}
+			serverURL = tmpURL.Scheme + "://" + tmpURL.Host
+		}
 		authType = viper.GetString("auth_type")
 		idToken = viper.GetString("id_token")
 		login = viper.GetString("login")
@@ -87,16 +96,26 @@ This will guide you through a quick procedure to get you up and ready in no time
 		skipKeyring = viper.GetBool("skip_keyring")
 		skipVerify = viper.GetBool("skip_verify")
 
-		// fmt.Println("[DEBUG] flags: ")
-		// fmt.Printf("- configFilePath: %s\n", configFilePath)
-		// fmt.Printf("- serverURL: %s\n", serverURL)
-		// fmt.Printf("- authType: %s\n", authType)
-		// fmt.Printf("- idToken: %s\n", idToken)
-		// fmt.Printf("- login: %s\n", login)
-		// fmt.Printf("- password: %s\n", password)
-		// fmt.Printf("- noCache: %v\n", noCache)
-		// fmt.Printf("- skipKeyring: %v\n", skipKeyring)
-		// fmt.Printf("- skipVerify: %v\n", skipVerify)
+		//fmt.Println("[DEBUG] flags: ")
+		//fmt.Printf("- configFilePath: %s\n", configFilePath)
+		//fmt.Printf("- serverURL: %s\n", serverURL)
+		//fmt.Printf("- authType: %s\n", authType)
+		//fmt.Printf("- idToken: %s\n", idToken)
+		//fmt.Printf("- login: %s\n", login)
+		//fmt.Printf("- password: %s\n", password)
+		//fmt.Printf("- noCache: %v\n", noCache)
+		//fmt.Printf("- skipKeyring: %v\n", skipKeyring)
+		//fmt.Printf("- skipVerify: %v\n", skipVerify)
+		////log.Println("... iterating over ENV vars")
+		//for _, pair := range os.Environ() {
+		//	//log.Printf("- %s \n", pair)
+		//	if strings.HasPrefix(pair, "CEC_") {
+		//		parts := strings.Split(pair, "=")
+		//		if len(parts) == 2 && parts[1] != "" {
+		//			fmt.Printf("- %s : %s\n", parts[0], parts[1])
+		//		}
+		//	}
+		//}
 
 		if needSetup {
 			e := setUpEnvironment()
@@ -148,7 +167,7 @@ func setUpEnvironment() error {
 	}
 
 	// First Check if an environment is defined via the context (flags or ENV vars)
-	c := getSdkConfigFromEnv()
+	c := getCecConfigFromEnv()
 
 	if c.Url == "" {
 		confPath := rest.GetConfigFilePath()
@@ -189,7 +208,9 @@ func setUpEnvironment() error {
 	return nil
 }
 
-func getSdkConfigFromEnv() rest.CecConfig {
+// getCecConfigFromEnv first check if a valid connection has been configured with flags and/or ENV var
+// **before** it even tries to retrieve info for the local file configuration.
+func getCecConfigFromEnv() rest.CecConfig {
 
 	// Flags and env variable have been managed by viper => we can rely on local variable
 	c := new(rest.CecConfig)

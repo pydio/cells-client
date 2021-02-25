@@ -20,8 +20,6 @@ import (
 	"github.com/pydio/cells-client/v2/rest"
 )
 
-const authTypeOAuth = "oauth"
-
 var (
 	callbackPort = 3000
 )
@@ -37,7 +35,7 @@ type oAuthHandler struct {
 }
 
 var configureOAuthCmd = &cobra.Command{
-	Use:   authTypeOAuth,
+	Use:   "oauth",
 	Short: "User OAuth2 to login to server",
 	Long:  `Configure Authentication using OAuth2`,
 	Run: func(cm *cobra.Command, args []string) {
