@@ -111,5 +111,5 @@ var rmCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(rmCmd)
-	rmCmd.Flags().BoolVarP(&force, "force", "f", false, "Does not ask for user approval")
+	rmCmd.Flags().BoolVarP(&force, "force", "f", false, "Do not ask for user approval")
 }

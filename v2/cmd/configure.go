@@ -6,21 +6,9 @@ import (
 	"io/ioutil"
 
 	"github.com/manifoldco/promptui"
-	"github.com/ory/viper"
-	"github.com/pydio/cells-client/v2/rest"
 	"github.com/spf13/cobra"
-)
 
-var (
-	serverURL string
-	idToken   string
-	authType  string
-	login     string
-	password  string
-
-	skipKeyring bool
-	skipVerify  bool
-	noCache     bool
+	"github.com/pydio/cells-client/v2/rest"
 )
 
 var configureCmd = &cobra.Command{
@@ -39,21 +27,20 @@ If you want to forget a connection, the config file can be wiped out by calling 
 If no keyring is defined in the local machine, all information is stored in *clear text* in a config file of the Cells Client working directory.
 In such case, do not use the 'client-auth' process.
 `,
-	PreRunE: func(cmd *cobra.Command, args []string) error {
+	// PreRunE: func(cmd *cobra.Command, args []string) error {
 
-		// Manually bind to viper instead of flags.StringVar, flags.BoolVar, etc
-		serverURL = viper.GetString("url")
-		idToken = viper.GetString("authType")
-		authType = viper.GetString("login")
-		login = viper.GetString("idToken")
-		password = viper.GetString("password")
+	// 	fmt.Println("[DEBUG] flags: ")
+	// 	fmt.Printf("- serverURL: %s\n", serverURL)
+	// 	fmt.Printf("- authType: %s\n", authType)
+	// 	fmt.Printf("- idToken: %s\n", idToken)
+	// 	fmt.Printf("- login: %s\n", login)
+	// 	fmt.Printf("- password: %s\n", password)
+	// 	fmt.Printf("- noCache: %v\n", noCache)
+	// 	fmt.Printf("- skipKeyring: %v\n", skipKeyring)
+	// 	fmt.Printf("- skipVerify: %v\n", skipVerify)
 
-		skipKeyring = viper.GetBool("skip-keyring")
-		skipVerify = viper.GetBool("skip-verify")
-		noCache = viper.GetBool("no-cache")
-
-		return nil
-	},
+	// 	return nil
+	// },
 
 	Run: func(cmd *cobra.Command, args []string) {
 
@@ -82,9 +69,6 @@ In such case, do not use the 'client-auth' process.
 // saveConfig handle file and/or keyring storage depending on user preference and system.
 func saveConfig(config *rest.CecConfig) error {
 
-	// TODO insure config is OK
-	// LS ? Retrieve UserName
-
 	uname, e := rest.RetrieveCurrentSessionLogin()
 	if e != nil {
 		return fmt.Errorf("could not connect to distant server with provided parameters. Discarding change")
@@ -112,17 +96,11 @@ func saveConfig(config *rest.CecConfig) error {
 func init() {
 	flags := configureCmd.PersistentFlags()
 
-	flags.StringP("url", "u", "", "Server serverURL")
-	flags.StringP("authType", "a", "", "Authorizaton mechanism used: Personnal Access Token (Default), OAuth2 flow or Client Credentials")
-	flags.StringP("login", "l", "", "User login")
-	flags.StringP("idToken", "t", "", "Valid IdToken")
-	flags.StringP("password", "p", "", "User password")
-
-	flags.Bool("skip-verify", false, "Skip SSL certificate verification (not recommended)")
-	// Duplicate
+	// Legacy flags - TODO: finalise handling of retrocompatibility
 	flags.Bool("skipVerify", false, "Skip SSL certificate verification (not recommended)")
-	flags.Bool("skip-keyring", false, "Explicitly tell the tool to *NOT* try to use a keyring, even if present. Warning: sensitive information will be stored in clear text.")
-	flags.Bool("no-cache", false, "Force token refresh at each call. This might slow down scripts with many calls.")
+	flags.String("idToken", "", "Valid IdToken")
+
+	bindViperFlags(flags, map[string]string{})
 
 	RootCmd.AddCommand(configureCmd)
 }

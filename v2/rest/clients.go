@@ -89,26 +89,25 @@ func SetConfigFilePath(confPath string) {
 	configFilePath = confPath
 }
 
-func DefaultConfigFilePath() string {
-
+func DefaultConfigDirPath() string {
 	vendor := "Pydio"
 	if runtime.GOOS == "linux" {
 		vendor = "pydio"
 	}
-	appName := "cells-client"
-	configDirs := configdir.New(vendor, appName)
+	configDirs := configdir.New(vendor, common.AppName)
 	folders := configDirs.QueryFolders(configdir.Global)
 	if len(folders) == 0 {
 		folders = configDirs.QueryFolders(configdir.Local)
 	}
-	f := folders[0].Path
-	if err := os.MkdirAll(f, 0777); err != nil {
+	return folders[0].Path
+}
+
+func DefaultConfigFilePath() string {
+	f := DefaultConfigDirPath()
+	if err := os.MkdirAll(f, 0755); err != nil {
 		log.Fatal("Could not create local data dir - please check that you have the correct permissions for the folder -", f)
 	}
-
-	f = filepath.Join(f, "config.json")
-
-	return f
+	return  filepath.Join(f, "config.json")
 }
 
 var refreshMux = &sync.Mutex{}

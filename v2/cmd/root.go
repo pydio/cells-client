@@ -10,13 +10,13 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/ory/viper"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
+	"github.com/pydio/cells-client/v2/common"
 	"github.com/pydio/cells-client/v2/rest"
 )
 
@@ -24,16 +24,26 @@ const (
 	// EnvPrefix represents the prefix used to insure we have a reserved namespacce for cec specific ENV vars.
 	EnvPrefix = "CEC"
 	// EnvPrefixOld represents the legacy prefix for environment variables, kept for backward compat.
-	EnvPrefixOld = "CELLS_CLIENT"
+	// EnvPrefixOld = "CELLS_CLIENT_TARGET"
 
 	unconfiguredMsg = "unconfigured"
 )
 
 var (
-	configFile string
-
 	// These commands and respective children do not need an already configured environment.
 	infoCommands = []string{"help", "configure", "version", "completion", "oauth", "clear", "doc", "update", "token", "--help"}
+
+	configFilePath string
+
+	serverURL string
+	idToken   string
+	authType  string
+	login     string
+	password  string
+
+	skipKeyring bool
+	skipVerify  bool
+	noCache     bool
 )
 
 // RootCmd is the parent of all commands defined in this package.
@@ -56,17 +66,40 @@ This will guide you through a quick procedure to get you up and ready in no time
 `,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 
-		needSetup := len(os.Args) > 1 // no args
+		needSetup := true
 
-		for _, skip := range infoCommands { // reserved info commands
+		for _, skip := range infoCommands { // info commands do not require a configured env.
 			if os.Args[1] == skip {
 				needSetup = false
 				break
 			}
 		}
 
+		// Manually bind to viper instead of flags.StringVar, flags.BoolVar, etc
+		// => This is useful to ease implementation of retrocompatibility
+		configFilePath = viper.GetString("config") + "/config.json"
+		serverURL = viper.GetString("url")
+		authType = viper.GetString("auth_type")
+		idToken = viper.GetString("id_token")
+		login = viper.GetString("login")
+		password = viper.GetString("password")
+		noCache = viper.GetBool("no_cache")
+		skipKeyring = viper.GetBool("skip_keyring")
+		skipVerify = viper.GetBool("skip_verify")
+
+		// fmt.Println("[DEBUG] flags: ")
+		// fmt.Printf("- configFilePath: %s\n", configFilePath)
+		// fmt.Printf("- serverURL: %s\n", serverURL)
+		// fmt.Printf("- authType: %s\n", authType)
+		// fmt.Printf("- idToken: %s\n", idToken)
+		// fmt.Printf("- login: %s\n", login)
+		// fmt.Printf("- password: %s\n", password)
+		// fmt.Printf("- noCache: %v\n", noCache)
+		// fmt.Printf("- skipKeyring: %v\n", skipKeyring)
+		// fmt.Printf("- skipVerify: %v\n", skipVerify)
+
 		if needSetup {
-			e := setUpEnvironment(configFile)
+			e := setUpEnvironment()
 			if e != nil {
 				if e.Error() != unconfiguredMsg {
 					log.Fatalf("unexpected error during initialisation phase: %s", e.Error())
@@ -83,64 +116,42 @@ This will guide you through a quick procedure to get you up and ready in no time
 }
 
 func init() {
-	initEnvPrefixes()
+	handleLegagyParams()
 	viper.SetEnvPrefix(EnvPrefix)
 	viper.AutomaticEnv()
 
 	flags := RootCmd.PersistentFlags()
-	flags.StringVarP(&configFile, "config", "c", "", "Path to the configuration file")
+
+	dflt := rest.DefaultConfigDirPath()
+	flags.String("config", dflt, fmt.Sprintf("Location of cells client config files (default %s)", dflt))
+
+	flags.StringP("url", "u", "", "Full URL of the target server")
+	flags.StringP("auth_type", "a", "", "Authorizaton mechanism used: Personnal Access Token (Default), OAuth2 flow or Client Credentials")
+	flags.StringP("id_token", "t", "", "Valid IdToken")
+	flags.StringP("login", "l", "", "User login")
+	flags.StringP("password", "p", "", "User password")
+
+	flags.Bool("skip_verify", false, "By default the Cells Client will verify the validity of TLS certificates for each communication. This option skips TLS certificate verification.")
+	flags.Bool("skip_keyring", false, "Explicitly tell the tool to *NOT* try to use a keyring, even if present. Warning: sensitive information will be stored in clear text.")
+	flags.Bool("no_cache", false, "Force token refresh at each call. This might slow down scripts with many calls.")
 
 	bindViperFlags(flags, map[string]string{})
 }
 
-func initEnvPrefixes() {
-	prefOld := strings.ToUpper(EnvPrefixOld) + "_"
-	prefNew := strings.ToUpper(EnvPrefix) + "_"
-	//log.Println("... iterating over ENV vars")
-	for _, pair := range os.Environ() {
-		//log.Printf("- %s \n", pair)
-		if strings.HasPrefix(pair, prefOld) {
-			parts := strings.Split(pair, "=")
-			if len(parts) == 2 && parts[1] != "" {
-				os.Setenv(prefNew+strings.TrimPrefix(parts[0], prefOld), parts[1])
-			}
-		}
-	}
-}
+// SetUpEnvironment configures the current runtime by setting the SDK Config that is used by child commands.
+// It first tries to retrieve parameters via flags or environment variables. If it is not enough to define a valid connection,
+// we check for a locally defined configuration file (that might also relies on local keyring to store sensitive info).
+func setUpEnvironment() error {
 
-// bindViperFlags visits all flags in FlagSet and bind their key to the corresponding viper variable.
-func bindViperFlags(flags *pflag.FlagSet, replaceKeys map[string]string) {
-	flags.VisitAll(func(flag *pflag.Flag) {
-		key := flag.Name
-		if replace, ok := replaceKeys[flag.Name]; ok {
-			key = replace
-		}
-		viper.BindPFlag(key, flag)
-	})
-}
-
-// SetUpEnvironment retrieves parameters and stores them in the DefaultConfig of the SDK.
-// It also puts the sensitive bits in the server's keyring if one is present.
-// Note the precedence order (for each start of the app):
-//  1) flags
-// 	2) environment variables,
-//  3) config files whose path is passed as argument of the start command
-//  4) local config file (that are generated at first start with one of the 2 options above OR by calling the configure command.
-func setUpEnvironment(confPath string) error {
-	// Use a config file
-	if confPath != "" {
-		rest.SetConfigFilePath(confPath)
+	if configFilePath != "" { // override default location for the configuration file
+		rest.SetConfigFilePath(configFilePath)
 	}
 
-	// Get config params from environment variables
-	c, err := getSdkConfigFromEnv()
-	if err != nil {
-		return err
-	}
+	// First Check if an environment is defined via the context (flags or ENV vars)
+	c := getSdkConfigFromEnv()
 
 	if c.Url == "" {
-
-		confPath = rest.GetConfigFilePath()
+		confPath := rest.GetConfigFilePath()
 		if _, err := os.Stat(confPath); os.IsNotExist(err) {
 			return fmt.Errorf(unconfiguredMsg)
 		}
@@ -178,43 +189,80 @@ func setUpEnvironment(confPath string) error {
 	return nil
 }
 
-func getSdkConfigFromEnv() (rest.CecConfig, error) {
+func getSdkConfigFromEnv() rest.CecConfig {
 
-	// var c CecConfig
+	// Flags and env variable have been managed by viper => we can rely on local variable
 	c := new(rest.CecConfig)
+	validConfViaContext := false
 
-	// Check presence of environment variables
-	url := os.Getenv(rest.KeyURL)
-	clientKey := os.Getenv(rest.KeyClientKey)
-	clientSecret := os.Getenv(rest.KeyClientSecret)
-	user := os.Getenv(rest.KeyUser)
-	password := os.Getenv(rest.KeyPassword)
-	skipVerifyStr := os.Getenv(rest.KeySkipVerify)
-	if skipVerifyStr == "" {
-		skipVerifyStr = "false"
-	}
-	skipVerify, err := strconv.ParseBool(skipVerifyStr)
-	if err != nil {
-		return *c, err
+	if len(serverURL) > 0 {
+		if len(login) > 0 && len(password) > 0 {
+			authType = common.ClientAuthType
+			c.Password = password
+			c.User = login
+			validConfViaContext = true
+
+			// TODO do we want to enable OAuth from flags ?
+			// } else if len(idToken) > 0 && len(refreshToken) {
+			// 	authType = common.OAuthType
+			// 	validConfViaContext = true
+
+		} else if len(idToken) > 0 { // PAT auth
+			authType = common.PatType
+			c.IdToken = idToken
+			validConfViaContext = true
+		}
 	}
 
-	// Client Key and Client Secret are not used anymore
-	// if !(len(url) > 0 && len(clientKey) > 0 && len(clientSecret) > 0 && len(user) > 0 && len(password) > 0) {
-	if !(len(url) > 0 && len(user) > 0 && len(password) > 0) {
-		return *c, nil
+	if !validConfViaContext {
+		return *c
 	}
 
-	c.Url = url
-	c.ClientKey = clientKey
-	c.ClientSecret = clientSecret
-	c.User = user
-	c.Password = password
+	c.Url = serverURL
+	c.AuthType = authType
+
 	c.SkipVerify = skipVerify
+	c.SkipKeyring = skipKeyring
+	c.UseTokenCache = !noCache
 
-	// Note: this cannot be set via env variable. Enhance?
-	c.UseTokenCache = true
+	return *c
+}
 
-	return *c, nil
+// handleLegagyParams manages backward compatibility for ENV variables and flags.
+func handleLegagyParams() {
+
+	prefOld := "CELLS_CLIENT_TARGET_"
+
+	for _, pair := range os.Environ() {
+		if strings.HasPrefix(pair, prefOld) {
+			parts := strings.Split(pair, "=")
+			if len(parts) == 2 && parts[1] != "" {
+				switch parts[0] {
+				case "CELLS_CLIENT_TARGET_URL":
+					os.Setenv("CEC_URL", parts[1])
+				case "CELLS_CLIENT_TARGET_CLIENT_KEY", "CELLS_CLIENT_TARGET_CLIENT_SECRET":
+					log.Printf("[WARNING] %s is not used anymore. Double check your configuration", parts[0])
+				case "CELLS_CLIENT_TARGET_USER_LOGIN":
+					os.Setenv("CEC_LOGIN", parts[1])
+				case "CELLS_CLIENT_TARGET_USER_PWD":
+					os.Setenv("CEC_PASSWORD", parts[1])
+				case "CELLS_CLIENT_TARGET_SKIP_VERIFY":
+					os.Setenv("CEC_SKIP_VERIFY", parts[1])
+				}
+			}
+		}
+	}
+}
+
+// bindViperFlags visits all flags in FlagSet and bind their key to the corresponding viper variable.
+func bindViperFlags(flags *pflag.FlagSet, replaceKeys map[string]string) {
+	flags.VisitAll(func(flag *pflag.Flag) {
+		key := flag.Name
+		if replace, ok := replaceKeys[flag.Name]; ok {
+			key = replace
+		}
+		viper.BindPFlag(key, flag)
+	})
 }
 
 var bashCompletionFunc = `__` + os.Args[0] + `_custom_func() {
