@@ -3,6 +3,8 @@ package rest
 import (
 	"encoding/xml"
 	"fmt"
+	"net/url"
+	"strings"
 	"time"
 )
 
@@ -23,7 +25,7 @@ func RetryCallback(callback func() error, number int, interval time.Duration) er
 	return e
 }
 
-// RetrieveCurrentSessionLogin requests the registry of the current configured server & login  
+// RetrieveCurrentSessionLogin requests the registry of the current configured server & login
 // and parse the result to get current user login. Typically useful when using PAT auth.
 func RetrieveCurrentSessionLogin() (string, error) {
 
@@ -49,4 +51,14 @@ func RetrieveCurrentSessionLogin() (string, error) {
 		}
 	}
 	return "", fmt.Errorf("no <user> tag found in registry. Are you sure you are connected?")
+}
+
+func CleanURL(input string) (string, error) {
+	input = strings.TrimSpace(input)
+	tmpURL, err := url.Parse(input)
+	if err != nil {
+		return "", err
+	}
+	output := tmpURL.Scheme + "://" + tmpURL.Host
+	return output, nil
 }

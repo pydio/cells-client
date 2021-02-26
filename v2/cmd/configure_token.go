@@ -2,13 +2,10 @@ package cmd
 
 import (
 	"fmt"
-	"strings"
-
 	"github.com/manifoldco/promptui"
-	"github.com/spf13/cobra"
-
 	"github.com/pydio/cells-client/v2/common"
 	"github.com/pydio/cells-client/v2/rest"
+	"github.com/spf13/cobra"
 )
 
 var withPatCmd = &cobra.Command{
@@ -30,14 +27,17 @@ var withPatCmd = &cobra.Command{
 
 			p = promptui.Prompt{Label: "Server URL", Validate: validUrl}
 			newConf.Url, err = p.Run()
-			// clean spaces in the URL
-			newConf.Url = strings.TrimSpace(newConf.Url)
 			if err != nil {
 				if err == promptui.ErrInterrupt {
 					fmt.Println("Operation aborted by user")
 					return
 				}
 				fmt.Println(promptui.IconBad + "URL is not valid" + err.Error())
+				return
+			}
+			newConf.Url, err = rest.CleanURL(newConf.Url)
+			if err != nil {
+				fmt.Println(promptui.IconBad + err.Error())
 				return
 			}
 

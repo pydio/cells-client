@@ -71,7 +71,11 @@ func interactive(newConf *rest.CecConfig) error {
 	if newConf.Url, e = p.Run(); e != nil {
 		return e
 	}
-	newConf.Url = strings.Trim(newConf.Url, " ")
+
+	newConf.Url, e = rest.CleanURL(newConf.Url)
+	if e != nil {
+		return e
+	}
 
 	u, e := url.Parse(newConf.Url)
 	if e != nil {
