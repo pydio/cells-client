@@ -30,11 +30,9 @@ func ConfigToKeyring(conf *CecConfig) error {
 		conf.IdToken = ""
 		conf.RefreshToken = ""
 	case common.ClientAuthType:
-		value := value(conf.ClientSecret, conf.Password)
-		if e := keyring.Set(keyringService, currKey, value); e != nil {
+		if e := keyring.Set(keyringService, currKey, conf.Password); e != nil {
 			return e
 		}
-		conf.ClientSecret = ""
 		conf.Password = ""
 	}
 	return nil
@@ -53,9 +51,7 @@ func ConfigFromKeyring(conf *CecConfig) error {
 		conf.IdToken = parts[0]
 		conf.RefreshToken = parts[1]
 	case common.ClientAuthType:
-		parts := splitValue(value)
-		conf.ClientSecret = parts[0]
-		conf.Password = parts[1]
+		conf.Password = value
 	case common.PatType:
 		conf.IdToken = value
 	default:

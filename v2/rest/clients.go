@@ -45,7 +45,7 @@ func GetApiClient(anonymous ...bool) (context.Context, *client.PydioCellsRest, e
 	if len(anonymous) > 0 && anonymous[0] {
 		anon = true
 	}
-	DefaultConfig.CustomHeaders = map[string]string{"User-Agent": "cells-client/" + common.Version}
+	DefaultConfig.CustomHeaders = map[string]string{"User-Agent": common.AppName + "/" + common.Version}
 	c, t, e := transport.GetRestClientTransport(&DefaultConfig.SdkConfig, anon)
 	if e != nil {
 		return nil, nil, e
@@ -107,7 +107,7 @@ func DefaultConfigFilePath() string {
 	if err := os.MkdirAll(f, 0755); err != nil {
 		log.Fatal("Could not create local data dir - please check that you have the correct permissions for the folder -", f)
 	}
-	return  filepath.Join(f, "config.json")
+	return filepath.Join(f, "config.json")
 }
 
 var refreshMux = &sync.Mutex{}

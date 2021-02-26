@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+
 	"github.com/pydio/cells-sdk-go/client/tree_service"
 	"github.com/pydio/cells-sdk-go/models"
 	awstransport "github.com/pydio/cells-sdk-go/transport/aws"
@@ -22,7 +23,7 @@ import (
 )
 
 func GetS3Client() (*s3.S3, string, error) {
-	DefaultConfig.CustomHeaders = map[string]string{"User-Agent": "cells-client/" + common.Version}
+	DefaultConfig.CustomHeaders = map[string]string{"User-Agent": common.AppName + "/" + common.Version}
 	if err := ConfigFromKeyring(DefaultConfig); err != nil {
 		return nil, "", err
 	}

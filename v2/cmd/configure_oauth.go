@@ -131,22 +131,22 @@ func oAuthInteractive(newConf *rest.CecConfig) error {
 		}
 	}
 
-	newConf.ClientKey = "cells-client"
-	pE := promptui.Select{Label: "Do you want to edit OAuth client data (defaults generally work)?", Items: []string{"Use defaults", "Edit OAuth client"}}
-	if _, v, e := pE.Run(); e == nil && v != "Use defaults" {
-		// PROMPT CLIENT ID
-		p = promptui.Prompt{
-			Label:     "OAuth APP ID (found in your server pydio.json)",
-			Validate:  notEmpty,
-			Default:   "cells-client",
-			AllowEdit: true,
-		}
-		if newConf.ClientKey, e = p.Run(); e != nil {
-			return e
-		}
-		p = promptui.Prompt{Label: "OAuth APP Secret (leave empty for a public client)", Default: "", Mask: '*'}
-		newConf.ClientSecret, _ = p.Run()
-	}
+	// newConf.ClientKey = "cells-client"
+	// pE := promptui.Select{Label: "Do you want to edit OAuth client data (defaults generally work)?", Items: []string{"Use defaults", "Edit OAuth client"}}
+	// if _, v, e := pE.Run(); e == nil && v != "Use defaults" {
+	// 	// PROMPT CLIENT ID
+	// 	p = promptui.Prompt{
+	// 		Label:     "OAuth APP ID (found in your server pydio.json)",
+	// 		Validate:  notEmpty,
+	// 		Default:   "cells-client",
+	// 		AllowEdit: true,
+	// 	}
+	// 	if newConf.ClientKey, e = p.Run(); e != nil {
+	// 		return e
+	// 	}
+	// 	p = promptui.Prompt{Label: "OAuth APP Secret (leave empty for a public client)", Default: "", Mask: '*'}
+	// 	newConf.ClientSecret, _ = p.Run()
+	// }
 
 	openBrowser := true
 	p3 := promptui.Select{Label: "Can you open a browser on this computer? If not, you will make the authentication process by copy/pasting", Items: []string{"Yes", "No"}}
@@ -168,7 +168,7 @@ func oAuthInteractive(newConf *rest.CecConfig) error {
 	// Starting authentication process
 	var returnCode string
 	state := RandString(16)
-	directUrl, callbackUrl, err := rest.OAuthPrepareUrl(newConf.Url, newConf.ClientKey, newConf.ClientSecret, state, openBrowser)
+	directUrl, callbackUrl, err := rest.OAuthPrepareUrl(newConf.Url, state, openBrowser)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -208,6 +208,8 @@ func oAuthInteractive(newConf *rest.CecConfig) error {
 	if err := rest.OAuthExchangeCode(&newConf.SdkConfig, returnCode, callbackUrl); err != nil {
 		log.Fatal(err)
 	}
+	fmt.Printf(" SDK CONF: %v", newConf)
+
 	fmt.Println(promptui.IconGood + " Successfully Received Token!")
 
 	// Test a simple PING with this config before saving!
@@ -254,12 +256,5 @@ func oAuthNonInteractive(conf *rest.CecConfig) error {
 }
 
 func init() {
-
-	// flags := configureOAuthCmd.PersistentFlags()
-
-	// flags.StringVarP(&oAuthUrl, "url", "u", "", "HTTP URL to server")
-	// flags.StringVarP(&oAuthIdToken, "idToken", "t", "", "Valid IdToken")
-	// flags.BoolVar(&oAuthSkipVerify, "skipVerify", false, "Skip SSL certificate verification (not recommended)")
-
 	configureCmd.AddCommand(configureOAuthCmd)
 }

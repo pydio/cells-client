@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pydio/cells-client/v2/common"
 	cells_sdk "github.com/pydio/cells-sdk-go"
 )
 
@@ -18,19 +19,21 @@ type tokenResponse struct {
 	ExpiresIn    int    `json:"expires_in"`
 	IdToken      string `json:"id_token"`
 	RefreshToken string `json:"refresh_token"`
+	// if the server returns an error, we will have this field so that we can check.
+	StatusCode int `json:"status_code"`
 }
 
 // OAuthPrepareUrl makes a URL that can be opened in browser or copy/pasted by user
-func OAuthPrepareUrl(serverUrl, clientId, clientSecret, state string, browser bool) (redirectUrl string, callbackUrl string, e error) {
+func OAuthPrepareUrl(serverUrl, state string, browser bool) (redirectUrl string, callbackUrl string, e error) {
 
 	authU, _ := url.Parse(serverUrl)
 	authU.Path = "/oidc/oauth2/auth"
 	values := url.Values{}
 	values.Add("response_type", "code")
-	values.Add("client_id", clientId)
-	if clientSecret != "" {
-		values.Add("client_secret", clientSecret)
-	}
+	values.Add("client_id", common.AppName)
+	// if clientSecret != "" {
+	// 	values.Add("client_secret", clientSecret)
+	// }
 	values.Add("scope", "openid email profile pydio offline")
 	values.Add("state", state)
 	if browser {
@@ -54,10 +57,7 @@ func OAuthExchangeCode(c *cells_sdk.SdkConfig, code, callbackUrl string) error {
 	values.Add("grant_type", "authorization_code")
 	values.Add("code", code)
 	values.Add("redirect_uri", callbackUrl)
-	values.Add("client_id", c.ClientKey)
-	if c.ClientSecret != "" {
-		values.Add("client_secret", c.ClientSecret)
-	}
+	values.Add("client_id", common.AppName)
 	if c.SkipVerify {
 		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}
@@ -70,9 +70,15 @@ func OAuthExchangeCode(c *cells_sdk.SdkConfig, code, callbackUrl string) error {
 	if err := json.Unmarshal(b, &r); err != nil {
 		return err
 	}
+
+	if r.StatusCode > 299 {
+		return fmt.Errorf("could not perfom authentication flow: response body %s", string(b))
+	}
+
 	c.IdToken = r.AccessToken
 	c.RefreshToken = r.RefreshToken
 	c.TokenExpiresAt = int(time.Now().Unix()) + r.ExpiresIn
+
 	return nil
 }
 
@@ -88,10 +94,7 @@ func RefreshIfRequired(conf *CecConfig) (bool, error) {
 	}
 	data := url.Values{}
 	data.Add("grant_type", "refresh_token")
-	data.Add("client_id", conf.ClientKey)
-	if conf.ClientSecret != "" {
-		data.Add("client_secret", conf.ClientSecret)
-	}
+	data.Add("client_id", common.AppName)
 	data.Add("refresh_token", conf.RefreshToken)
 	data.Add("scope", "openid email profile pydio offline")
 

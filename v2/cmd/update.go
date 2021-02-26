@@ -20,8 +20,8 @@ var (
 	updateToVersion string
 	updateDryRun    bool
 	devChannel      bool
-	unstableChannel bool
-	defaultChannel  = common.UpdateStableChannel
+	// unstableChannel bool
+	defaultChannel = common.UpdateStableChannel
 )
 
 var updateBinCmd = &cobra.Command{
@@ -117,6 +117,6 @@ func init() {
 	updateBinCmd.Flags().StringVarP(&updateToVersion, "version", "v", "", "Pass a version number to apply the upgrade")
 	updateBinCmd.Flags().BoolVarP(&updateDryRun, "dry-run", "d", false, "If set, this flag will grab the package and save it to the tmp directory instead of replacing current binary")
 	updateBinCmd.Flags().BoolVarP(&devChannel, "dev", "", false, "If set this flag will use the dev channel to load the updates")
-	updateBinCmd.Flags().BoolVarP(&unstableChannel, "unstable", "", false, "If set this flag will use the unstable channel to load the updates")
+	// updateBinCmd.Flags().BoolVarP(&unstableChannel, "unstable", "", false, "If set this flag will use the unstable channel to load the updates")
 
 }
