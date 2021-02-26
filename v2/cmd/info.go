@@ -25,14 +25,3 @@ var infoCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(infoCmd)
 }
-
-// Useless, we rely on the configure command to retrieve and store username
-// func loginFromConfig(cfg *rest.CecConfig) (login string) {
-// 	switch cfg.AuthType {
-// 	case common.PatType, common.OAuthType:
-// 		login, _ = rest.RetrieveCurrentSessionLogin()
-// 	case common.ClientAuthType:
-// 		return cfg.User
-// 	}
-// 	return ""
-// }
