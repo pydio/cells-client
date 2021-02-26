@@ -62,7 +62,7 @@ var configureOAuthCmd = &cobra.Command{
 		if err != nil {
 			fmt.Println(promptui.IconBad + " Cannot save configuration file! " + err.Error())
 		} else {
-			fmt.Printf("%s Configuration saved, you can now use the client to interract with %s.\n", promptui.IconGood, newConf.Url)
+			fmt.Printf("%s Configuration saved, you can now use the client to interract with %s\n", promptui.IconGood, newConf.Url)
 		}
 	},
 }
@@ -210,8 +210,6 @@ func oAuthInteractive(newConf *rest.CecConfig) error {
 	if err := rest.OAuthExchangeCode(&newConf.SdkConfig, returnCode, callbackUrl); err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf(" SDK CONF: %v", newConf)
-
 	fmt.Println(promptui.IconGood + " Successfully Received Token!")
 
 	// Test a simple PING with this config before saving!

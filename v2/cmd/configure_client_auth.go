@@ -57,7 +57,7 @@ You can also go through the whole process in a non-interactive manner by using t
 		if err != nil {
 			fmt.Println(promptui.IconBad + " Cannot save configuration file! " + err.Error())
 		} else {
-			fmt.Printf("%s Configuration saved, you can now use the client to interract with %s.\n", promptui.IconGood, newConf.Url)
+			fmt.Printf("%s Configuration saved, you can now use the client to interract with %s\n", promptui.IconGood, newConf.Url)
 		}
 	},
 }

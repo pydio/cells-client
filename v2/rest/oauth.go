@@ -98,7 +98,7 @@ func RefreshIfRequired(conf *CecConfig) (bool, error) {
 	data.Add("refresh_token", conf.RefreshToken)
 	data.Add("scope", "openid email profile pydio offline")
 
-	httpReq, err := http.NewRequest("POST", strings.TrimSuffix(conf.Url, "/")+"/oidc/oauth2/token", strings.NewReader(data.Encode()))
+	httpReq, err := http.NewRequest("POST", conf.Url+"/oidc/oauth2/token", strings.NewReader(data.Encode()))
 	if err != nil {
 		return true, err
 	}
@@ -125,6 +125,5 @@ func RefreshIfRequired(conf *CecConfig) (bool, error) {
 	conf.IdToken = respMap.AccessToken
 	conf.RefreshToken = respMap.RefreshToken
 	conf.TokenExpiresAt = int(time.Now().Unix()) + respMap.ExpiresIn
-	// fmt.Printf("Retrieved new token that will be refeshed at %v\n", time.Unix(int64(conf.TokenExpiresAt), 0))
 	return true, nil
 }
