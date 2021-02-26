@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net/url"
 	"os"
 	"strings"
 
@@ -82,11 +81,11 @@ This will guide you through a quick procedure to get you up and ready in no time
 		tmpURLStr := viper.GetString("url")
 		// Clean URL string
 		if tmpURLStr != "" {
-			tmpURL, err := url.Parse(tmpURLStr)
+			var err error
+			serverURL, err = rest.CleanURL(tmpURLStr)
 			if err != nil {
 				log.Fatalf("server URL %s seems to be unvalid, please double check and adapt. Cause: %s", tmpURLStr, err.Error())
 			}
-			serverURL = tmpURL.Scheme + "://" + tmpURL.Host
 		}
 		authType = viper.GetString("auth_type")
 		idToken = viper.GetString("id_token")

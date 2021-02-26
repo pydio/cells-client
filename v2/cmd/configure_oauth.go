@@ -7,7 +7,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/gookit/color"
@@ -117,7 +116,10 @@ func oAuthInteractive(newConf *rest.CecConfig) error {
 	if newConf.Url, e = p.Run(); e != nil {
 		return e
 	} else {
-		newConf.Url = strings.TrimSpace(newConf.Url)
+		newConf.Url, e = rest.CleanURL(newConf.Url)
+		if e != nil {
+			return e
+		}
 	}
 	u, e := url.Parse(newConf.Url)
 	if e != nil {
@@ -242,8 +244,14 @@ func oAuthNonInteractive(conf *rest.CecConfig) error {
 	conf.SkipVerify = skipVerify
 
 	// Insure values are legal
-	if err := validUrl(conf.Url); err != nil {
+	err := validUrl(conf.Url)
+	if err != nil {
 		return fmt.Errorf("URL %s is not valid: %s", conf.Url, err.Error())
+	}
+
+	conf.Url, err = rest.CleanURL(conf.Url)
+	if err != nil {
+		return err
 	}
 
 	// Test a simple PING with this config before saving!
