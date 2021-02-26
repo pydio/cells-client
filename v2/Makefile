@@ -8,6 +8,8 @@ CELLS_CLIENT_VERSION?=${DEV_VERSION}.${TIMESTAMP}
 XGO_TARGETS?="linux/amd64,darwin/amd64,windows/amd64"
 XGO_IMAGE?=pydio/xgo:latest
 
+.PHONY: all clean main dev xgo
+
 
 main:
 	go build -a\
