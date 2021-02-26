@@ -318,7 +318,7 @@ func (c *CrawlNode) download(src *CrawlNode, bar *uiprogress.Bar) error {
 		bname = c.NewFileName
 	}
 	downloadToLocation := c.Join(c.FullPath, bname)
-	writer, e := os.OpenFile(downloadToLocation, os.O_CREATE|os.O_WRONLY, 0755)
+	writer, e := os.OpenFile(downloadToLocation, os.O_CREATE|os.O_WRONLY, 0644)
 	if e != nil {
 		return e
 	}
