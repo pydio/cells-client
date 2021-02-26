@@ -144,7 +144,10 @@ func init() {
 	flags.String("config", dflt, fmt.Sprintf("Location of cells client config files (default %s)", dflt))
 
 	flags.StringP("url", "u", "", "Full URL of the target server")
-	flags.StringP("auth_type", "a", "", "Authorizaton mechanism used: Personnal Access Token (Default), OAuth2 flow or Client Credentials")
+	// Unused for the time being
+	// flags.StringP("auth_type", "a", "", "Authorization mechanism used: Personnal Access Token (Default), OAuth2 flow or Client Credentials")
+	// flags.MarkHidden("auth_type")
+
 	flags.StringP("id_token", "t", "", "Valid IdToken")
 	flags.String("login", "", "User login")
 	flags.String("password", "", "User password")
