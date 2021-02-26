@@ -146,8 +146,8 @@ func init() {
 	flags.StringP("url", "u", "", "Full URL of the target server")
 	flags.StringP("auth_type", "a", "", "Authorizaton mechanism used: Personnal Access Token (Default), OAuth2 flow or Client Credentials")
 	flags.StringP("id_token", "t", "", "Valid IdToken")
-	flags.StringP("login", "l", "", "User login")
-	flags.StringP("password", "p", "", "User password")
+	flags.String("login", "", "User login")
+	flags.String("password", "", "User password")
 
 	flags.Bool("skip_verify", false, "By default the Cells Client will verify the validity of TLS certificates for each communication. This option skips TLS certificate verification.")
 	flags.Bool("skip_keyring", false, "Explicitly tell the tool to *NOT* try to use a keyring, even if present. Warning: sensitive information will be stored in clear text.")
