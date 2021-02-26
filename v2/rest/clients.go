@@ -32,8 +32,8 @@ var (
 // CecConfig extends the default SdkConfig with custom parameters.
 type CecConfig struct {
 	cells_sdk.SdkConfig
-	SkipKeyring bool
-	AuthType    string
+	SkipKeyring bool   `json:"skipKeyring"`
+	AuthType    string `json:"authType"`
 }
 
 // GetApiClient connects to the Pydio Cells server defined by this config, by sending an authentication
