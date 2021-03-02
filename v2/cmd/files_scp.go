@@ -9,9 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pydio/cells-client/v2/rest"
 	"github.com/spf13/cobra"
-
-	. "github.com/pydio/cells-client/v2/rest"
 )
 
 var scpFileExample = `
@@ -34,7 +33,7 @@ var scpFiles = &cobra.Command{
 	Long: `
 DESCRIPTION
 
-  Copy files from your local machine to your Pydio Cells server instance (and vice versa).
+  Copy files from the client machine to your Pydio Cells server instance (and vice versa).
 
   To differentiate local from remote, prefix remote paths with 'cells://' or with 'cells//' (without the column) if you have installed the completion and intend to use it.
   For the time being, copy can only be performed from the client machine to the server or the otherway round:
@@ -43,8 +42,8 @@ DESCRIPTION
 SYNTAX
 
   Note that you can rename the file or base folder that you upload/download if:  
-   - Last part of the target path is a new name that *does not exists*,  
-   - Parent path exists and is a folder at target location.
+   - last part of the target path is a new name that *does not exists*,  
+   - parent path exists and is a folder at target location.
 
 EXAMPLES
 
@@ -62,7 +61,7 @@ EXAMPLES
   $ ` + os.Args[0] + ` scp cells://personal-files/funnyCat.jpg ./cat2.jpg
   Copying cells://personal-files/funnyCat.jpg to /home/pydio/downloads/	
 `,
-	Args:    cobra.MinimumNArgs(2),
+	Args: cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 
 		from := args[0]
@@ -74,11 +73,11 @@ EXAMPLES
 			scpCurrentPrefix = prefixB
 		} else {
 			// No prefix found
-			log.Fatal("Source and target are both local, copy remote to local or the opposite.")
+			log.Fatal("Source and target are both on the client machine, copy from server to client or the opposite.")
 		}
 
 		// Prepare paths
-		DryRun = false // Debug option
+		rest.DryRun = false // Debug option
 		isSrcLocal := true
 		var crawlerPath, targetPath string
 		var rename bool
@@ -93,7 +92,7 @@ EXAMPLES
 				log.Fatal(err)
 			}
 			if isRemote {
-				log.Fatal("Source and target are both remote, copy remote to local or the opposite.")
+				log.Fatal("Source and target are both remote: you can only copy from client to remote Pydio Server or the opposite.")
 			}
 			fmt.Printf("Downloading %s to %s\n", from, to)
 		} else {
@@ -107,7 +106,7 @@ EXAMPLES
 			fmt.Printf("Uploading %s to %s\n", from, to)
 		}
 
-		crawler, e := NewCrawler(crawlerPath, isSrcLocal)
+		crawler, e := rest.NewCrawler(crawlerPath, isSrcLocal)
 		if e != nil {
 			log.Fatal(e)
 		}
@@ -116,13 +115,13 @@ EXAMPLES
 			log.Fatal(e)
 		}
 
-		targetNode := NewTarget(targetPath, crawler, rename)
+		targetNode := rest.NewTarget(targetPath, crawler, rename)
 
 		refreshInterval := time.Millisecond * 10 // this is the default
 		if scpQuiet {
 			refreshInterval = time.Millisecond * 3000
 		}
-		pool := NewBarsPool(len(nn) > 1, len(nn), refreshInterval)
+		pool := rest.NewBarsPool(len(nn) > 1, len(nn), refreshInterval)
 		pool.Start()
 
 		// CREATE FOLDERS
@@ -153,24 +152,25 @@ func targetToFullPath(from, to string) (string, bool, bool, error) {
 		// This is remote: UPLOAD
 		isRemote = true
 		toPath = strings.TrimPrefix(to, scpCurrentPrefix)
-		_, ok := StatNode(toPath)
+		_, ok := rest.StatNode(toPath)
 		if !ok {
 
 			parPath, _ := path.Split(toPath)
 			if parPath == "" {
 				// unexisting workspace
-				return toPath, true, false, fmt.Errorf("Target path %s does not exist on remote server, please double check and correct.", toPath)
+				return toPath, true, false, fmt.Errorf("Target path %s does not exist on remote server, please double check and correct. ", toPath)
 			}
 
 			// Check if parent exists. In such case, we rename the file or root folder that has been passed as local source
 			// Typically, `cec scp README.txt cells//common-files/readMe.md` or `cec scp local-folder cells//common-files/remote-folder`
-			if _, ok2 := StatNode(parPath); !ok2 {
+			if _, ok2 := rest.StatNode(parPath); !ok2 {
 				// Target parent folder does not exist, we do not create it
 				return toPath, true, false, fmt.Errorf("Target parent folder %s does not exist on remote server. ", parPath)
-			} else {
-				// Parent folder exists on remote, we rename src file or folder
-				return toPath, true, true, nil
 			}
+
+			// Parent folder exists on remote, we rename src file or folder
+			return toPath, true, true, nil
+
 		}
 	} else {
 		// This is local: DOWNLOAD
@@ -184,16 +184,16 @@ func targetToFullPath(from, to string) (string, bool, bool, error) {
 			parPath := filepath.Dir(toPath)
 			if parPath == "." {
 				// this should never happen
-				return toPath, true, false, fmt.Errorf("Target path %s does not exist on local server, please double check and correct.", toPath)
+				return toPath, true, false, fmt.Errorf("Target path %s does not exist on client machine, please double check and correct. ", toPath)
 			}
 
 			// Check if parent exists. In such case, we rename the file or root folder that has been passed as remote source
 			if ln, err2 := os.Stat(parPath); err2 != nil {
-				// Target parent folder does not exist on local machine, we do not create it
-				return "", true, false, fmt.Errorf("Target parent folder %s does not exist on local server. ", parPath)
+				// Target parent folder does not exist on client machine, we do not create it
+				return "", true, false, fmt.Errorf("Target parent folder %s does not exist in client machine. ", parPath)
 			} else if !ln.IsDir() {
 				// Local parent is not a folder
-				return "", true, false, fmt.Errorf("Target parent %s is not a folder, could not download to it.", parPath)
+				return "", true, false, fmt.Errorf("Target parent %s is not a folder, could not download to it. ", parPath)
 			} else {
 				// Parent folder exists on local, we rename src file or folder
 				return toPath, false, true, nil

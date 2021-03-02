@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/manifoldco/promptui"
@@ -12,6 +13,8 @@ import (
 
 	"github.com/pydio/cells-client/v2/rest"
 )
+
+const noKeyringMsg = "Could not validate local keyring: sensitive information like token or password will end up stored in clear text in the client machine."
 
 var configureCmd = &cobra.Command{
 	Use:   "configure",
@@ -24,13 +27,21 @@ DESCRIPTION
 
   If necessary, you might use an alternative authorization process and/or execute this process non-interactively calling one of the defined sub-commands.
 
-  Once a connection with the server established, it stores necessary information locally, keeping the sensitive bits encrypted in the local machine keyring.
+  Once a connection with the server established, it stores necessary information locally, keeping the sensitive bits encrypted in the client machine keyring.
   If you want to forget a connection, the config file and keyring can be cleant out by calling the 'clear' subcommand.
 
 WARNING
 
-If no keyring is defined in the local machine, all information is stored in *clear text* in a config file of the Cells Client working directory.
+If no keyring is defined in the client machine, all information is stored in *clear text* in a config file of the Cells Client working directory.
 `,
+
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		if !skipKeyring {
+			if err := rest.CheckKeyring(); err != nil {
+				fmt.Println(promptui.IconWarn + " " + noKeyringMsg)
+			}
+		}
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 
 		s := promptui.Select{Label: "Select authentication method", Size: 3, Items: []string{"OAuth2 login (requires a browser access)", "Personal Access Token (unique token generated server-side)", "Client Auth (direct login/password, less secure)"}}
@@ -56,7 +67,30 @@ If no keyring is defined in the local machine, all information is stored in *cle
 }
 
 func init() {
+	configureCmd.AddCommand(checkKeyringCmd)
 	RootCmd.AddCommand(configureCmd)
+}
+
+var checkKeyringCmd = &cobra.Command{
+	Use:   "check-keyring",
+	Short: "Try to store and retrieve a dummy value in local keyring to test it",
+	Long: `
+DESCRIPTION
+
+  Helper command to check if a keyring is present and correctly configured 
+  in the client machine by simply storing and retrieving a dummy password.
+`,
+	Run: func(cm *cobra.Command, args []string) {
+
+		if err := rest.CheckKeyring(); err != nil {
+			if skipKeyring { // Otherwise this has already be shown by the PersistentPrerun
+				fmt.Println(promptui.IconWarn + " " + noKeyringMsg)
+			}
+			os.Exit(1)
+		} else {
+			fmt.Println(promptui.IconGood + " Keyring seems to be here and working.")
+		}
+	},
 }
 
 // Local helpers

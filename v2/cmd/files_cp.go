@@ -17,7 +17,7 @@ var cpCmd = &cobra.Command{
 DESCRIPTION
 
   Copy files from one location to another *within* a *single* Pydio Cells instance. 
-  To copy files from your local machine to your server (and vice versa), rather see the '` + os.Args[0] + ` scp' command.
+  To copy files from the client machine to your server (and vice versa), rather see the '` + os.Args[0] + ` scp' command.
 
 EXAMPLE
 

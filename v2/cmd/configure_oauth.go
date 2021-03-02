@@ -130,14 +130,15 @@ func oAuthInteractive(newConf *rest.CecConfig) error {
 		Default:  "",
 	}
 
-	if newConf.Url, e = p.Run(); e != nil {
+	newConf.Url, e = p.Run()
+	if e != nil {
 		return e
-	} else {
-		newConf.Url, e = rest.CleanURL(newConf.Url)
-		if e != nil {
-			return e
-		}
 	}
+	newConf.Url, e = rest.CleanURL(newConf.Url)
+	if e != nil {
+		return e
+	}
+
 	u, e := url.Parse(newConf.Url)
 	if e != nil {
 		return e

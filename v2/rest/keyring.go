@@ -78,6 +78,34 @@ func ConfigFromKeyring(conf *CecConfig) error {
 	return nil
 }
 
+// CheckKeyring simply tries a write followed by a read in the local keyring and
+// returns nothing if it works or an error otherwise.
+func CheckKeyring() error {
+
+	testKey := key("https://test.example.com", "john.doe")
+	testValue := "A very complicated value !!#%<{}//\\q"
+
+	if e := keyring.Set(keyringService, testKey, testValue); e != nil {
+		return e
+	}
+
+	defer func() {
+		// Best effort to remove the test key from the keyring => ignore error
+		_ = keyring.Delete(keyringService, testKey)
+	}()
+
+	value, err := keyring.Get(keyringService, testKey)
+	if err != nil {
+		return err
+	}
+
+	if value != testValue {
+		return fmt.Errorf("Keyring seems to be broken in this machine, retrieved value (%s) differs from the one we stored (%s)", value, testValue)
+	}
+
+	return nil
+}
+
 const (
 	keySep   = "::"
 	valueSep = "__//__"
@@ -95,7 +123,7 @@ func splitValue(value string) []string {
 	return strings.Split(value, valueSep)
 }
 
-// ClearKeyring removes sensitive info from local keychain, if they are present.
+// ClearKeyring removes sensitive info from the local keychain, if they are present.
 func ClearKeyring(c *CecConfig) error {
 	// Best effort to remove known keys from keyring
 	if err := keyring.Delete(keyringService, key(c.Url, c.User)); err != nil {
