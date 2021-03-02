@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"net/url"
-	"strings"
 
 	"github.com/manifoldco/promptui"
 	"github.com/micro/go-log"
@@ -130,7 +129,6 @@ func nonInteractive(conf *rest.CecConfig) error {
 
 	return nil
 }
-
 
 func init() {
 	configureCmd.AddCommand(configureClientAuthCmd)
