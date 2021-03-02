@@ -17,7 +17,8 @@ var listWorkspaces = &cobra.Command{
 	Long: `
 DESCRIPTION	
 
-	List all the workspaces on which the current logged in user (configured via the oauth command) has at least Read Access
+  List all workspaces on which the current logged in user has *at least* Read Access.
+
 `,
 	Run: func(cm *cobra.Command, args []string) {
 

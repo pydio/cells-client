@@ -89,28 +89,25 @@ var (
 
 var listFiles = &cobra.Command{
 	Use:   "ls",
-	Short: "List files in your remote server",
+	Short: "List files in your Cells server",
 	Long: `
 DESCRIPTION
 
-	List files in your Pydio Cells server instance.
+  List files in your Cells server.
 
 SYNTAX
 
-	Use as a normal ls, with additional path to list sub-folders or read info about a node.
-	You can use one of the below optional flags: 
+  Use as a normal ls, with additional path to list sub-folders or read info about a node.
+  You can use one of the below optional flags: 
+   - d (--details) flag to display more information, 
+   - r (--raw) flag to only list the paths of found files and folders
+   - f (--exists) flag to only check if given path exists on the server.
 
-	- d (--details) flag to display more information, 
-	- r (--raw) flag to only list the paths of found files and folders
-	- f (--exists) flag to only check if given path exists on the server.
+  Note that you can only use *one* of the three above flags at a time.
 
-	Note that you can only use *one* of the three above flags at a time.
+EXAMPLES
 
-EXAMPLE
-
-	- `+ os.Args[0] +` ls
-	- `+ os.Args[0] +` ls common-files
-	
+` + lsCmdExample + `
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 

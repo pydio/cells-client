@@ -13,10 +13,11 @@ import (
 var listGroups = &cobra.Command{
 	Use:   "list-groups",
 	Short: "List groups",
-	Long:  `
+	Long: `
 DESCRIPION
 
-	List the groups defined in your Pydio Cells instance.`,
+  List user groups that are defined in your Pydio Cells instance.
+`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		ctx, apiClient, err := rest.GetApiClient()

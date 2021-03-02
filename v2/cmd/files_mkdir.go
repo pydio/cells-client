@@ -23,19 +23,22 @@ var mkDir = &cobra.Command{
 	Long: `
 DESCRIPTION
 
-	mkdir commande creates a folder in the remote Cells server instance.
-	If ancestor folders do not exist and if the 'parents' flag is set, non-existing folders are recursively created. 
+  Create a folder in the remote Cells server instance. 
+  You must specify the full path, including the slug of an existing workspace.
+  
+  If parent folder does not exists, the command fails unless the '-p' flag is set.
+  In such a case, non-existing folders are recursively created. 
+  
+  Warning: even if '-p' flag is set, trying to create a folder in an unknown or non-existent 
+  workspace fails with error.
 
-	You must specify the full path, including the slug of an existing workspace: 
-	even if 'parents' flags is set, trying to create a folder in an unknown/non-existent workspace will result in an error.
+EXAMPLES
 
-EXAMPLE
+  # Simply create a folder under an already existing folder 'test' in 'common-files' workspace
+  ` + os.Args[0] + ` mkdir common-files/test/new-folder
 
-	# Simply create a folder under an already existing folder 'existing' in 'common-files' workspace
-	` + os.Args[0] + ` mkdir common-files/existing/new-folder
-
-	# Create a full tree
-	` + os.Args[0] + ` mkdir -p common-files/a/folder/that/does/not/exits
+  # Create a full tree
+  ` + os.Args[0] + ` mkdir -p common-files/a/folder/that/does/not/exits
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 

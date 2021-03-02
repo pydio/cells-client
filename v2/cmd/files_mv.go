@@ -12,25 +12,27 @@ import (
 
 // filesMvCmd represents the filesMv command
 var filesMvCmd = &cobra.Command{
-	Use:     "mv",
-	Short:   "Move and/or rename nodes on the server",
+	Use:   "mv",
+	Short: "Move and/or rename nodes on the server",
 	Long: `
 DESCRIPTION
 	
-	Move files inside your server between your workspaces.
+  Synchronously move or rename one or more files or folders within your Cells server.
+  It works within the same workspace or from one to another, as long as
+  the current user has sufficient permission on both workspaces.
 
-EXAMPLE
+EXAMPLES
 
-	# Move a node
-	` + os.Args[0] + ` mv common-files/formula-one.jpg personal-files/photos/
+  Move a node:
+  ` + os.Args[0] + ` mv common-files/picture.jpg personal-files/photos/
 
-	# Rename a node
-	` + os.Args[0] + ` mv common-files/formula-one.jpg common-files/f1.jpg
+  Rename a node:
+  ` + os.Args[0] + ` mv common-files/picture.jpg common-files/p2.jpg
 
-	# Move all nodes recursively 
-	` + os.Args[0] + ` mv common-files/photos/* personal-files/photos/
-	`,
-	Args:    cobra.MinimumNArgs(2),
+  Move all nodes recursively:
+  ` + os.Args[0] + ` mv common-files/photos/* personal-files/photos/
+`,
+	Args: cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 
 		source := args[0]

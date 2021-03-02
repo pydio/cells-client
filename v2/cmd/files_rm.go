@@ -26,28 +26,32 @@ var rmCmd = &cobra.Command{
 	Long:    `
 DESCRIPTION
 	
-	Deleting specified files or folders. In fact, it moves specified files or folders to the recycle bin that is at the root of the corresponding workspace.
+  Delete specified files or folders. 
+	
+  In fact, it only moves specified files or folders to the recycle bin 
+  that is at the root of the corresponding workspace, the trashed objects 
+  can be restored (from the web UI, this feature is not yet implemented 
+  in the Cells Client) 
 
+EXAMPLES
 
-EXAMPLE
+  # Generic example:
+  ` + os.Args[0] + ` rm <workspace-slug>/path/to/resource
 
-	# Path
-	` + os.Args[0] + ` rm <workspace-slug>/path/to/resource
+  # Remove a single file:
+  ` + os.Args[0] + ` rm common-files/target.txt
 
-	# Remove a single file
-	` + os.Args[0] + ` rm common-files/target.txt
+  # Remove recursively inside a folder, the wildcard is '%':
+  ` + os.Args[0] + ` rm common-files/folder/%
 
-	# Remove recursively inside a folder (the wildcard is %)
-	` + os.Args[0] + ` rm common-files/folder/%
+  # Remove a folder and all its children (even if it is not empty)
+  ` + os.Args[0] + ` rm common-files/folder
 
-	# Remove a folder and all its children (even if it is not empty)
-	` + os.Args[0] + ` rm common-files/folder
+  # Remove multiple files
+  ` + os.Args[0] + ` rm common-files/file-1.txt common-files/file-2.txt
 
-	# Remove multiple files
-	` + os.Args[0] + ` rm common-files/file-1.txt common-files/file-2.txt
-
-	# You can force the deletion with the -f --force flag (to avoid the Yes or No)
-	` + os.Args[0] + ` rm -f common-files/file-1.txt
+  # You can force the deletion with the '--force' flag (to avoid the Yes or No)
+  ` + os.Args[0] + ` rm -f common-files/file-1.txt
 `,
 	Args:    cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
