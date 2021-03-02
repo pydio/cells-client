@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/go-openapi/runtime"
 )
 
 // RetryCallback implements boiler plate code to easily call the same function until it suceeds
@@ -61,4 +63,12 @@ func CleanURL(input string) (string, error) {
 	}
 	output := tmpURL.Scheme + "://" + tmpURL.Host
 	return output, nil
+}
+
+func IsForbiddenError(err error) bool {
+	switch e := err.(type) {
+	case *runtime.APIError:
+		return e.Code == 401
+	}
+	return false
 }

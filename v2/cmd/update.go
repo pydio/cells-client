@@ -27,8 +27,14 @@ var (
 var updateBinCmd = &cobra.Command{
 	Use:   "update",
 	Short: "Check for available updates and apply them",
-	Long: `Without argument, this command will list the available updates for this binary.
-To apply the actual update, re-run the command with a --version parameter.
+	Long: `
+DESCRIPTION	
+	
+  Without argument, the 'update' command lists available updates.
+  To apply the actual update, re-run the command specifying the target version with the --version flag.
+
+  By default, we check for update in the stable channel, that is: we only install binaries that have been properly released.
+  If necessary, you can use the --dev flag to switch **at your own risks** to the pre-release channel.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 
@@ -111,12 +117,9 @@ To apply the actual update, re-run the command with a --version parameter.
 }
 
 func init() {
+	updateBinCmd.Flags().StringVarP(&updateToVersion, "version", "v", "", "Specify the version to be installed and trigger the actual upgrade")
+	updateBinCmd.Flags().BoolVarP(&updateDryRun, "dry-run", "d", false, "If set, this flag will grab the package and save it to the tmp directory instead of replacing current binary")
+	updateBinCmd.Flags().BoolVar(&devChannel, "dev", false, "If set this flag will use the dev channel to load the updates")
 
 	RootCmd.AddCommand(updateBinCmd)
-
-	updateBinCmd.Flags().StringVarP(&updateToVersion, "version", "v", "", "Pass a version number to apply the upgrade")
-	updateBinCmd.Flags().BoolVarP(&updateDryRun, "dry-run", "d", false, "If set, this flag will grab the package and save it to the tmp directory instead of replacing current binary")
-	updateBinCmd.Flags().BoolVar(&devChannel, "dev",  false, "If set this flag will use the dev channel to load the updates")
-	// updateBinCmd.Flags().BoolVarP(&unstableChannel, "unstable", "", false, "If set this flag will use the unstable channel to load the updates")
-
 }

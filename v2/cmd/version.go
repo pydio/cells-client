@@ -21,7 +21,7 @@ var cellsVersionTpl = `{{.PackageLabel}}
  Go version: 	{{.GoVersion}}
 `
 
-type CellsClientVersion struct {
+type cecVersion struct {
 	PackageLabel string
 	Version      string
 	BuildTime    string
@@ -39,9 +39,25 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Show Cells Client version information",
 	Long: `
-The version command simply shows the version that is currently running.
+DESCRIPTION
 
-It also provides various utility sub commands than comes handy when manipulating software files. 
+  Print version information.
+
+  You can format the output with a go template using the --format flag.
+  Typically, to only output a parsable version, call:
+
+    $ ` + os.Args[0] + ` version -f '{{.Version}}'
+ 
+  As reference, known attributes are:
+   - PackageLabel
+   - Version
+   - BuildTime
+   - GitCommit
+   - OS
+   - Arch
+   - GoVersion
+
+  This also provides various utility sub-commands that come handy when manipulating software files. 
 `,
 	Run: func(cm *cobra.Command, args []string) {
 		var t time.Time
@@ -56,7 +72,7 @@ It also provides various utility sub commands than comes handy when manipulating
 			sV = v.String()
 		}
 
-		cv := &CellsClientVersion{
+		cv := &cecVersion{
 			PackageLabel: common.PackageLabel,
 			Version:      sV,
 			BuildTime:    t.Format(time.RFC822Z),
@@ -88,17 +104,24 @@ It also provides various utility sub commands than comes handy when manipulating
 
 var ivCmd = &cobra.Command{
 	Use:   "isvalid",
-	Short: "Return an error if the passed version is not correctly formatted",
-	Long: `Tries to parse the passed string version using the hashicorp/go-version library 
-and hence validates that it respects semantic versionning rules.
+	Short: "Check if a given string represents a valid version",
+	Long: `
+DESCRIPTION 
+  
+  Check the passed string to validate that it respects semantic versioning rules.
+  It returns an error if the string is not correctly formatted.
 
-In case the passed version is *not* valid, the process exits with status 1.`,
-	Example: `
-# A valid version
-` + os.Args[0] + ` version isvalid 2.0.6-dev.20191205
+  Under the hood, we try to parse the version string using the hashicorp/go-version library.
+   - If the passed version is *not* valid, the process exits with status 1.
+   - When it is valid, the process simply exits with status 0.
 
-# A *non* valid version
-` + os.Args[0] + ` version isvalid 2.a
+EXAMPLES
+
+  A valid version:
+   ` + os.Args[0] + ` version isvalid 2.0.6-dev.20191205
+
+  A *non* valid version:
+   ` + os.Args[0] + ` version isvalid 2.a
 `,
 	Run: func(cm *cobra.Command, args []string) {
 		if len(args) != 1 {
@@ -112,30 +135,35 @@ In case the passed version is *not* valid, the process exits with status 1.`,
 		if err != nil {
 			cm.Printf("[%s] is *not* a valid version\n", versionStr)
 			os.Exit(1)
-			// do not output anything is case the version is correct.
-			// } else {
-			// 	cm.Printf("[%s] is a valid version\n", versionStr)
 		}
 	},
 }
 
 var irCmd = &cobra.Command{
 	Use:   "isrelease",
-	Short: "Return an error if the passed version is a snapshot",
-	Long: `Tries to parse the passed string version using the hashicorp/go-version library 
-and hence validates that it respects semantic versionning rules.
+	Short: "Check if a given string represents a valid **RELEASE** version",
+	Long: `
+DESCRIPTION
 
-It then insures that the passed string is not a pre-release, 
-that is that is not suffixed by "a hyphen and a series of dot separated identifiers 
-immediately following the patch version", see: https://semver.org
+  Check the passed string to validate that it respects semantic versioning rules
+  *and* represents a valid release version.
+  It returns an error if the string is not correctly formatted or represents a SNAPSHOT.
+  
+  Under the hood, we try to parse the version string using the hashicorp/go-version library.
+  We then check that the passed string is not a pre-release, that is that is not suffixed 
+  by "a hyphen and a series of dot separated identifiers immediately following the patch version", 
+  see: https://semver.org
+  
+  In case the passed version is *not* a valid release version, the process prints an error 
+  and exits with status 1. Otherwise it simply exits silently with status 0.
 
-In case the passed version is *not* a valid realease version, the process exits with status 1.`,
-	Example: `
-# A valid release version
-` + os.Args[0] + ` version isvalid 2.0.6
+EXAMPLES
 
-# A *non* release version
-` + os.Args[0] + ` version isvalid 2.0.6-dev.20191205
+  A valid release version:
+   ` + os.Args[0] + ` version isvalid 2.0.6
+
+  A *non* release version:
+   ` + os.Args[0] + ` version isvalid 2.0.6-dev.20191205
 `,
 	Run: func(cm *cobra.Command, args []string) {
 		if len(args) != 1 {
@@ -161,13 +189,26 @@ In case the passed version is *not* a valid realease version, the process exits 
 
 var igtCmd = &cobra.Command{
 	Use:   "isgreater",
-	Short: "Compares the two passed versions and returns an error if the first is *not* strictly greater than the second",
-	Long: `Tries to parse the passed string versions using the hashicorp/go-version library and returns an error if:
-  - one of the 2 strings is not a valid semantic version,
-  - the first version is not strictly greater than the second`,
-	Example: `
-# This exits with status 1.
-` + os.Args[0] + ` version isgreater 2.0.6-dev.20191205 2.0.6
+	Short: "Compare the two versions, succeed when the first is greater than the second",
+	Long: `
+DESCRIPTION
+
+  Check the passed strings to validate that they respects semantic versioning rules
+  and then compare them.
+  
+  Under the hood, it tries to parse the version strings using the hashicorp/go-version library
+  and then compare the 2 resulting version structs.
+  
+  The command prints an error and exits with status 1 if:
+    - one of the 2 strings is not a valid semantic version,
+    - the first version is not strictly greater than the second.
+
+  Otherwise, the command simply exits with status 0.	
+
+EXAMPLE
+
+  This exits with status 1:
+   ` + os.Args[0] + ` version isgreater 2.0.6-dev.20191205 2.0.6
 `,
 	Run: func(cm *cobra.Command, args []string) {
 		if len(args) != 2 {

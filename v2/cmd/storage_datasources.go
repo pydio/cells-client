@@ -20,7 +20,12 @@ var (
 var listDatasources = &cobra.Command{
 	Use:   "list-datasources",
 	Short: "List configured datasources",
-	Long:  `List all the datasources`,
+	Long: `
+DESCRIPTION 
+
+  List all the datasources that are defined on the server side.
+  Note that the currently used user account must have be given the necessary Admin permissions.
+`,
 	Run: func(cm *cobra.Command, args []string) {
 
 		//connects to the pydio api via the sdkConfig
@@ -36,8 +41,10 @@ var listDatasources = &cobra.Command{
 		//assigns the datasources data retrieved above in the results variable
 		result, err := apiClient.ConfigService.ListDataSources(params)
 		if err != nil {
-			fmt.Printf("could not list workspaces: %s\n", err.Error())
-			log.Fatal(err.Error())
+			if rest.IsForbiddenError(err) {
+				log.Fatalf("[Forbidden access] You do not have necessary permission to list the datasources at %s", rest.DefaultConfig.Url)
+			}
+			log.Fatalf("Could not list data sources of %s, cause: %s", rest.DefaultConfig.Url, err.Error())
 		}
 
 		//prints the name of the datasources retrieved previously
