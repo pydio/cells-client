@@ -14,24 +14,6 @@ import (
 	"github.com/pydio/cells-client/v2/rest"
 )
 
-var rmCmdExample = `# Path
-` + os.Args[0] + ` rm <workspace-slug>/path/to/resource
-
-# Remove a single file
-` + os.Args[0] + ` rm common-files/target.txt
-
-# Remove recursively inside a folder (the wildcard is %)
-` + os.Args[0] + ` rm common-files/folder/%
-
-# Remove a folder and all its children (even if it is not empty)
-` + os.Args[0] + ` rm common-files/folder
-
-# Remove multiple files
-` + os.Args[0] + ` rm common-files/file-1.txt common-files/file-2.txt
-
-# You can force the deletion with the -f --force flag (to avoid the Yes or No)
-` + os.Args[0] + ` rm -f common-files/file-1.txt
-`
 
 var (
 	force        bool
@@ -41,8 +23,32 @@ var (
 var rmCmd = &cobra.Command{
 	Use:     "rm",
 	Short:   "Trash files or folders",
-	Long:    `Deleting specified files or folders. In fact, it moves specified files or folders to the recycle bin that is at the root of the corresponding workspace.`,
-	Example: rmCmdExample,
+	Long:    `
+DESCRIPTION
+	
+	Deleting specified files or folders. In fact, it moves specified files or folders to the recycle bin that is at the root of the corresponding workspace.
+
+
+EXAMPLE
+
+	# Path
+	` + os.Args[0] + ` rm <workspace-slug>/path/to/resource
+
+	# Remove a single file
+	` + os.Args[0] + ` rm common-files/target.txt
+
+	# Remove recursively inside a folder (the wildcard is %)
+	` + os.Args[0] + ` rm common-files/folder/%
+
+	# Remove a folder and all its children (even if it is not empty)
+	` + os.Args[0] + ` rm common-files/folder
+
+	# Remove multiple files
+	` + os.Args[0] + ` rm common-files/file-1.txt common-files/file-2.txt
+
+	# You can force the deletion with the -f --force flag (to avoid the Yes or No)
+	` + os.Args[0] + ` rm -f common-files/file-1.txt
+`,
 	Args:    cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 

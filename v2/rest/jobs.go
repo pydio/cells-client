@@ -27,8 +27,8 @@ func CopyParams(source []string, targetFolder string) string {
 
 func BuildParams(source []string, targetFolder string, targetParent bool) string {
 	type p struct {
-		Nodes        []string `json:"nodes"`
 		Target       string   `json:"target"`
+		Nodes        []string `json:"nodes"`
 		TargetParent bool     `json:"targetParent"`
 	}
 	i := &p{

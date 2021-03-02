@@ -13,7 +13,10 @@ import (
 var listUsers = &cobra.Command{
 	Use:   "list-users",
 	Short: "List users",
-	Long:  `List the users defined in your Pydio Cells instance.`,
+	Long:  `
+DESCRIPTION	
+
+	List the users defined in your Pydio Cells instance.`,
 	Run: func(cm *cobra.Command, args []string) {
 
 		ctx, apiClient, err := rest.GetApiClient()

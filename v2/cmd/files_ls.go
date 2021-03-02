@@ -64,7 +64,7 @@ Huge Photo.jpg
 IMG_9723.JPG
 (...)
 
-4/ Check path existance.
+4/ Check path existence.
 
 $ ` + os.Args[0] + ` ls personal-files/P5021040.jpg -f
 true
@@ -91,18 +91,27 @@ var listFiles = &cobra.Command{
 	Use:   "ls",
 	Short: "List files in your remote server",
 	Long: `
-List files in your Pydio Cells server instance.
+DESCRIPTION
 
-Use as a normal ls, with additional path to list sub-folders or read info about a node.
-You can use one of the below optional flags: 
+	List files in your Pydio Cells server instance.
 
-- d (--details) flag to display more information, 
-- r (--raw) flag to only list the paths of found files and folders
-- f (--exists) flag to only check if given path exists on the server.
+SYNTAX
 
-Note that you can only use *one* of the three above flags at a time.
+	Use as a normal ls, with additional path to list sub-folders or read info about a node.
+	You can use one of the below optional flags: 
+
+	- d (--details) flag to display more information, 
+	- r (--raw) flag to only list the paths of found files and folders
+	- f (--exists) flag to only check if given path exists on the server.
+
+	Note that you can only use *one* of the three above flags at a time.
+
+EXAMPLE
+
+	- `+ os.Args[0] +` ls
+	- `+ os.Args[0] +` ls common-files
+	
 `,
-	Example: lsCmdExample,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		// Retrieve requested display type and check it is valid

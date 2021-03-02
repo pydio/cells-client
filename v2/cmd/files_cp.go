@@ -10,25 +10,27 @@ import (
 	"github.com/pydio/cells-client/v2/rest"
 )
 
-var cpCmdExample = `
-# Copy file "test.txt" from workspace root inside target "folder-a":
-` + os.Args[0] + ` cp common-files/test.txt common-files/folder-a
-
-# Copy a file from a workspace to another:
-` + os.Args[0] + ` cp common-files/test.txt personal-files/folder-b
-
-# Copy all the content of a folder inside another
-` + os.Args[0] + ` cp common-files/test/* common-files/folder-c`
-
 // cmCmd represents the rm command
 var cpCmd = &cobra.Command{
 	Use:   "cp",
 	Short: "Copy files from A to B within your remote server",
 	Long: `
-Copy files from one location to another *within* a *single* Pydio Cells instance. 
-To copy files from your local machine to your server (and vice versa), rather see '` + os.Args[0] + ` scp' command.
+DESCRIPTION
+
+	Copy files from one location to another *within* a *single* Pydio Cells instance. 
+	To copy files from your local machine to your server (and vice versa), rather see '` + os.Args[0] + ` scp' command.
+
+EXAMPLE
+
+	# Copy file "test.txt" from workspace root inside target "folder-a":
+	` + os.Args[0] + ` cp common-files/test.txt common-files/folder-a
+
+	# Copy a file from a workspace to another:
+	` + os.Args[0] + ` cp common-files/test.txt personal-files/folder-b
+
+	# Copy all the content of a folder inside another
+	` + os.Args[0] + ` cp common-files/test/* common-files/folder-c
 `,
-	Example: cpCmdExample,
 	Args:    cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		source := args[0]
