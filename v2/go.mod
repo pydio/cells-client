@@ -3,13 +3,12 @@ module github.com/pydio/cells-client/v2
 go 1.15
 
 require (
-	github.com/aws/aws-sdk-go v1.37.9
+	github.com/aws/aws-sdk-go v1.37.21
 	github.com/beevik/ntp v0.3.0 // indirect
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fatih/color v1.10.0
 	github.com/go-log/log v0.2.0 // indirect
 	github.com/go-openapi/strfmt v0.20.0
-	github.com/go-openapi/validate v0.20.2 // indirect
 	github.com/google/go-cmp v0.5.4 // indirect
 	github.com/google/uuid v1.2.0 // indirect
 	github.com/gookit/color v1.3.7
@@ -26,9 +25,8 @@ require (
 	github.com/micro/go-log v0.1.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/ory/viper v1.7.5
-	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pydio/cells v2.2.0+incompatible
-	github.com/pydio/cells-sdk-go v0.0.0-20210129151817-cd751628279e
+	github.com/pydio/cells-sdk-go v0.0.0-20210302082328-1371017c0e19
 	github.com/pydio/go v0.0.0-20191211170306-d00ac19450ef
 	github.com/shibukawa/configdir v0.0.0-20170330084843-e180dbdc8da0
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966

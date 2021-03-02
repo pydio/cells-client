@@ -17,8 +17,7 @@ import (
 	cells_sdk "github.com/pydio/cells-sdk-go"
 	"github.com/pydio/cells-sdk-go/client"
 	"github.com/pydio/cells-sdk-go/transport"
-	sdk_http "github.com/pydio/cells-sdk-go/transport/http"
-	"github.com/pydio/cells-sdk-go/transport/oidc"
+	sdk_rest "github.com/pydio/cells-sdk-go/transport/rest"
 
 	"github.com/pydio/cells-client/v2/common"
 )
@@ -46,7 +45,7 @@ func GetApiClient(anonymous ...bool) (context.Context, *client.PydioCellsRest, e
 		anon = true
 	}
 	DefaultConfig.CustomHeaders = map[string]string{"User-Agent": common.AppName + "/" + common.Version}
-	c, t, e := transport.GetRestClientTransport(&DefaultConfig.SdkConfig, anon)
+	c, t, e := sdk_rest.GetClientTransport(&DefaultConfig.SdkConfig, anon)
 	if e != nil {
 		return nil, nil, e
 	}
@@ -68,13 +67,18 @@ func AuthenticatedGet(uri string) (*http.Response, error) {
 
 // AuthenticatedRequest performs the passed request after adding an authorization Header.
 func AuthenticatedRequest(req *http.Request, sdkConfig *cells_sdk.SdkConfig) (*http.Response, error) {
-	token, err := oidc.RetrieveToken(sdkConfig)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Authorization", "Bearer "+token)
 
-	httpClient := sdk_http.GetHttpClient(&DefaultConfig.SdkConfig)
+	tp, e := transport.TokenProviderFromConfig(sdkConfig)
+	if e != nil {
+		return nil, e
+	}
+
+	httpClient := &http.Client{Transport: transport.New(
+		transport.WithSkipVerify(sdkConfig.SkipVerify),
+		transport.WithCustomHeaders(sdkConfig.CustomHeaders),
+		transport.WithBearer(tp),
+	)}
+
 	return httpClient.Do(req)
 }
 

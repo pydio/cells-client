@@ -8,7 +8,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -16,8 +15,9 @@ import (
 
 	"github.com/pydio/cells-sdk-go/client/tree_service"
 	"github.com/pydio/cells-sdk-go/models"
-	awstransport "github.com/pydio/cells-sdk-go/transport/aws"
-	"github.com/pydio/cells-sdk-go/transport/oidc"
+
+	// "github.com/pydio/cells-sdk-go/transport/oidc"
+	s3transport "github.com/pydio/cells-sdk-go/transport/s3"
 
 	"github.com/pydio/cells-client/v2/common"
 )
@@ -29,7 +29,7 @@ func GetS3Client() (*s3.S3, string, error) {
 	}
 	s3Config := getS3ConfigFromSdkConfig(DefaultConfig)
 	bucketName := s3Config.Bucket
-	s3Client, e := awstransport.GetS3CLient(&DefaultConfig.SdkConfig, &s3Config)
+	s3Client, e := s3transport.GetClient(&DefaultConfig.SdkConfig, &s3Config)
 	if e != nil {
 		return nil, "", e
 	}
@@ -238,9 +238,9 @@ func uploadManager(path string, content io.ReadSeeker, computeMD5 bool, errChan 
 			// We call log.fatal inside the method if there is an error, no need to manage that here.
 			RefreshAndStoreIfRequired(DefaultConfig)
 
-			s3Config := getS3ConfigFromSdkConfig(DefaultConfig)
-			apiKey, _ := oidc.RetrieveToken(&DefaultConfig.SdkConfig)
-			r.Config.WithCredentials(credentials.NewStaticCredentials(apiKey, s3Config.ApiSecret, ""))
+			// s3Config := getS3ConfigFromSdkConfig(DefaultConfig)
+			// apiKey, _ := oidc.RetrieveToken(&DefaultConfig.SdkConfig)
+			// r.Config.WithCredentials(credentials.NewStaticCredentials(apiKey, s3Config.ApiSecret, ""))
 		}}
 	})
 
