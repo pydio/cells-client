@@ -10,22 +10,26 @@ import (
 	"github.com/pydio/cells-client/v2/rest"
 )
 
-var filesMvCmdExample = `
-# Move a node
-` + os.Args[0] + ` mv common-files/formula-one.jpg personal-files/photos/
-
-# Rename a node
-` + os.Args[0] + ` mv common-files/formula-one.jpg common-files/f1.jpg
-
-# Move all nodes recursively 
-` + os.Args[0] + ` mv common-files/photos/* personal-files/photos/
-`
-
 // filesMvCmd represents the filesMv command
 var filesMvCmd = &cobra.Command{
 	Use:     "mv",
 	Short:   "Move and/or rename nodes on the server",
-	Example: filesMvCmdExample,
+	Long: `
+DESCRIPTION
+	
+	Move files inside your server between your workspaces.
+
+EXAMPLE
+
+	# Move a node
+	` + os.Args[0] + ` mv common-files/formula-one.jpg personal-files/photos/
+
+	# Rename a node
+	` + os.Args[0] + ` mv common-files/formula-one.jpg common-files/f1.jpg
+
+	# Move all nodes recursively 
+	` + os.Args[0] + ` mv common-files/photos/* personal-files/photos/
+	`,
 	Args:    cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 
