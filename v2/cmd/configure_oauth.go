@@ -37,7 +37,23 @@ type oAuthHandler struct {
 var configureOAuthCmd = &cobra.Command{
 	Use:   "oauth",
 	Short: "Use OAuth2 credential flow to login to the server",
-	Long:  `Configure Authentication using OAuth2`,
+	Long: `
+DESCRIPTION
+
+  Configure your Cells Client to connect to your distant server using OAuth2 standard procedures.
+
+  Please beware that the retrieved ID and refresh tokens will be stored in clear text if you do not have a **correctly configured and running** keyring on your client machine.
+
+USAGE
+
+  This command launches an interactive process that gather necessary information.
+  If you are on a workstation with a browser, you are then redirected to your Cells' web UI to authenticate.
+  Otherwise, we provide you with a link that will help you terminate the procedure with 2 copy/pastes.
+  
+  If you are quick enough, (or if the default JWT token duration is long enough), 
+  you can also initialise this configuration by providing an ID token that you have retrieved using an alternative procedure,
+  and go through the configuration process in a non-interactive manner by using the provided flags.
+`,
 	Run: func(cm *cobra.Command, args []string) {
 
 		var err error

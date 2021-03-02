@@ -12,6 +12,18 @@ import (
 var withPatCmd = &cobra.Command{
 	Use:   "token",
 	Short: "Configure Authentication using a Personal Access Token",
+	Long: `
+DESCRIPTION
+
+  Configure your Cells Client to connect to your distant server using a Personal Acces Token.
+  A token can be generated with the 'token' command for a given user on the server side (not in this client),
+  see 'cells admin user token --help' for further details.
+
+  Please beware that the Personal Access Token will be stored in clear text if you do not have a **correctly configured and running** keyring on your client machine.
+
+  This is the prefered way to handle authentication between Cells and your client.
+`,
+
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 		var p promptui.Prompt

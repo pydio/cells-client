@@ -18,7 +18,14 @@ var noKeyringDefined bool
 var clearCmd = &cobra.Command{
 	Use:   "clear",
 	Short: "Clear current configuration",
-	Long:  "Clear current authentication data from your local keyring",
+	Long: `
+DESCRIPTION
+
+	Clear current authentication data from your client machine.
+	
+	It deletes the ` + confFileName + ` from Cells Client working directory.
+	It also removes the sensitive data that has been stored in the keyring, if present.
+`,
 	Run: func(cmd *cobra.Command, args []string) {
 		filePath := rest.DefaultConfigFilePath()
 		if s, err := ioutil.ReadFile(filePath); err == nil {

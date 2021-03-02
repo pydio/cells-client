@@ -15,38 +15,25 @@ import (
 
 var configureCmd = &cobra.Command{
 	Use:   "configure",
-	Short: "Configure a connection to a running server and locally persist credentials for later use",
+	Short: "Configure a connection to a running server and persist credentials locally for later use",
 	Long: `
-Launch an interactive process to configure a connection to a running Pydio Cells server instance.
-By default, we use a secure OAuth2 process based on 'Authorization Code' Grant.
+DESCRIPTION
 
-If necessary, you might use an alternative authorization process and/or execute this process non-interactively calling one of the defined sub-commands.
+  Launch an interactive process to configure a connection to a running Cells server.
+  By default, we use a secure OAuth2 process based on 'Authorization Code' Grant.
 
-Once a connection with the server established, it stores necessary information locally, keeping the sensitive bits encrypted in the local machine keyring.
-If you want to forget a connection, the config file can be wiped out by calling the 'clear' subcommand.
+  If necessary, you might use an alternative authorization process and/or execute this process non-interactively calling one of the defined sub-commands.
 
-*WARNING*
+  Once a connection with the server established, it stores necessary information locally, keeping the sensitive bits encrypted in the local machine keyring.
+  If you want to forget a connection, the config file and keyring can be cleant out by calling the 'clear' subcommand.
+
+WARNING
+
 If no keyring is defined in the local machine, all information is stored in *clear text* in a config file of the Cells Client working directory.
-In such case, do not use the 'client-auth' process.
 `,
-	// PreRunE: func(cmd *cobra.Command, args []string) error {
-
-	// 	fmt.Println("[DEBUG] flags: ")
-	// 	fmt.Printf("- serverURL: %s\n", serverURL)
-	// 	fmt.Printf("- authType: %s\n", authType)
-	// 	fmt.Printf("- idToken: %s\n", idToken)
-	// 	fmt.Printf("- login: %s\n", login)
-	// 	fmt.Printf("- password: %s\n", password)
-	// 	fmt.Printf("- noCache: %v\n", noCache)
-	// 	fmt.Printf("- skipKeyring: %v\n", skipKeyring)
-	// 	fmt.Printf("- skipVerify: %v\n", skipVerify)
-
-	// 	return nil
-	// },
-
 	Run: func(cmd *cobra.Command, args []string) {
 
-		s := promptui.Select{Label: "Select authentication method", Size: 3, Items: []string{"Personal Access Token (unique token generated server-side)", "OAuth2 login (requires a browser access)", "Client Auth (direct login/password, less secure)"}}
+		s := promptui.Select{Label: "Select authentication method", Size: 3, Items: []string{"OAuth2 login (requires a browser access)", "Personal Access Token (unique token generated server-side)", "Client Auth (direct login/password, less secure)"}}
 		n, _, err := s.Run()
 		if err != nil {
 			if err == promptui.ErrInterrupt {
@@ -57,9 +44,9 @@ In such case, do not use the 'client-auth' process.
 
 		switch n {
 		case 0:
-			withPatCmd.Run(cmd, args)
-		case 1:
 			configureOAuthCmd.Run(cmd, args)
+		case 1:
+			withPatCmd.Run(cmd, args)
 		case 2:
 			configureClientAuthCmd.Run(cmd, args)
 		default:
@@ -69,11 +56,6 @@ In such case, do not use the 'client-auth' process.
 }
 
 func init() {
-	// flags := configureCmd.PersistentFlags()
-	// // Legacy flags - TODO: finalise handling of retrocompatibility
-	// flags.Bool("skipVerify", false, "Skip SSL certificate verification (not recommended)")
-	// flags.String("idToken", "", "Valid IdToken")
-	// bindViperFlags(flags, map[string]string{})
 	RootCmd.AddCommand(configureCmd)
 }
 

@@ -14,15 +14,21 @@ import (
 
 var configureClientAuthCmd = &cobra.Command{
 	Use:   "client-auth",
-	Short: "Connect to the server directly using the Client Credentials",
+	Short: "Connect to the server using Client Credentials",
 	Long: `
-Launch an interactive process to gather necessary client information to configure a connection to a running Pydio Cells server instance.
+DESCRIPTION
 
-You must provide a valid login and password, for a user with enough permissions to achieve what you want on the server.
+  Configure your Cells Client to connect to your distant server using Client Credentials.
+  Note that this procedure is less secure than the other ones (using OAuth2 or a Personal Access Token).
 
-Please beware that the password will be stored in clear text if you do not have a **correctly configured and running** keyring on your client machine.
+  Please also beware that the password will be stored in clear text if you do not have a **correctly configured and running** keyring on your client machine.
 
-You can also go through the whole process in a non-interactive manner by using the provided flags.
+USAGE
+
+  This command launches an interactive process that gather necessary information to configure your connection to a running Cells server.
+  You must provide a valid login and password for a user with enough permissions to achieve what you want on the server.
+
+  You can also go through the whole process in a non-interactive manner by using the provided flags.
 `,
 	Run: func(cm *cobra.Command, args []string) {
 

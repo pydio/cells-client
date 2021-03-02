@@ -45,9 +45,11 @@ var completionCmd = &cobra.Command{
 	Use:   "completion",
 	Short: "Add auto-completion helper to Cells Client",
 	Long: `
-Install completion helper to Pydio Cells Client.
+DESCRIPTION
 
-This command installs an additional plugin to provide suggestions when working with the Cells Client and hitting the 'tab' key.`,
+  Install a completion helper to the Cells Client.
+
+  This command configures an additional plugin to provide suggestions when hitting the 'tab' key.`,
 	Example: completionCmdExample,
 	Args:    cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
