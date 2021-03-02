@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/url"
+	"strings"
 
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
@@ -28,7 +30,7 @@ If no keyring is defined in the local machine, all information is stored in *cle
 In such case, do not use the 'client-auth' process.
 `,
 	// PreRunE: func(cmd *cobra.Command, args []string) error {
-		
+
 	// 	fmt.Println("[DEBUG] flags: ")
 	// 	fmt.Printf("- serverURL: %s\n", serverURL)
 	// 	fmt.Printf("- authType: %s\n", authType)
@@ -64,6 +66,38 @@ In such case, do not use the 'client-auth' process.
 			return
 		}
 	},
+}
+
+func init() {
+	// flags := configureCmd.PersistentFlags()
+	// // Legacy flags - TODO: finalise handling of retrocompatibility
+	// flags.Bool("skipVerify", false, "Skip SSL certificate verification (not recommended)")
+	// flags.String("idToken", "", "Valid IdToken")
+	// bindViperFlags(flags, map[string]string{})
+	RootCmd.AddCommand(configureCmd)
+}
+
+// Local helpers
+
+func validURL(input string) error {
+	// Warning: trim must also be performed when retrieving the final value.
+	// Here we only validate that the trimmed input is valid, but do not modify it.
+	input = strings.TrimSpace(input)
+	if len(input) == 0 {
+		return fmt.Errorf("Field cannot be empty")
+	}
+	u, e := url.Parse(input)
+	if e != nil || u == nil || u.Scheme == "" || u.Host == "" {
+		return fmt.Errorf("Please, provide a valid URL")
+	}
+	return nil
+}
+
+func notEmpty(input string) error {
+	if len(input) == 0 {
+		return fmt.Errorf("Field cannot be empty")
+	}
+	return nil
 }
 
 // saveConfig handle file and/or keyring storage depending on user preference and system.
@@ -103,16 +137,4 @@ func saveConfig(config *rest.CecConfig) error {
 	}
 
 	return nil
-}
-
-func init() {
-	flags := configureCmd.PersistentFlags()
-
-	// Legacy flags - TODO: finalise handling of retrocompatibility
-	flags.Bool("skipVerify", false, "Skip SSL certificate verification (not recommended)")
-	flags.String("idToken", "", "Valid IdToken")
-
-	bindViperFlags(flags, map[string]string{})
-
-	RootCmd.AddCommand(configureCmd)
 }

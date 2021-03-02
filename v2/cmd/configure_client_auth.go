@@ -13,22 +13,15 @@ import (
 	"github.com/pydio/cells-client/v2/rest"
 )
 
-// var (
-// 	configHost       string
-// 	configUser       string
-// 	configPwd        string
-// 	configSkipVerify bool
-// )
-
 var configureClientAuthCmd = &cobra.Command{
 	Use:   "client-auth",
 	Short: "Connect to the server directly using the Client Credentials",
 	Long: `
 Launch an interactive process to gather necessary client information to configure a connection to a running Pydio Cells server instance.
 
-You must use a valid userName/password with enough permissions to achieve what you want on the server.
+You must provide a valid login and password, for a user with enough permissions to achieve what you want on the server.
 
-Please beware that this sensitive information will be stored in clear text if you do not have a **correctly configured and running** keyring on your client machine.
+Please beware that the password will be stored in clear text if you do not have a **correctly configured and running** keyring on your client machine.
 
 You can also go through the whole process in a non-interactive manner by using the provided flags.
 `,
@@ -57,7 +50,7 @@ You can also go through the whole process in a non-interactive manner by using t
 		if err != nil {
 			fmt.Println(promptui.IconBad + " Cannot save configuration file! " + err.Error())
 		} else {
-			fmt.Printf("%s Configuration saved, you can now use the client to interract with %s\n", promptui.IconGood, newConf.Url)
+			fmt.Printf("%s Configuration saved. You can now use the client to interact with %s\n", promptui.IconGood, newConf.Url)
 		}
 	},
 }
@@ -67,7 +60,7 @@ func interactive(newConf *rest.CecConfig) error {
 	var e error
 
 	// PROMPT URL
-	p := promptui.Prompt{Label: "Server Address (provide a valid URL)", Validate: validUrl}
+	p := promptui.Prompt{Label: "Server Address (provide a valid URL)", Validate: validURL}
 	if newConf.Url, e = p.Run(); e != nil {
 		return e
 	}
@@ -124,49 +117,21 @@ func nonInteractive(conf *rest.CecConfig) error {
 	conf.Password = password
 	conf.SkipVerify = skipVerify
 
-	// Insure values are legal
-	if err := validUrl(conf.Url); err != nil {
+	// Insure values are legit
+	if err := validURL(conf.Url); err != nil {
 		return fmt.Errorf("URL %s is not valid: %s", conf.Url, err.Error())
 	}
 
 	// Test a simple ping with this config before saving
 	rest.DefaultConfig = conf
 	if _, _, e := rest.GetApiClient(); e != nil {
-		return fmt.Errorf("Could not connect to newly configured server failed, cause: %s", e.Error())
+		return fmt.Errorf("Could not connect to newly configured server, cause: %s", e.Error())
 	}
 
 	return nil
 }
 
-func validUrl(input string) error {
-	// Warning: trim must also be performed when retrieving the final value.
-	// Here we only validate that the trimmed input is valid, but do not modify it.
-	input = strings.TrimSpace(input)
-	if len(input) == 0 {
-		return fmt.Errorf("Field cannot be empty")
-	}
-	u, e := url.Parse(input)
-	if e != nil || u == nil || u.Scheme == "" || u.Host == "" {
-		return fmt.Errorf("Please, provide a valid URL")
-	}
-	return nil
-}
-
-func notEmpty(input string) error {
-	if len(input) == 0 {
-		return fmt.Errorf("Field cannot be empty")
-	}
-	return nil
-}
 
 func init() {
-
-	// flags := configureClientAuthCmd.PersistentFlags()
-
-	// flags.StringVarP(&configHost, "url", "u", "", "HTTP URL to server")
-	// flags.StringVarP(&configUser, "login", "l", "", "User login")
-	// flags.StringVarP(&configPwd, "password", "p", "", "User password")
-	// flags.BoolVar(&configSkipVerify, "skipVerify", false, "Skip SSL certificate verification (not recommended)")
-
 	configureCmd.AddCommand(configureClientAuthCmd)
 }

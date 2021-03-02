@@ -11,7 +11,7 @@ import (
 
 var withPatCmd = &cobra.Command{
 	Use:   "token",
-	Short: "Configure Authentication using the personal token",
+	Short: "Configure Authentication using a Personal Access Token",
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 		var p promptui.Prompt
@@ -21,12 +21,12 @@ var withPatCmd = &cobra.Command{
 		}
 
 		// non interactive
-		if idToken != "" && serverURL != "" {
-			newConf.IdToken = idToken
+		if token != "" && serverURL != "" {
+			newConf.IdToken = token
 			newConf.Url = serverURL
 		} else { // interactive
 
-			p = promptui.Prompt{Label: "Server URL", Validate: validUrl}
+			p = promptui.Prompt{Label: "Server URL", Validate: validURL}
 			newConf.Url, err = p.Run()
 			if err != nil {
 				if err == promptui.ErrInterrupt {

@@ -19,9 +19,10 @@ import (
 	"github.com/pydio/cells-client/v2/rest"
 )
 
-var (
-	callbackPort = 3000
-)
+var oauthIDToken string
+
+// This cannot be changed on the client side: the call back URL, including this port, must be registered on the server side.
+const callbackPort = 3000
 
 type oAuthHandler struct {
 	// Input
@@ -35,7 +36,7 @@ type oAuthHandler struct {
 
 var configureOAuthCmd = &cobra.Command{
 	Use:   "oauth",
-	Short: "User OAuth2 to login to server",
+	Short: "Use OAuth2 credential flow to login to the server",
 	Long:  `Configure Authentication using OAuth2`,
 	Run: func(cm *cobra.Command, args []string) {
 
@@ -45,7 +46,7 @@ var configureOAuthCmd = &cobra.Command{
 			AuthType:    common.OAuthType,
 		}
 
-		if serverURL != "" && idToken != "" {
+		if serverURL != "" && oauthIDToken != "" {
 			err = oAuthNonInteractive(newConf)
 		} else {
 			err = oAuthInteractive(newConf)
@@ -109,7 +110,7 @@ func oAuthInteractive(newConf *rest.CecConfig) error {
 	// PROMPT URL
 	p := promptui.Prompt{
 		Label:    "Server Address (provide a valid URL)",
-		Validate: validUrl,
+		Validate: validURL,
 		Default:  "",
 	}
 
@@ -238,11 +239,11 @@ func isPortAvailable(port int, timeout int) bool {
 func oAuthNonInteractive(conf *rest.CecConfig) error {
 
 	conf.Url = serverURL
-	conf.IdToken = idToken
+	conf.IdToken = oauthIDToken
 	conf.SkipVerify = skipVerify
 
 	// Insure values are legal
-	err := validUrl(conf.Url)
+	err := validURL(conf.Url)
 	if err != nil {
 		return fmt.Errorf("URL %s is not valid: %s", conf.Url, err.Error())
 	}
@@ -262,5 +263,8 @@ func oAuthNonInteractive(conf *rest.CecConfig) error {
 }
 
 func init() {
+	flags := configureOAuthCmd.PersistentFlags()
+	flags.StringVar(&oauthIDToken, "id_token", "", "A currently valid OAuth2 ID token, retrived via the OIDC credential flow")
+
 	configureCmd.AddCommand(configureOAuthCmd)
 }

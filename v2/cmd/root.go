@@ -23,10 +23,9 @@ import (
 const (
 	// EnvPrefix represents the prefix used to insure we have a reserved namespacce for cec specific ENV vars.
 	EnvPrefix = "CEC"
-	// EnvPrefixOld represents the legacy prefix for environment variables, kept for backward compat.
-	// EnvPrefixOld = "CELLS_CLIENT_TARGET"
 
 	unconfiguredMsg = "unconfigured"
+	confFileName    = "config.json"
 )
 
 var (
@@ -36,7 +35,7 @@ var (
 	configFilePath string
 
 	serverURL string
-	idToken   string
+	token     string
 	authType  string
 	login     string
 	password  string
@@ -54,15 +53,37 @@ var RootCmd = &cobra.Command{
 	BashCompletionFunction: bashCompletionFunc,
 	Args:                   cobra.MinimumNArgs(1),
 	Long: `
-The Cells Client tool allows interacting with a Pydio Cells server instance directly via the command line. 
-It uses the Cells SDK for Go and the REST API under the hood.
+DESCRIPTION
 
-See the respective help pages of the various commands to get detailed explanation and some examples.
+  This command line client allows interacting with a Pydio Cells server via the command line. 
+  It uses the Cells SDK for Go and the REST API under the hood.
 
-You should probably start with configuring your setup by running:
- ` + os.Args[0] + ` configure
+  See the respective help pages of the various commands to get detailed explanation and some examples.
 
-This will guide you through a quick procedure to get you up and ready in no time.
+CONFIGURE
+
+  For the very first run, use '` + os.Args[0] + ` configure' to begin the command-line based configuration wizard. 
+  This will guide you through a quick procedure to get you up and ready in no time.
+
+  Non-sensitive information are stored by default in a ` + confFileName + ` file under ` + rest.DefaultConfigDirPath() + `
+  You can change this location by using the --config flag.
+  Entered (or retrieved, in the case of OAuth2 procedure) credentials will be stored in your keyring.
+
+  [Note]: if no keyring is found, all information are stored in clear text in the ` + confFileName + ` file, including sensitive bits.
+
+ENVIRONMENT
+
+  All the command flags documented below are mapped to their associated ENV var, using upper case and CEC_ prefix.
+
+  For example:
+    $ ` + os.Args[0] + ` ls --no_cache
+  is equivalent to: 
+    $ export CEC_NO_CACHE=true; ` + os.Args[0] + ` ls
+   
+  This is typically useful when using the Cells Client non-interactively on a server:
+    $ export CEC_URL=https://files.example.com; export CEC_TOKEN=<Your Personal Access Token>; 
+    $ ` + os.Args[0] + ` ls
+
 `,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 
@@ -77,7 +98,7 @@ This will guide you through a quick procedure to get you up and ready in no time
 
 		// Manually bind to viper instead of flags.StringVar, flags.BoolVar, etc
 		// => This is useful to ease implementation of retrocompatibility
-		configFilePath = viper.GetString("config") + "/config.json"
+		configFilePath = viper.GetString("config") + "/" + confFileName
 		tmpURLStr := viper.GetString("url")
 		// Clean URL string
 		if tmpURLStr != "" {
@@ -88,7 +109,7 @@ This will guide you through a quick procedure to get you up and ready in no time
 			}
 		}
 		authType = viper.GetString("auth_type")
-		idToken = viper.GetString("id_token")
+		token = viper.GetString("token")
 		login = viper.GetString("login")
 		password = viper.GetString("password")
 		noCache = viper.GetBool("no_cache")
@@ -140,21 +161,19 @@ func init() {
 
 	flags := RootCmd.PersistentFlags()
 
-	dflt := rest.DefaultConfigDirPath()
-	flags.String("config", dflt, fmt.Sprintf("Location of cells client config files (default %s)", dflt))
+	flags.String("config", rest.DefaultConfigDirPath(), "Location of Cells Client's config files")
+	flags.StringP("url", "u", "", "The full URL of the target server")
+	flags.StringP("token", "t", "", "A valid Personal Access Token")
+	flags.String("login", "", "The user login, for Client auth only")
+	flags.String("password", "", "The user password, for Client auth only")
 
-	flags.StringP("url", "u", "", "Full URL of the target server")
+	flags.Bool("skip_verify", false, "By default the Cells Client verifies the validity of TLS certificates for each communication. This option skips TLS certificate verification")
+	flags.Bool("skip_keyring", false, "Explicitly tell the tool to *NOT* try to use a keyring, even if present. Warning: sensitive information will be stored in clear text")
+	flags.Bool("no_cache", false, "Force token refresh at each call. This might slow down scripts with many calls")
+
 	// Unused for the time being
 	// flags.StringP("auth_type", "a", "", "Authorization mechanism used: Personnal Access Token (Default), OAuth2 flow or Client Credentials")
 	// flags.MarkHidden("auth_type")
-
-	flags.StringP("id_token", "t", "", "Valid IdToken")
-	flags.String("login", "", "User login")
-	flags.String("password", "", "User password")
-
-	flags.Bool("skip_verify", false, "By default the Cells Client will verify the validity of TLS certificates for each communication. This option skips TLS certificate verification.")
-	flags.Bool("skip_keyring", false, "Explicitly tell the tool to *NOT* try to use a keyring, even if present. Warning: sensitive information will be stored in clear text.")
-	flags.Bool("no_cache", false, "Force token refresh at each call. This might slow down scripts with many calls.")
 
 	bindViperFlags(flags, map[string]string{})
 }
@@ -230,9 +249,9 @@ func getCecConfigFromEnv() rest.CecConfig {
 			// 	authType = common.OAuthType
 			// 	validConfViaContext = true
 
-		} else if len(idToken) > 0 { // PAT auth
+		} else if len(token) > 0 { // PAT auth
 			authType = common.PatType
-			c.IdToken = idToken
+			c.IdToken = token
 			validConfViaContext = true
 		}
 	}
