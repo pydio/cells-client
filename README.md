@@ -4,11 +4,13 @@
 [Issue-Tracker](https://github.com/pydio/cells-client/issues)
 
 [![License Badge](https://img.shields.io/badge/License-Apache2-blue.svg)](LICENSE)
-[![Build Status](https://travis-ci.org/pydio/cells-client.svg?branch=master)](https://travis-ci.org/pydio/cells-client)
 [![Go Report Card](https://goreportcard.com/badge/github.com/pydio/cells-client?rand=2)](https://goreportcard.com/report/github.com/pydio/cells-client)
 
 This command line client allows interacting with a [Pydio Cells](https://github.com/pydio/cells) server via the command line. It uses the [Cells SDK for Go](https://github.com/pydio/cells-sdk-go) and the REST API under the hood.
 
+We try our best to be backward compatible, yet you will have a better user experience if your server is up-to-date (typically in version 2.2+) and use the latest client (also 2.2+ at the time of writing).
+
+Typically we introduced the Personal Access Token that is easier to use and more secure in version 2.2 of the server.
 ## Download
 
 We provide binaries for the following amd64 architectures:
@@ -20,7 +22,7 @@ We provide binaries for the following amd64 architectures:
 ## Installation
 
 We do not provide a packaged installer for the various OSs.  
-Yet, Cells Client is a single self-contained binary file and is easy to install. 
+Yet, Cells Client is a single self-contained binary file and is easy to install.
 
 Typically on Linux, you have to:
 
@@ -29,7 +31,7 @@ Typically on Linux, you have to:
 - Put it in your path or add a symlink to the binary location, typically:  
   `sudo ln -s /<path-to-bin>/cec /usr/local/bin/cec`  
   This last step is **required** if you want to configure the completion helper (see below).  
-  Otherwise, you can also do `./cec ls` directly (in such case, adapt the suggested commands to run the examples).
+  Otherwise, you can also use `./cec` directly (in such case, adapt the suggested commands to run the examples).
 
 You can verify that `cec` is correctly installed and configured by launching any command, for instance:  
 `cec version`
@@ -44,49 +46,75 @@ cd ./cells-client/v2
 make dev
 ```
 
-_Note: Cells Client uses the Go Modules mechanism to manage dependencies, so you do not have to be in your GOPATH._
+#### Important Notes
 
-## Configuration
+Cells Client uses the Go Modules mechanism to manage dependencies, this has 2 consequences:
 
-This step is compulsory if you do not want to precise all configuration information each time you call the command, typically on your working station. It guides through a few steps to gather necessary information and store sensitive bits in your keyring _**if you have one configured and running on your machine**_.
+- as current active development cycle is 2.x, the latest code from master is **in the v2 subfolder**
+- you can checkout the code anywhere in your local machine, it does not have to be within your `GOPATH`
+
+## Connecting to your server
+
+The Cells Client is just another client to talk to your Cells server instance to manage your files. Thus, it needs to establish a connection using a valid user with sufficient permission to achieve what you are trying to do:
+
+typically, you won't be able to download a file from a workspace where you don't have read access. Similarly, you need write access in the workspace where you want to upload.
+
+Once you have a valid user, you have 2 choices:
+
+- Pass the necessary connection information at each call (Non Persistent Mode)
+- Go through a configuration step and persists necessary information on the client machine (Persistent Mode)
+
+### Non Persistent Mode
+
+This is typically useful if you want to use the Cells Client in your CICD pipe or via cron jobs. In such case, we strongly advise that you create a Personal Access Token on the server and use this.
+
+Let's say that you have created a user `robot` that has sufficient permissions for what you want to do and whant to create a token that is valid for 90 days.
+Log into the shell of your server as `pydio` (a.k.a as the user that **runs** the `cells` service) and execute:
+
+```sh
+$ cells admin user token -u robot -e 90d
+✔ This token for robot will expire on Tuesday, 01-Jun-21 16:46:40 CEST.
+✔ d-_-x3N8jg9VYegwf5KpKFTlYnQIzCrvbXHzS24uB7k.mibFBN2bGy3TUVzJvcrnUlI9UuM3-kzB1OekrPLLd4U
+⚠ Make sure to secure it as it grants access to the user resources!
+```
+
+You can then use environment variables (or the corresponding flags) to configure the connection, typically in our case:
+
+```sh
+export CEC_URL=https://files.example.com
+export CEC_TOKEN=d-_-x3N8jg9VYegwf5KpKFTlYnQIzCrvbXHzS24uB7k.mibFBN2bGy3TUVzJvcrnUlI9UuM3-kzB1OekrPLLd4U
+```
+
+You can then directly talk to your server, typically:
+
+```sh
+cec ls common-files 
+```
+
+### Persistent Mode
+
+On your local workstation and typically if you do not have access to the server to create a `Personal Access Token`, you can configure and persist your connection.
+
+Furthermore, if you have a keyring that is correctly configured and running on your machine, we transparently use it to avoid storing sensitive information in clear text.  
+We have added an helper command to check if the Cells Client can access the keyring without issue, simply run:
+
+```sh
+cec configure check-keyring 
+```
 
 Default authentication mechanism is a OAuth _Authorization Code_ flow.
 
 ```sh
-# simply call
-cec configure
+cec configure oauth
 ```
 
-You are then prompted for the following information:
+You are then guided through a few steps to configure and persist your connection, mainly:
 
-- Server Address: full URL to Cells, e.g.: `https://cells.yourdomain.com/`
-- Client ID / Client Secret: this is used by the OpenIDConnect service for authentication.  
-  Note that since the v2.0, a default **public** client is registered by default, using the suggested default values should work out of the box:
-  - Client ID: `cells-client`
-  - Client Secret: (leave empty)
-- Then follow the OAuth2 process either by opening a browser or copy/pasting the URL in your browser to get a valid token.
-- The token is automatically saved in your keychain. It will be refreshed as necessary.
+- Enter your server address: the full URL to access your Cells instance, e.g.: `https://files.example.com/`
+- Choose OAuth2 process either by opening a browser or copy/pasting the URL in your browser to get a valid token
+- Test and validate the connection.
 
-**Example:**
-
-Assuming that I have a Pydio Cells instance running under this URL `https://cells.my-files.com` and that I am running the command on the same **graphical environment**.
-
-``` sh
-$ cec configure
-Server Address (provide a valid URL): https://cells.my-files.com
-✔ No
-OAuth APP ID (found in your server pydio.json): cells-client
-OAuth APP Secret (leave empty for a public client):
-✔ Yes
-Opening URL https://cells.my-files.com/oidc/oauth2/auth?client_id=cells-client&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fservers%2Fcallback&response_type=code&state=XVlBzgbaiCMRAjWw
-Now exchanging the code for a valid IdToken
-✔Successfully Received Token!
-⚠ Testing this configuration before saving
-✔ Successfully logged to server, token will be refreshed at 2019-12-09 12:42:58 +0100 CET
-✔ Configuration saved, you can now use the client to interract with https://cells.my-files.com.
-```
-
-*If you have no tab opening in your browser you can manually copy the URL and put it in your browser*.
+The token is then automatically saved in your keychain and will be refreshed and stored again as necessary.
 
 ## Command completion
 
