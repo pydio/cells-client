@@ -33,10 +33,12 @@ DESCRIPTION
 			if err = json.Unmarshal(s, &config); err == nil {
 				if !config.SkipKeyring {
 					// First clean the keyring
-					if err := rest.ClearKeyring(config); err == nil {
-						fmt.Println(promptui.IconGood + " Removed tokens from keychain")
-					} else {
+					if err := rest.CheckKeyring(); err != nil {
+						fmt.Println(promptui.IconWarn + "No Keyring found on this system")
+					} else if err := rest.ClearKeyring(config); err != nil {
 						fmt.Println(promptui.IconBad + " Error while removing token from keyring: " + err.Error())
+					} else {
+						fmt.Println(promptui.IconGood + " Removed tokens from keychain")
 					}
 				}
 			}
