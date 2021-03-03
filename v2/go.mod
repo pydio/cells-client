@@ -3,7 +3,7 @@ module github.com/pydio/cells-client/v2
 go 1.15
 
 require (
-	github.com/aws/aws-sdk-go v1.37.21
+	github.com/aws/aws-sdk-go v1.37.22
 	github.com/beevik/ntp v0.3.0 // indirect
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fatih/color v1.10.0
@@ -28,7 +28,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/ory/viper v1.7.5
 	github.com/pydio/cells v2.2.2+incompatible
-	github.com/pydio/cells-sdk-go v0.0.0-20210302082328-1371017c0e19
+	github.com/pydio/cells-sdk-go v0.0.0-20210303114627-0c65e70a9ee4
 	github.com/pydio/go v0.0.0-20191211170306-d00ac19450ef
 	github.com/shibukawa/configdir v0.0.0-20170330084843-e180dbdc8da0
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
