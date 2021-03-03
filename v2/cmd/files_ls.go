@@ -138,7 +138,7 @@ EXAMPLES
 			return
 		} else if !exists && p != "" {
 			// Avoid 404 errors
-			cmd.Println("could not list content, no folder found at ", p)
+			cmd.Printf("Could not list content, no folder found at %s\n", p)
 			return
 		}
 
@@ -152,7 +152,7 @@ EXAMPLES
 		}
 		result, err := apiClient.MetaService.GetBulkMeta(params)
 		if err != nil {
-			cmd.Printf("could not list files at %s, cause: %s\n", p, err.Error())
+			cmd.Printf("Could not list files at %s, cause: %s\n", p, err.Error())
 			os.Exit(1)
 		}
 		if len(result.Payload.Nodes) == 0 {
@@ -281,7 +281,7 @@ func sanityCheck() string {
 		displayType = raw
 	}
 	if nb > 1 {
-		log.Fatal("please use at most *one* modifier flag")
+		log.Fatal("Please use at most *one* modifier flag")
 	}
 	return displayType
 }
@@ -316,7 +316,7 @@ func stampToDate(stamp string) string {
 
 func init() {
 	flags := listFiles.PersistentFlags()
-	flags.BoolVarP(&lsDetails, "details", "d", false, "Show more information about files")
+	flags.BoolVarP(&lsDetails, "details", "d", false, "Show more information about retrieved objects")
 	flags.BoolVarP(&lsRaw, "raw", "r", false, "List found paths (one per line) with no further info to be able to use returned results in later commands")
 	flags.BoolVarP(&lsExists, "exists", "f", false, "Check if the passed path exists on the server and return non zero status code if not")
 
