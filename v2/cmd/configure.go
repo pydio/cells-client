@@ -15,7 +15,7 @@ import (
 	"github.com/pydio/cells-client/v2/rest"
 )
 
-const noKeyringMsg = "Could not validate local keyring: sensitive information like token or password will end up stored in clear text in the client machine."
+const noKeyringMsg = "Could not access local keyring: sensitive information like token or password will end up stored in clear text in the client machine."
 
 var configureCmd = &cobra.Command{
 	Use:   "configure",
@@ -36,13 +36,13 @@ WARNING
 If no keyring is defined in the client machine, all information is stored in *clear text* in a config file of the Cells Client working directory.
 `,
 
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		if !skipKeyring {
-			if err := rest.CheckKeyring(); err != nil {
-				fmt.Println(promptui.IconWarn + " " + noKeyringMsg)
-			}
-		}
-	},
+	// PersistentPreRun: func(cmd *cobra.Command, args []string) {
+	// 	if !skipKeyring {
+	// 		if err := rest.CheckKeyring(); err != nil {
+	// 			fmt.Println(promptui.IconWarn + " " + noKeyringMsg)
+	// 		}
+	// 	}
+	// },
 	Run: func(cmd *cobra.Command, args []string) {
 
 		s := promptui.Select{Label: "Select authentication method", Size: 3, Items: []string{"OAuth2 login (requires a browser access)", "Personal Access Token (unique token generated server-side)", "Client Auth (direct login/password, less secure)"}}
@@ -84,9 +84,7 @@ DESCRIPTION
 	Run: func(cm *cobra.Command, args []string) {
 
 		if err := rest.CheckKeyring(); err != nil {
-			if skipKeyring { // Otherwise this has already be shown by the PersistentPrerun
-				fmt.Println(promptui.IconWarn + " " + noKeyringMsg)
-			}
+			fmt.Println(promptui.IconWarn + " " + noKeyringMsg)
 			os.Exit(1)
 		} else {
 			fmt.Println(promptui.IconGood + " Keyring seems to be here and working.")
@@ -139,7 +137,9 @@ func saveConfig(config *rest.CecConfig) error {
 
 	if !config.SkipKeyring {
 		if err = rest.ConfigToKeyring(config); err != nil {
-			return err
+			// We still save info in clear text but warn the user
+			// return err
+			fmt.Println(promptui.IconWarn + " " + noKeyringMsg)
 		}
 	}
 
