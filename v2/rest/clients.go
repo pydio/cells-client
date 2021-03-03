@@ -31,8 +31,9 @@ var (
 // CecConfig extends the default SdkConfig with custom parameters.
 type CecConfig struct {
 	cells_sdk.SdkConfig
-	SkipKeyring bool   `json:"skipKeyring"`
-	AuthType    string `json:"authType"`
+	SkipKeyring      bool   `json:"skipKeyring"`
+	AuthType         string `json:"authType"`
+	CreatedAtVersion string `json:"createdAtVersion"`
 }
 
 // GetApiClient connects to the Pydio Cells server defined by this config, by sending an authentication
@@ -151,46 +152,3 @@ func getS3ConfigFromSdkConfig(sConf *CecConfig) cells_sdk.S3Config {
 	c.Endpoint = sConf.Url
 	return c
 }
-
-// func getS3ConfigFromEnv() (cells_sdk.S3Config, error) {
-
-// 	var c cells_sdk.S3Config
-
-// 	// check presence of Env variable
-// 	endpoint := os.Getenv(KeyS3Endpoint)
-// 	region := os.Getenv(KeyS3Region)
-// 	bucket := os.Getenv(KeyS3Bucket)
-// 	apiKey := os.Getenv(KeyS3ApiKey)
-// 	apiSecret := os.Getenv(KeyS3ApiSecret)
-// 	usePSHStr := os.Getenv(KeyS3UsePydioSpecificHeader)
-// 	if usePSHStr == "" {
-// 		usePSHStr = "false"
-// 	}
-// 	usePSH, err := strconv.ParseBool(usePSHStr)
-// 	if err != nil {
-// 		return c, err
-// 	}
-
-// 	isDebugStr := os.Getenv(KeyS3IsDebug)
-// 	if isDebugStr == "" {
-// 		isDebugStr = "false"
-// 	}
-// 	isDebug, err := strconv.ParseBool(isDebugStr)
-// 	if err != nil {
-// 		return c, err
-// 	}
-
-// 	if !(len(endpoint) > 0 && len(region) > 0 && len(bucket) > 0 && len(apiKey) > 0 && len(apiSecret) > 0) {
-// 		return c, nil
-// 	}
-
-// 	c.Endpoint = endpoint
-// 	c.Region = region
-// 	c.Bucket = bucket
-// 	c.ApiKey = apiKey
-// 	c.ApiSecret = apiSecret
-// 	c.UsePydioSpecificHeader = usePSH
-// 	c.IsDebug = isDebug
-
-// 	return c, nil
-// }

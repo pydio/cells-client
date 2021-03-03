@@ -66,9 +66,7 @@ DESCRIPTION
 
 		err = saveConfig(newConf)
 		if err != nil {
-			fmt.Println(promptui.IconBad + " Cannot save configuration file! " + err.Error())
-		} else {
-			fmt.Printf("%s Configuration saved, you can now use the client to interract with %s\n", promptui.IconGood, newConf.Url)
+			fmt.Println(promptui.IconBad + " Cannot save configuration, cause: " + err.Error())
 		}
 	},
 }

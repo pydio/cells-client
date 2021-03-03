@@ -11,6 +11,7 @@ import (
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 
+	"github.com/pydio/cells-client/v2/common"
 	"github.com/pydio/cells-client/v2/rest"
 )
 
@@ -143,6 +144,10 @@ func saveConfig(config *rest.CecConfig) error {
 	}
 
 	file := rest.GetConfigFilePath()
+
+	// Add version before saving the config
+	config.CreatedAtVersion = common.Version
+
 	data, e := json.MarshalIndent(config, "", "\t")
 	if e != nil {
 		err = e
@@ -151,6 +156,8 @@ func saveConfig(config *rest.CecConfig) error {
 	if err = ioutil.WriteFile(file, data, 0600); err != nil {
 		return err
 	}
+
+	fmt.Printf("%s Configuration saved. You can now use the Cells Client to interact as %s with %s\n", promptui.IconGood, config.User, config.Url)
 
 	return nil
 }
