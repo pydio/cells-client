@@ -130,6 +130,8 @@ The token is then automatically saved in your keychain and will be refreshed and
 
 Cells Client provides a handy feature that provides completion on commands and paths; both on local and remote machines.
 
+### Bash completion
+
 To enable this feature, you must have `bash-completion` third party add-on installed on your workstation.
 
 ```sh
@@ -143,14 +145,14 @@ sudo yum install bash-completion
 brew install bash-completion
 ```
 
-_MacOS users should update their bash version to v5, (by default it is using v3)_.
+_MacOS latest release changed the default shell to ZSH_.
 
 Then, to add the completion in a persistent manner:
 
 ```sh
 # Linux users
 cec completion bash | sudo tee /etc/bash_completion.d/cec
-# MacOS users
+# MacOS users 
 cec completion bash | sudo tee /usr/local/etc/bash_completion.d/cec
 ```
 
