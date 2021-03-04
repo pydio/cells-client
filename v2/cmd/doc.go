@@ -35,12 +35,13 @@ var docCmd = &cobra.Command{
 	Use:   "doc",
 	Short: "Generate documentation of the Cells Client",
 	Long: `
-This command automatically generates the documentation of the Cells Client.
-It produces nice Markdown files based on the various comments that are in the code itself.
+DESCRIPTION
+  This command automatically generates the documentation of the Cells Client.
+  It produces nice Markdown files based on the various comments that are in the code itself.
 
-Please, provide the '-p' flag with a path to define where to put the generated files.
+  Please, provide the '-p' flag with a path to define where to put the generated files.
 
-Also note that this command also generates the yaml files that we use for pydio.com documentation format.
+  Also note that this command also generates the yaml files that we use for pydio.com documentation format.
 `,
 	Hidden: true,
 	Run: func(cmd *cobra.Command, args []string) {

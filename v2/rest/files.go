@@ -24,9 +24,6 @@ import (
 
 func GetS3Client() (*s3.S3, string, error) {
 	DefaultConfig.CustomHeaders = map[string]string{"User-Agent": common.AppName + "/" + common.Version}
-	if err := ConfigFromKeyring(DefaultConfig); err != nil {
-		return nil, "", err
-	}
 	s3Config := getS3ConfigFromSdkConfig(DefaultConfig)
 	bucketName := s3Config.Bucket
 	s3Client, e := s3transport.GetClient(&DefaultConfig.SdkConfig, &s3Config)

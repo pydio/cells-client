@@ -116,27 +116,6 @@ ENVIRONMENT
 		skipKeyring = viper.GetBool("skip_keyring")
 		skipVerify = viper.GetBool("skip_verify")
 
-		//fmt.Println("[DEBUG] flags: ")
-		//fmt.Printf("- configFilePath: %s\n", configFilePath)
-		//fmt.Printf("- serverURL: %s\n", serverURL)
-		//fmt.Printf("- authType: %s\n", authType)
-		//fmt.Printf("- idToken: %s\n", idToken)
-		//fmt.Printf("- login: %s\n", login)
-		//fmt.Printf("- password: %s\n", password)
-		//fmt.Printf("- noCache: %v\n", noCache)
-		//fmt.Printf("- skipKeyring: %v\n", skipKeyring)
-		//fmt.Printf("- skipVerify: %v\n", skipVerify)
-		////log.Println("... iterating over ENV vars")
-		//for _, pair := range os.Environ() {
-		//	//log.Printf("- %s \n", pair)
-		//	if strings.HasPrefix(pair, "CEC_") {
-		//		parts := strings.Split(pair, "=")
-		//		if len(parts) == 2 && parts[1] != "" {
-		//			fmt.Printf("- %s : %s\n", parts[0], parts[1])
-		//		}
-		//	}
-		//}
-
 		if needSetup {
 			e := setUpEnvironment()
 			if e != nil {
@@ -205,7 +184,8 @@ func setUpEnvironment() error {
 			return err
 		}
 		// Retrieves sensible info from the keyring if one is present
-		rest.ConfigFromKeyring(&c)
+		// Ignore error: if we cannot access the keyring, we assume we retrieved the full conf from the JSON file
+		_ = rest.ConfigFromKeyring(&c)
 
 		// Refresh token if required
 		if refreshed, err := rest.RefreshIfRequired(&c); refreshed {

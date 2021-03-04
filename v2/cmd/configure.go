@@ -36,13 +36,6 @@ WARNING
 If no keyring is defined in the client machine, all information is stored in *clear text* in a config file of the Cells Client working directory.
 `,
 
-	// PersistentPreRun: func(cmd *cobra.Command, args []string) {
-	// 	if !skipKeyring {
-	// 		if err := rest.CheckKeyring(); err != nil {
-	// 			fmt.Println(promptui.IconWarn + " " + noKeyringMsg)
-	// 		}
-	// 	}
-	// },
 	Run: func(cmd *cobra.Command, args []string) {
 
 		s := promptui.Select{Label: "Select authentication method", Size: 3, Items: []string{"OAuth2 login (requires a browser access)", "Personal Access Token (unique token generated server-side)", "Client Auth (direct login/password, less secure)"}}
@@ -138,8 +131,9 @@ func saveConfig(config *rest.CecConfig) error {
 	if !config.SkipKeyring {
 		if err = rest.ConfigToKeyring(config); err != nil {
 			// We still save info in clear text but warn the user
-			// return err
 			fmt.Println(promptui.IconWarn + " " + noKeyringMsg)
+			// Force skip keyring flag in the config file to be explicit
+			config.SkipKeyring = true
 		}
 	}
 
