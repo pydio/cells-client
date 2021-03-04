@@ -211,6 +211,7 @@ func setUpEnvironment() error {
 
 // getCecConfigFromEnv first check if a valid connection has been configured with flags and/or ENV var
 // **before** it even tries to retrieve info for the local file configuration.
+// Also note that if both Token and User/Pwd are defined, we rather use PAT auth.
 func getCecConfigFromEnv() rest.CecConfig {
 
 	// Flags and env variable have been managed by viper => we can rely on local variable
@@ -218,22 +219,20 @@ func getCecConfigFromEnv() rest.CecConfig {
 	validConfViaContext := false
 
 	if len(serverURL) > 0 {
-		if len(login) > 0 && len(password) > 0 {
+		if len(token) > 0 { // PAT auth
+			authType = common.PatType
+			c.IdToken = token
+			validConfViaContext = true
+		} else if len(login) > 0 && len(password) > 0 { // client auth
 			authType = common.ClientAuthType
 			c.Password = password
 			c.User = login
 			validConfViaContext = true
-
-			// TODO do we want to enable OAuth from flags ?
-			// } else if len(idToken) > 0 && len(refreshToken) {
-			// 	authType = common.OAuthType
-			// 	validConfViaContext = true
-
-		} else if len(token) > 0 { // PAT auth
-			authType = common.PatType
-			c.IdToken = token
-			validConfViaContext = true
 		}
+		// OAuth via ENV vars seems to be irrelevant for v2.1
+		// } else if len(idToken) > 0 && len(refreshToken) {
+		// 	authType = common.OAuthType
+		// 	validConfViaContext = true
 	}
 
 	if !validConfViaContext {
