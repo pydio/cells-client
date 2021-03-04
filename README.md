@@ -10,15 +10,6 @@ Cells Client provides an easy way to communicate with a [Pydio Cells](https://gi
 
 Cells Client a.k.a `cec` works like standard command line tools like **ls**, **scp**, etc.  Using the `cec` command, you can list, download and upload directly to your remote Cells server.
 
-
-## Download
-
-We provide binaries for the following amd64 architectures:
-
-- [Linux](https://download.pydio.com/latest/cells-client/release/{latest}/linux-amd64/cec)
-- [MacOS](https://download.pydio.com/latest/cells-client/release/{latest}/darwin-amd64/cec)
-- [Windows](https://download.pydio.com/latest/cells-client/release/{latest}/windows-amd64/cec.exe)
-
 ## Installation
 
 Cells Client is a single self-contained binary file and is easy to install.
@@ -215,29 +206,33 @@ There are 3 authentication methods to establish the connection:
 
 A token can be generated on the server for a given user. It can be limited in time or you might choose the auto-refresh mode.
 
-Note about the autorefresh option: let's say you have given a validity of 10 days.
-If you connect to your server within 10 days, the token's validity is extended for 10 more days _on the server side_: on the client side the token _string_ remains unchanged.  
-Thus, if you have a cron job that runs once a week during the night, typically to push some backups to your server, the token remains valid undefinitly.
-But if your server is down and _misses_ a week, the upload will fail the week after, because 14 days have passed and the token expired.
+Note about the auto-refresh option:
+
+- Let's say you have given a validity of 10 days.
+- If you connect to your server within 10 days, the token's validity is extended for 10 more days **on the server side**: on the client side the **token string remains unchanged**.  
+- If you have a cron job that runs once a week during the night, typically to push some backups to your server, the token remains valid undefinitly.
+- If your server is down and _misses_ a week, the upload will fail the week after, because 14 days have passed and the token expired.
 
 **Pros**:
 
 - Secure
 - Non Interactive
-- The best solution if the client machine is a headless server, that has no Keyring and must communicate with your server with daemon processes, typically `cron` jobs.
 - On client side, you only have to give the URL and the token to establish the connection
+- This is the best solution if the client machine is a headless server that has no Keyring and must communicate with your server with daemon processes, typically `cron` jobs.
 
 **Cons**:
 
-- To created a token, you must either have access to the server as privileged user or ask your sysadmin
+- To create a token, you must either have access to the server as privileged user or ask your sysadmin.
 
 ### OAuth2 Credential Flows
 
-This is the recommended strategy for persitent mode on your local workstation. Calling `cec configure oauth` will guide you through a quick process to securely generate an ID token and a refresh Token.
+This is the recommended strategy for persitent mode on your local workstation.  
+Calling `cec configure oauth` will guide you through a quick process to securely generate an ID token and a refresh token.
 
-Under the hood, `cec` will watch the validity of the token. When necessary, it will issue a refresh request and stores the updated tokens in your keychain without you even noticing it. For the record, in Cells 2.2, the default validity period of the refresh token is 60 days.
+Under the hood, `cec` will watch the validity of the token. When necessary, it will issue a refresh request and stores the updated tokens in your keychain without you even noticing it.  
+For the record, in Cells 2.2, the default validity period of the refresh token is 60 days.
 
-As tokens are represented as unique (random) complicated strings, this approach makes it difficult to steal your token by only looking at it, even if it ends up in clear text shown to third persons.
+As tokens are represented as unique (random) complicated strings, this approach makes it difficult to steal your token by only looking at it, even if it ends up in clear text and is shown to third persons.
 
 **Pros**:
 
@@ -250,13 +245,13 @@ As tokens are represented as unique (random) complicated strings, this approach 
 
 ### Client Credential Flows
 
-This legacy method is not recommended and might disapear in a future version.
+This legacy method is not recommended and might disappear in a future version.
 
 **Pros**:
 
 - You only have to enter URL, login and password
-- Can be used via configure process or directly using flags / env variable at each call
-- Any user can use her own account to configure a connection, without asking the sysadmin.
+- Can be used via configure process or directly using flags/ENV variable at each call
+- Any user can use her own account to configure a connection, without asking the system administrator.
 
 **Cons**:
 
