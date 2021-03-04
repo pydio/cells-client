@@ -149,23 +149,6 @@ func oAuthInteractive(newConf *rest.CecConfig) error {
 		}
 	}
 
-	// newConf.ClientKey = "cells-client"
-	// pE := promptui.Select{Label: "Do you want to edit OAuth client data (defaults generally work)?", Items: []string{"Use defaults", "Edit OAuth client"}}
-	// if _, v, e := pE.Run(); e == nil && v != "Use defaults" {
-	// 	// PROMPT CLIENT ID
-	// 	p = promptui.Prompt{
-	// 		Label:     "OAuth APP ID (found in your server pydio.json)",
-	// 		Validate:  notEmpty,
-	// 		Default:   "cells-client",
-	// 		AllowEdit: true,
-	// 	}
-	// 	if newConf.ClientKey, e = p.Run(); e != nil {
-	// 		return e
-	// 	}
-	// 	p = promptui.Prompt{Label: "OAuth APP Secret (leave empty for a public client)", Default: "", Mask: '*'}
-	// 	newConf.ClientSecret, _ = p.Run()
-	// }
-
 	openBrowser := true
 	p3 := promptui.Select{Label: "Can you open a browser on this computer? If not, you will make the authentication process by copy/pasting", Items: []string{"Yes", "No"}}
 	if _, v, e := p3.Run(); e == nil && v == "No" {
@@ -226,19 +209,20 @@ func oAuthInteractive(newConf *rest.CecConfig) error {
 	if err := rest.OAuthExchangeCode(&newConf.SdkConfig, returnCode, callbackUrl); err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(promptui.IconGood + " Successfully Received Token!")
+	fmt.Printf("%s Successfully Received Token. It will be refreshed at %v\n", promptui.IconGood, time.Unix(int64(newConf.TokenExpiresAt), 0))
 
-	// Test a simple PING with this config before saving!
-	fmt.Println(promptui.IconWarn + " Testing this configuration before saving")
-	rest.DefaultConfig = newConf
-	if _, _, e := rest.GetApiClient(); e != nil {
-		fmt.Println("\r" + promptui.IconBad + " Could not connect to server, please recheck your configuration")
-		fmt.Printf("Id_token: [%s]\n", newConf.IdToken)
+	// Rather done in the factorized save method
+	// // Test a simple PING with this config before saving!
+	// fmt.Println(promptui.IconWarn + " Testing this configuration before saving")
+	// rest.DefaultConfig = newConf
+	// if _, _, e := rest.GetApiClient(); e != nil {
+	// 	fmt.Println("\r" + promptui.IconBad + " Could not connect to server, please recheck your configuration")
+	// 	fmt.Printf("Id_token: [%s]\n", newConf.IdToken)
 
-		fmt.Println("Cause: " + e.Error())
-		return fmt.Errorf("test connection failed")
-	}
-	fmt.Println("\r" + promptui.IconGood + fmt.Sprintf(" Successfully logged to server, token will be refreshed at %v", time.Unix(int64(newConf.TokenExpiresAt), 0)))
+	// 	fmt.Println("Cause: " + e.Error())
+	// 	return fmt.Errorf("test connection failed")
+	// }
+	// fmt.Println("\r" + promptui.IconGood + fmt.Sprintf(" Successfully logged to server, token will be refreshed at %v", time.Unix(int64(newConf.TokenExpiresAt), 0)))
 	return nil
 }
 

@@ -101,15 +101,16 @@ func interactive(newConf *rest.CecConfig) error {
 		return e
 	}
 
-	// Test a simple PING with this config before saving
-	fmt.Println(promptui.IconWarn + " Testing this configuration before saving")
-	rest.DefaultConfig = newConf
-	if _, _, e := rest.GetApiClient(); e != nil {
-		fmt.Println("\r" + promptui.IconBad + " Could not connect to server, please recheck your configuration")
-		fmt.Println("Cause: " + e.Error())
-		return fmt.Errorf("test connection failed")
-	}
-	fmt.Println("\r" + promptui.IconGood + " Successfully logged to server")
+	// Rather done in the factorized save method
+	// // Test a simple PING with this config before saving
+	// fmt.Println(promptui.IconWarn + " Testing this configuration before saving")
+	// rest.DefaultConfig = newConf
+	// if _, _, e := rest.GetApiClient(); e != nil {
+	// 	fmt.Println("\r" + promptui.IconBad + " Could not connect to server, please recheck your configuration")
+	// 	fmt.Println("Cause: " + e.Error())
+	// 	return fmt.Errorf("test connection failed")
+	// }
+	// fmt.Println("\r" + promptui.IconGood + " Successfully logged to server")
 	return nil
 }
 
