@@ -53,7 +53,6 @@ func ConfigFromKeyring(conf *CecConfig) error {
 		if err != nil {
 			return err
 		}
-		fmt.Printf("%s Legacy configuration will be migrated.\n", promptui.IconGood)
 		value, err = keyring.Get(keyringService, key(conf.Url, conf.User))
 		if err != nil {
 			return err
@@ -174,20 +173,6 @@ func ClearKeyring(c *CecConfig) error {
 			return err
 		}
 	}
-
-	// Legacy keys
-	// TODO maybe check if at least one of the two has been found and deleted and otherwise print at least a warning
-	if err := keyring.Delete(keyringService, key(c.Url, "ClientCredentials")); err != nil {
-		if err.Error() != "secret not found in keyring" {
-			return err
-		}
-	}
-	if err := keyring.Delete(keyringService, key(c.Url, "IdToken")); err != nil {
-		if err.Error() != "secret not found in keyring" {
-			return err
-		}
-	}
-
 	return nil
 }
 
@@ -198,6 +183,8 @@ func retrieveLegacyKey(conf *CecConfig) error {
 			//conf.ClientSecret = parts[0]
 			conf.Password = parts[1]
 			conf.AuthType = common.ClientAuthType
+			// Leave the keyring in a clean state
+			_ = keyring.Delete(keyringService, key(conf.Url, "ClientCredentials"))
 		} else {
 			return e
 		}
@@ -208,11 +195,13 @@ func retrieveLegacyKey(conf *CecConfig) error {
 			conf.RefreshToken = parts[1]
 			conf.AuthType = common.OAuthType
 			RefreshIfRequired(conf)
+			_ = keyring.Delete(keyringService, key(conf.Url, "IdToken"))
 		} else {
 			return e
 		}
 	}
 	DefaultConfig = conf
+	fmt.Printf("%s Legacy configuration will be migrated.\n", promptui.IconGood)
 	SaveConfig(conf)
 
 	return nil
