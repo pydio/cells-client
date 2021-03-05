@@ -53,6 +53,7 @@ func ConfigFromKeyring(conf *CecConfig) error {
 		if err != nil {
 			return err
 		}
+		fmt.Printf("%s Legacy configuration will be migrated.\n", promptui.IconGood)
 		value, err = keyring.Get(keyringService, key(conf.Url, conf.User))
 		if err != nil {
 			return err
