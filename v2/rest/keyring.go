@@ -1,15 +1,21 @@
 package rest
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"strings"
 
+	"github.com/manifoldco/promptui"
 	"github.com/zalando/go-keyring"
 
 	"github.com/pydio/cells-client/v2/common"
 )
 
 const keyringService = "com.pydio.cells-client"
+
+// NoKeyringMsg warns end user when no keyring is found
+const NoKeyringMsg = "Could not access local keyring: sensitive information like token or password will end up stored in clear text in the client machine."
 
 // ConfigToKeyring stores sensitive information in local keyring if any and removes it from current SDK config.
 func ConfigToKeyring(conf *CecConfig) error {
@@ -42,7 +48,15 @@ func ConfigToKeyring(conf *CecConfig) error {
 func ConfigFromKeyring(conf *CecConfig) error {
 	value, err := keyring.Get(keyringService, key(conf.Url, conf.User))
 	if err != nil {
-		return err
+		// Best effort to retrieve legacy conf
+		err = retrieveLegacyKey(conf)
+		if err != nil {
+			return err
+		}
+		value, err = keyring.Get(keyringService, key(conf.Url, conf.User))
+		if err != nil {
+			return err
+		}
 	}
 
 	switch conf.AuthType {
@@ -54,27 +68,55 @@ func ConfigFromKeyring(conf *CecConfig) error {
 		conf.Password = value
 	case common.PatType:
 		conf.IdToken = value
-	default:
-		// default case is intended for backwards compatibility
-		// TODO manage this cleanly
-		if conf.User != "" && conf.Password == "" { // client auth
-			if value, e := keyring.Get(keyringService, key(conf.Url, "ClientCredentials")); e == nil {
-				parts := splitValue(value)
-				//conf.ClientSecret = parts[0]
-				conf.Password = parts[1]
-			} else {
-				return e
-			}
-		} else if conf.IdToken == "" && conf.RefreshToken == "" && conf.Password == "" { // oauth
-			if value, e := keyring.Get(keyringService, key(conf.Url, "IdToken")); e == nil {
-				parts := splitValue(value)
-				conf.IdToken = parts[0]
-				conf.RefreshToken = parts[1]
-			} else {
-				return e
-			}
+	}
+	return nil
+}
+
+// SaveConfig handle file and/or keyring storage depending on user preference and system.
+func SaveConfig(config *CecConfig) error {
+
+	var err error
+	oldConfig := DefaultConfig
+	defer func() {
+		if err != nil {
+			DefaultConfig = oldConfig
+		}
+	}()
+
+	DefaultConfig = config
+
+	uname, e := RetrieveCurrentSessionLogin()
+	if e != nil {
+		err = e
+		return fmt.Errorf("could not connect to distant server with provided parameters. Discarding change")
+	}
+	config.User = uname
+
+	if !config.SkipKeyring {
+		if err = ConfigToKeyring(config); err != nil {
+			// We still save info in clear text but warn the user
+			fmt.Println(promptui.IconWarn + " " + NoKeyringMsg)
+			// Force skip keyring flag in the config file to be explicit
+			config.SkipKeyring = true
 		}
 	}
+
+	file := GetConfigFilePath()
+
+	// Add version before saving the config
+	config.CreatedAtVersion = common.Version
+
+	data, e := json.MarshalIndent(config, "", "\t")
+	if e != nil {
+		err = e
+		return e
+	}
+	if err = ioutil.WriteFile(file, data, 0600); err != nil {
+		return err
+	}
+
+	fmt.Printf("%s Configuration saved. You can now use the Cells Client to interact as %s with %s\n", promptui.IconGood, config.User, config.Url)
+
 	return nil
 }
 
@@ -144,6 +186,33 @@ func ClearKeyring(c *CecConfig) error {
 			return err
 		}
 	}
+
+	return nil
+}
+
+func retrieveLegacyKey(conf *CecConfig) error {
+	if conf.User != "" && conf.Password == "" { // client auth
+		if value, e := keyring.Get(keyringService, key(conf.Url, "ClientCredentials")); e == nil {
+			parts := splitValue(value)
+			//conf.ClientSecret = parts[0]
+			conf.Password = parts[1]
+			conf.AuthType = common.ClientAuthType
+		} else {
+			return e
+		}
+	} else if conf.IdToken == "" && conf.RefreshToken == "" && conf.Password == "" { // oauth
+		if value, e := keyring.Get(keyringService, key(conf.Url, "IdToken")); e == nil {
+			parts := splitValue(value)
+			conf.IdToken = parts[0]
+			conf.RefreshToken = parts[1]
+			conf.AuthType = common.OAuthType
+			RefreshIfRequired(conf)
+		} else {
+			return e
+		}
+	}
+	DefaultConfig = conf
+	SaveConfig(conf)
 
 	return nil
 }

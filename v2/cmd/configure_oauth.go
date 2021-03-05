@@ -75,7 +75,7 @@ USAGE
 			log.Fatal(err)
 		}
 
-		err = saveConfig(newConf)
+		err = rest.SaveConfig(newConf)
 		if err != nil {
 			fmt.Println(promptui.IconBad + " Cannot save configuration, cause: " + err.Error())
 		}

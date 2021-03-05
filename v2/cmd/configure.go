@@ -1,9 +1,7 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"strings"
@@ -11,11 +9,8 @@ import (
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-client/v2/common"
 	"github.com/pydio/cells-client/v2/rest"
 )
-
-const noKeyringMsg = "Could not access local keyring: sensitive information like token or password will end up stored in clear text in the client machine."
 
 var configureCmd = &cobra.Command{
 	Use:   "configure",
@@ -77,7 +72,7 @@ DESCRIPTION
 	Run: func(cm *cobra.Command, args []string) {
 
 		if err := rest.CheckKeyring(); err != nil {
-			fmt.Println(promptui.IconWarn + " " + noKeyringMsg)
+			fmt.Println(promptui.IconWarn + " " + rest.NoKeyringMsg)
 			os.Exit(1)
 		} else {
 			fmt.Println(promptui.IconGood + " Keyring seems to be here and working.")
@@ -105,53 +100,5 @@ func notEmpty(input string) error {
 	if len(input) == 0 {
 		return fmt.Errorf("Field cannot be empty")
 	}
-	return nil
-}
-
-// saveConfig handle file and/or keyring storage depending on user preference and system.
-func saveConfig(config *rest.CecConfig) error {
-
-	var err error
-	oldConfig := rest.DefaultConfig
-	defer func() {
-		if err != nil {
-			rest.DefaultConfig = oldConfig
-		}
-	}()
-
-	rest.DefaultConfig = config
-
-	uname, e := rest.RetrieveCurrentSessionLogin()
-	if e != nil {
-		err = e
-		return fmt.Errorf("could not connect to distant server with provided parameters. Discarding change")
-	}
-	config.User = uname
-
-	if !config.SkipKeyring {
-		if err = rest.ConfigToKeyring(config); err != nil {
-			// We still save info in clear text but warn the user
-			fmt.Println(promptui.IconWarn + " " + noKeyringMsg)
-			// Force skip keyring flag in the config file to be explicit
-			config.SkipKeyring = true
-		}
-	}
-
-	file := rest.GetConfigFilePath()
-
-	// Add version before saving the config
-	config.CreatedAtVersion = common.Version
-
-	data, e := json.MarshalIndent(config, "", "\t")
-	if e != nil {
-		err = e
-		return e
-	}
-	if err = ioutil.WriteFile(file, data, 0600); err != nil {
-		return err
-	}
-
-	fmt.Printf("%s Configuration saved. You can now use the Cells Client to interact as %s with %s\n", promptui.IconGood, config.User, config.Url)
-
 	return nil
 }
