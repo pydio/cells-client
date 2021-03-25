@@ -6,8 +6,9 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/pydio/cells-sdk-go/v2/client/user_service"
+
 	"github.com/pydio/cells-client/v2/rest"
-	"github.com/pydio/cells-sdk-go/client/user_service"
 )
 
 var listGroups = &cobra.Command{

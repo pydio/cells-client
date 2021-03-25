@@ -10,8 +10,9 @@ import (
 	"strings"
 	"time"
 
+	cells_sdk "github.com/pydio/cells-sdk-go/v2"
+
 	"github.com/pydio/cells-client/v2/common"
-	cells_sdk "github.com/pydio/cells-sdk-go"
 )
 
 type tokenResponse struct {

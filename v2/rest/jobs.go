@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pydio/cells-sdk-go/client/jobs_service"
-	"github.com/pydio/cells-sdk-go/models"
+	"github.com/pydio/cells-sdk-go/v2/client/jobs_service"
+	"github.com/pydio/cells-sdk-go/v2/models"
 )
 
 func MoveParams(source []string, targetFolder string) string {

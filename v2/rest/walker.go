@@ -13,7 +13,7 @@ import (
 
 	"github.com/gosuri/uiprogress"
 
-	"github.com/pydio/cells-sdk-go/models"
+	"github.com/pydio/cells-sdk-go/v2/models"
 )
 
 var (
