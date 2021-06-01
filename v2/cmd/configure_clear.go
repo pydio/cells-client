@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 
 	"github.com/manifoldco/promptui"
@@ -44,7 +43,8 @@ DESCRIPTION
 			}
 		}
 		if err := os.Remove(filePath); err != nil {
-			log.Fatal(err)
+			cmd.Println(err)
+			os.Exit(1)
 		}
 		fmt.Println(promptui.IconGood + " Successfully removed config file")
 	},
