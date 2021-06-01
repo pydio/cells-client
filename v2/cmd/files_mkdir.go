@@ -13,6 +13,7 @@ import (
 	"github.com/pydio/cells-sdk-go/v2/client/tree_service"
 	"github.com/pydio/cells-sdk-go/v2/models"
 
+	"github.com/pydio/cells-client/v2/common"
 	"github.com/pydio/cells-client/v2/rest"
 )
 
@@ -44,12 +45,25 @@ EXAMPLES
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if len(args) < 1 {
-			log.Fatal(fmt.Errorf("please provide the target path"))
+			cmd.PrintErrln("please provide the target path")
+			os.Exit(1)
 		}
 		dir := args[0]
 		parts := strings.Split(dir, "/")
 		if len(parts) < 2 {
-			log.Fatal("Please provide at least a workspace segment in the path")
+			cmd.PrintErrln("Please provide at least a workspace segment in the path")
+			os.Exit(1)
+		}
+
+		spinner, err := common.NewSpinner().Start("Init")
+		if err != nil {
+			cmd.PrintErrf("spinner failed %s", err)
+			os.Exit(1)
+		}
+		defer spinner.Stop()
+
+		if quiet {
+			common.DisableSpinnerOutput()
 		}
 
 		// Connect to the Pydio API via the sdkConfig
@@ -63,7 +77,8 @@ EXAMPLES
 
 		// Checking existence of parent workspace
 		if _, e := apiClient.TreeService.HeadNode(&tree_service.HeadNodeParams{Node: crt, Context: ctx}); e != nil {
-			log.Fatalf("Could not find workspace %s. Please specify a parent workspace that exists.")
+			spinner.Fail(fmt.Sprintf("Could not find workspace %s. Please specify a parent workspace that exists.", crt))
+			os.Exit(1)
 		}
 
 		for i := 1; i < len(parts)-1; i++ {
@@ -74,7 +89,8 @@ EXAMPLES
 					dirs = append(dirs, &models.TreeNode{Path: crt})
 					paths = append(paths, crt)
 				} else {
-					log.Fatalf("Could not find folder at %s, double check and correct your path or use the '-p' flags if you want to force the creation of missing ancestors.", crt)
+					cmd.PrintErrf("Could not find folder at %s, double check and correct your path or use the '-p' flags if you want to force the creation of missing ancestors.", crt)
+					os.Exit(1)
 				}
 			}
 		}
@@ -84,10 +100,11 @@ EXAMPLES
 		paths = append(paths, crt)
 
 		if len(dirs) == 0 {
-			fmt.Println("All dirs already exist, exiting")
+			spinner.Warning("All dirs already exist, exiting")
 			return
 		}
-		fmt.Printf("Creating folder(s) %s\n", strings.Join(paths, ", "))
+		spinner.UpdateText(fmt.Sprintf("Creating folder(s) %s", strings.Join(paths, ", ")))
+
 		_, err = apiClient.TreeService.CreateNodes(&tree_service.CreateNodesParams{
 			Body: &models.RestCreateNodesRequest{
 				Nodes: dirs,
@@ -95,13 +112,14 @@ EXAMPLES
 			Context: ctx,
 		})
 		if err != nil {
-			log.Fatal("error while calling CreateNodes:", err)
+			spinner.Fail("error while calling CreateNodes: ", err)
+			os.Exit(1)
 		}
 		// Wait that it is indexed
 		e := rest.RetryCallback(func() error {
 			_, e := apiClient.TreeService.HeadNode(&tree_service.HeadNodeParams{Node: dir, Context: ctx})
 			if e != nil {
-				fmt.Println("Waiting for folder to be correctly indexed...")
+				spinner.UpdateText("Waiting for folder to be correctly indexed...")
 			}
 			return e
 		}, 10, 2*time.Second)
@@ -109,8 +127,7 @@ EXAMPLES
 		if e != nil {
 			log.Fatal(e)
 		}
-		fmt.Printf("SUCCESS: Dir %s created and indexed\n", dir)
-
+		spinner.Success("Created and indexed ", dir)
 	},
 }
 

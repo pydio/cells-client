@@ -1,20 +1,18 @@
 package cmd
 
 import (
-	"log"
+	"fmt"
 	"os"
 	"path"
 
 	"github.com/spf13/cobra"
 
+	"github.com/pydio/cells-client/v2/common"
 	"github.com/pydio/cells-client/v2/rest"
 )
 
-// filesMvCmd represents the filesMv command
-var filesMvCmd = &cobra.Command{
-	Use:   "mv",
-	Short: "Move and/or rename nodes on the server",
-	Long: `
+func mvDescription(bin string) string {
+	return `
 DESCRIPTION
 	
   Synchronously move or rename one or more files or folders within your Cells server.
@@ -24,31 +22,50 @@ DESCRIPTION
 EXAMPLES
 
   Move a node:
-  ` + os.Args[0] + ` mv common-files/picture.jpg personal-files/photos/
+  ` + bin + ` mv common-files/picture.jpg personal-files/photos/
 
   Rename a node:
-  ` + os.Args[0] + ` mv common-files/picture.jpg common-files/p2.jpg
+  ` + bin + ` mv common-files/picture.jpg common-files/p2.jpg
 
   Move all nodes recursively:
-  ` + os.Args[0] + ` mv common-files/photos/* personal-files/photos/
-`,
-	Args: cobra.MinimumNArgs(2),
+  ` + bin + ` mv common-files/photos/* personal-files/photos/
+`
+}
+
+// filesMvCmd represents the filesMv command
+var filesMvCmd = &cobra.Command{
+	Use:   "mv",
+	Short: "Move and/or rename nodes on the server",
+	Long:  mvDescription(os.Args[0]),
+	Args:  cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 
 		source := args[0]
 		target := args[1]
 
+		spinner, err := common.NewSpinner().Start()
+		if err != nil {
+			cmd.PrintErrf("spinner failed %s", err)
+			os.Exit(1)
+		}
+		defer spinner.Stop()
+
+		if quiet {
+			common.DisableSpinnerOutput()
+		}
+
 		var sourceNodes []string
 		if path.Base(source) == "*" {
 			nodes, err := rest.ListNodesPath(source)
 			if err != nil {
-				log.Println("could not list the nodes path", err)
+				spinner.Warning("could not list the nodes path", err)
 			}
 			sourceNodes = nodes
 		} else {
 			_, exists := rest.StatNode(source)
 			if !exists {
-				log.Fatalf("This node does not exist: [%v]\n", source)
+				spinner.Fail(fmt.Sprintf("This node does not exist: [%v]\n", source))
+				return
 			}
 			sourceNodes = []string{source}
 		}
@@ -56,13 +73,16 @@ EXAMPLES
 		params := rest.MoveParams(sourceNodes, target)
 		jobID, err := rest.MoveJob(params)
 		if err != nil {
-			log.Fatalln("Could not run job:", err.Error())
+			spinner.Fail("Could not run job:", err.Error())
+			return
 		}
 
 		err = rest.MonitorJob(jobID)
 		if err != nil {
-			log.Fatalln("Could not monitor job:", err.Error())
+			spinner.Fail("Could not monitor job:", err.Error())
+			return
 		}
+		spinner.Success(fmt.Sprintf("moved %s to %s", source, target))
 	},
 }
 

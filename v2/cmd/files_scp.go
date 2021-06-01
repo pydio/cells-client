@@ -9,8 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pydio/cells-client/v2/rest"
 	"github.com/spf13/cobra"
+
+	"github.com/pydio/cells-client/v2/rest"
 )
 
 var scpFileExample = `
@@ -73,7 +74,8 @@ EXAMPLES
 			scpCurrentPrefix = prefixB
 		} else {
 			// No prefix found
-			log.Fatal("Source and target are both on the client machine, copy from server to client or the opposite.")
+			cmd.PrintErrln("Source and target are both on the client machine, copy from server to client or the opposite.")
+			os.Exit(1)
 		}
 
 		// Prepare paths
@@ -89,10 +91,12 @@ EXAMPLES
 			crawlerPath = strings.TrimPrefix(from, scpCurrentPrefix)
 			targetPath, isRemote, rename, err = targetToFullPath(from, to)
 			if err != nil {
-				log.Fatal(err)
+				cmd.PrintErr(err)
+				os.Exit(1)
 			}
 			if isRemote {
-				log.Fatal("Source and target are both remote: you can only copy from client to remote Pydio Server or the opposite.")
+				cmd.PrintErrln("Source and target are both remote: you can only copy from client to remote Pydio Server or the opposite.")
+				os.Exit(1)
 			}
 			fmt.Printf("Downloading %s to %s\n", from, to)
 		} else {
@@ -108,11 +112,13 @@ EXAMPLES
 
 		crawler, e := rest.NewCrawler(crawlerPath, isSrcLocal)
 		if e != nil {
-			log.Fatal(e)
+			cmd.PrintErr(e)
+			os.Exit(1)
 		}
 		nn, e := crawler.Walk()
 		if e != nil {
-			log.Fatal(e)
+			cmd.PrintErr(e)
+			os.Exit(1)
 		}
 
 		targetNode := rest.NewTarget(targetPath, crawler, rename)
@@ -130,14 +136,16 @@ EXAMPLES
 			// Force stop of the pool that stays blocked otherwise:
 			// It is launched *before* the MkdirAll but only managed during the CopyAll phase.
 			pool.Stop()
-			log.Fatal(e)
+			cmd.PrintErr(e)
+			os.Exit(1)
 		}
 
 		// UPLOAD / DOWNLOAD FILES
 		errs := targetNode.CopyAll(nn, pool)
 		//pool.Stop()
 		if len(errs) > 0 {
-			log.Fatal(errs)
+			cmd.PrintErr(errs)
+			os.Exit(1)
 		}
 		fmt.Println("") // Add a line to reduce glitches in the terminal
 	},

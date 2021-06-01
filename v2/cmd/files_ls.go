@@ -13,9 +13,10 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-sdk-go/v2/models"
 	"github.com/pydio/cells-sdk-go/v2/client/meta_service"
+	"github.com/pydio/cells-sdk-go/v2/models"
 
+	"github.com/pydio/cells-client/v2/common"
 	"github.com/pydio/cells-client/v2/rest"
 )
 
@@ -111,6 +112,18 @@ EXAMPLES
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 
+		spinner, err := common.NewSpinner().Start("Fetching nodes")
+		if err != nil {
+			cmd.PrintErrf("spinner failed %s", err)
+			os.Exit(1)
+		}
+		// we dont want the spinner to stay and pollute the ls tab writer
+		spinner.RemoveWhenDone = true
+
+		if quiet {
+			common.DisableSpinnerOutput()
+		}
+
 		// Retrieve requested display type and check it is valid
 		dt := sanityCheck()
 
@@ -124,7 +137,8 @@ EXAMPLES
 		// Connect to the Cells API
 		ctx, apiClient, err := rest.GetApiClient()
 		if err != nil {
-			log.Fatal(err)
+			cmd.PrintErr(err)
+			os.Exit(1)
 		}
 
 		var exists bool
@@ -138,8 +152,8 @@ EXAMPLES
 			return
 		} else if !exists && p != "" {
 			// Avoid 404 errors
-			cmd.Printf("Could not list content, no folder found at %s\n", p)
-			return
+			spinner.Fail(fmt.Sprintf("Could not list content, no folder found at %s\n", p))
+			os.Exit(1)
 		}
 
 		// Perform effective listing
@@ -236,6 +250,8 @@ EXAMPLES
 				table.Append([]string{t, currName})
 			}
 		}
+
+		spinner.Stop()
 
 		// Add meta-info and table headers and render (if necessary)
 		rowNb := len(result.Payload.Nodes) - hiddenRowNb

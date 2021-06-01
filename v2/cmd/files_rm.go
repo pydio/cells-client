@@ -11,19 +11,18 @@ import (
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 
+	"github.com/pydio/cells-client/v2/common"
 	"github.com/pydio/cells-client/v2/rest"
 )
-
 
 var (
 	force        bool
 	wildcardChar = "%"
 )
 
-var rmCmd = &cobra.Command{
-	Use:     "rm",
-	Short:   "Trash files or folders",
-	Long:    `
+// generates the description
+func rmDescription(bin string) string {
+	return `
 DESCRIPTION
 	
   Delete specified files or folders. 
@@ -36,24 +35,30 @@ DESCRIPTION
 EXAMPLES
 
   # Generic example:
-  ` + os.Args[0] + ` rm <workspace-slug>/path/to/resource
+  ` + bin + ` rm <workspace-slug>/path/to/resource
 
   # Remove a single file:
-  ` + os.Args[0] + ` rm common-files/target.txt
+  ` + bin + ` rm common-files/target.txt
 
   # Remove recursively inside a folder, the wildcard is '%':
-  ` + os.Args[0] + ` rm common-files/folder/%
+  ` + bin + ` rm common-files/folder/%
 
   # Remove a folder and all its children (even if it is not empty)
-  ` + os.Args[0] + ` rm common-files/folder
+  ` + bin + ` rm common-files/folder
 
   # Remove multiple files
-  ` + os.Args[0] + ` rm common-files/file-1.txt common-files/file-2.txt
+  ` + bin + ` rm common-files/file-1.txt common-files/file-2.txt
 
   # You can force the deletion with the '--force' flag (to avoid the Yes or No)
-  ` + os.Args[0] + ` rm -f common-files/file-1.txt
-`,
-	Args:    cobra.MinimumNArgs(1),
+  ` + bin + ` rm -f common-files/file-1.txt
+`
+}
+
+var rmCmd = &cobra.Command{
+	Use:   "rm",
+	Short: "Trash files or folders",
+	Long:  rmDescription(os.Args[0]),
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 
 		// Ask for user approval before deleting
@@ -65,11 +70,22 @@ EXAMPLES
 			}
 		}
 
+		spinner, err := common.NewSpinner().Start("Removing Nodes")
+		if err != nil {
+			log.Println("spinner failed", err)
+		}
+		defer spinner.Stop()
+
+		if quiet {
+			common.DisableSpinnerOutput()
+		}
+
 		targetNodes := make([]string, 0)
 		for _, arg := range args {
 			_, exists := rest.StatNode(strings.TrimRight(arg, wildcardChar))
 			if !exists {
-				log.Printf("Node not found %v, could not delete\n", arg)
+				spinner.Fail(fmt.Sprintf("Node not found [%v], could not delete\n", arg))
+				os.Exit(1)
 			}
 			if path.Base(arg) == wildcardChar {
 				dir, _ := path.Split(arg)
@@ -84,7 +100,8 @@ EXAMPLES
 				}
 
 				if err != nil {
-					log.Fatalf("Could not list nodes inside %s, aborting. Cause: %s\n", path.Dir(arg), err.Error())
+					spinner.Fail(fmt.Sprintf("Could not list nodes inside %s, aborting. Cause: %s\n", path.Dir(arg), err.Error()))
+					os.Exit(1)
 				}
 				targetNodes = append(targetNodes, nodes...)
 			} else {
@@ -93,13 +110,14 @@ EXAMPLES
 		}
 
 		if len(targetNodes) <= 0 {
-			log.Println("Nothing to delete")
-			return
+			spinner.Warning("Nothing to delete")
+			os.Exit(1)
 		}
 
 		jobUUID, err := rest.DeleteNode(targetNodes)
 		if err != nil {
-			log.Fatalf("could not delete nodes, cause: %s\n", err)
+			spinner.Fail(fmt.Sprintf("could not delete nodes, cause: %s\n", err))
+			os.Exit(1)
 		}
 
 		var wg sync.WaitGroup
@@ -109,13 +127,13 @@ EXAMPLES
 				err := rest.MonitorJob(id)
 				defer wg.Done()
 				if err != nil {
-					log.Printf("could not monitor job, %s\n", id)
+					spinner.Warning("could not monitor job, %s\n", id)
 				}
 			}(id)
 		}
 		wg.Wait()
 
-		fmt.Println("Nodes have been moved to the Recycle Bin")
+		spinner.Success("Nodes have been moved to the Recycle Bin")
 	},
 }
 

@@ -43,6 +43,7 @@ var (
 	skipKeyring bool
 	skipVerify  bool
 	noCache     bool
+	quiet       bool
 )
 
 // RootCmd is the parent of all commands defined in this package.
@@ -105,7 +106,8 @@ ENVIRONMENT
 			var err error
 			serverURL, err = rest.CleanURL(tmpURLStr)
 			if err != nil {
-				log.Fatalf("server URL %s seems to be unvalid, please double check and adapt. Cause: %s", tmpURLStr, err.Error())
+				cmd.PrintErrf("server URL %s seems to be unvalid, please double check and adapt. Cause: %s", tmpURLStr, err.Error())
+				os.Exit(1)
 			}
 		}
 		authType = viper.GetString("auth_type")
@@ -115,15 +117,18 @@ ENVIRONMENT
 		noCache = viper.GetBool("no_cache")
 		skipKeyring = viper.GetBool("skip_keyring")
 		skipVerify = viper.GetBool("skip_verify")
+		quiet = viper.GetBool("quiet")
 
 		if needSetup {
 			e := setUpEnvironment()
 			if e != nil {
 				if e.Error() != unconfiguredMsg {
-					log.Fatalf("unexpected error during initialisation phase: %s", e.Error())
+					cmd.PrintErrf("unexpected error during initialisation phase: %s", e.Error())
+					os.Exit(1)
 				}
 				// TODO Directly launch necessary configure command
-				log.Fatalf("No configuration has been found, please make sure to run '%s configure' first.\n", os.Args[0])
+				cmd.PrintErrf("No configuration has been found, please make sure to run '%s configure' first.\n", os.Args[0])
+				os.Exit(1)
 			}
 		}
 	},
@@ -149,6 +154,7 @@ func init() {
 	flags.Bool("skip_verify", false, "By default the Cells Client verifies the validity of TLS certificates for each communication. This option skips TLS certificate verification")
 	flags.Bool("skip_keyring", false, "Explicitly tell the tool to *NOT* try to use a keyring, even if present. Warning: sensitive information will be stored in clear text")
 	flags.Bool("no_cache", false, "Force token refresh at each call. This might slow down scripts with many calls")
+	flags.BoolP("quiet", "q", false, "Disable the spinners")
 
 	// Unused for the time being
 	// flags.StringP("auth_type", "a", "", "Authorization mechanism used: Personnal Access Token (Default), OAuth2 flow or Client Credentials")
@@ -190,7 +196,8 @@ func setUpEnvironment() error {
 		// Refresh token if required
 		if refreshed, err := rest.RefreshIfRequired(&c); refreshed {
 			if err != nil {
-				log.Fatal("Could not refresh authentication token:", err)
+				return fmt.Errorf("could not refresh authentication token: %s", err)
+				//log.Fatal("Could not refresh authentication token:", err)
 			}
 			// Copy config as IdToken will be cleared
 			storeConfig := c
