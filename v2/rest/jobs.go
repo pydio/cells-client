@@ -107,7 +107,7 @@ func GetTaskStatusForJob(jobID string) (status models.JobsTaskStatus, msg string
 func MonitorJob(JobID string) (err error) {
 	for {
 		status, _, _, e := GetTaskStatusForJob(JobID)
-		if err != nil {
+		if e != nil {
 			err = e
 			return
 		}
