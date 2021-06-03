@@ -64,7 +64,8 @@ For the installation manuals, run the respective helpers:
 	Run: func(cmd *cobra.Command, args []string) {
 		err := cmd.Help()
 		if err != nil {
-			return
+			cmd.PrintErr(err)
+			os.Exit(1)
 		}
 	},
 	DisableFlagsInUseLine: true,
