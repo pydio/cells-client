@@ -6,28 +6,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var completionCmdExample = `1) Using Bash
+func bashCompletionExample(bin string) string {
+	return `Using Bash
 
 	# Add to current bash session:
-		source <(` + os.Args[0] + ` completion bash)
+		source <(` + bin + ` completion bash)
 
 	# Debian/Ubuntu/CentOS
-		` + os.Args[0] + ` completion bash | sudo tee /etc/bash_completion.d/cec
+		` + bin + ` completion bash | sudo tee /etc/bash_completion.d/cec
 
 	# macOS
-		` + os.Args[0] + ` completion bash | tee /usr/local/etc/bash_completion.d/cec
-
-2) Zsh
-
-	# Add to current zsh session:
-		source <(` + os.Args[0] + ` completion zsh)
-
-	# Debian/Ubuntu/CentOS:
-		` + os.Args[0] + ` completion zsh | sudo tee <path>/<to>/<your zsh completion folder>
-
-	# macOS
-		` + os.Args[0] + ` completion zsh | tee /Users/<your current user>/.zsh/completion/_cec
-
+		` + bin + ` completion bash | tee /usr/local/etc/bash_completion.d/cec
 
 #### You must insure the 'bash-completion' library is installed:
 	
@@ -40,6 +29,20 @@ var completionCmdExample = `1) Using Bash
 	# On MacOS (after the installation make sure to follow the instructions displayed by Homebrew)
 		brew install bash-completion
 `
+}
+
+func zshCompletionExample(bin string) string {
+	return `Zsh
+
+	# Add to current zsh session:
+	source <(` + bin + ` completion zsh)
+
+	# Debian/Ubuntu/CentOS:
+	` + bin + ` completion zsh | sudo tee <path>/<to>/<your zsh completion folder>
+
+	# macOS
+	` + bin + ` completion zsh | tee ${fpath[1]}/_cec`
+}
 
 var completionCmd = &cobra.Command{
 	Use:   "completion",
@@ -49,26 +52,44 @@ DESCRIPTION
 
   Install a completion helper to the Cells Client.
 
+For the installation manuals, run the respective helpers:
+
+	Bash
+		` + os.Args[0] + " completion " + "bash --help" + `
+
+	Zsh
+		` + os.Args[0] + " completion " + "zsh --help" + `
+
   This command configures an additional plugin to provide suggestions when hitting the 'tab' key.`,
-	Example: completionCmdExample,
-	Args:    cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Help()
+		err := cmd.Help()
+		if err != nil {
+			return
+		}
 	},
-	ValidArgs: []string{"zsh", "bash"},
+	DisableFlagsInUseLine: true,
+	ValidArgs:             []string{"zsh", "bash"},
 }
 
 var bashCompletionCmd = &cobra.Command{
-	Use: "bash",
+	Use:     "bash",
+	Example: bashCompletionExample(os.Args[0]),
 	Run: func(cmd *cobra.Command, args []string) {
-		bashAutocomplete()
+		err := RootCmd.GenBashCompletion(os.Stdout)
+		if err != nil {
+			return
+		}
 	},
 }
 
 var zshCompletionCmd = &cobra.Command{
-	Use: "zsh",
+	Use:     "zsh",
+	Example: zshCompletionExample(os.Args[0]),
 	Run: func(cmd *cobra.Command, args []string) {
-		zshAutocomplete()
+		err := RootCmd.GenZshCompletionNoDesc(os.Stdout)
+		if err != nil {
+			return
+		}
 	},
 }
 
@@ -77,13 +98,4 @@ func init() {
 	completionCmd.AddCommand(bashCompletionCmd)
 	completionCmd.AddCommand(zshCompletionCmd)
 
-}
-
-// Reads the bash autocomplete file and prints it to stdout
-func bashAutocomplete() {
-	RootCmd.GenBashCompletion(os.Stdout)
-}
-
-func zshAutocomplete() {
-	RootCmd.GenZshCompletion(os.Stdout)
 }
