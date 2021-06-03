@@ -120,7 +120,7 @@ EXAMPLES
 		// we dont want the spinner to stay and pollute the ls tab writer
 		spinner.RemoveWhenDone = true
 
-		if quiet {
+		if quiet || lsRaw {
 			common.DisableSpinnerOutput()
 		}
 
@@ -251,7 +251,10 @@ EXAMPLES
 			}
 		}
 
-		spinner.Stop()
+		err = spinner.Stop()
+		if err != nil {
+			cmd.PrintErrf("failed to stop spinner: %s", err)
+		}
 
 		// Add meta-info and table headers and render (if necessary)
 		rowNb := len(result.Payload.Nodes) - hiddenRowNb
