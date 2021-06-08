@@ -10,7 +10,6 @@ XGO_IMAGE?=pydio/xgo:latest
 
 .PHONY: all clean main dev xgo
 
-
 main:
 	go build -a\
 	 -ldflags "-X github.com/pydio/cells-client/v2/common.Version=${CELLS_CLIENT_VERSION}\
@@ -29,7 +28,6 @@ xgo:
 	 -out cec\
 	 ${PWD}
 
-
 dev:
 	go build\
 	 -tags dev\
@@ -40,4 +38,4 @@ dev:
 	 .
 
 clean:
-	rm -f cec	 
+	rm -f cec
