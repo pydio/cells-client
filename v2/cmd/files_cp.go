@@ -70,7 +70,7 @@ var cpCmd = &cobra.Command{
 		if path.Base(fromPath) == "*" {
 			nodes, err := rest.ListNodesPath(fromPath)
 			if err != nil {
-				spinner.Fail(fmt.Sprintf("\"Preparing grouped copy, could not list all nodes under %s, cause: %s\", path.Dir(fromPath), err.Error()"))
+				spinner.Fail(fmt.Sprintf("Preparing grouped copy, could not list all nodes under %s, cause: %s", path.Dir(fromPath), err.Error()))
 				os.Exit(1)
 			}
 			sourceNodes = nodes

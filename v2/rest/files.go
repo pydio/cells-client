@@ -232,10 +232,6 @@ func uploadManager(path string, content io.ReadSeeker, computeMD5 bool, errChan 
 		u.RequestOptions = []request.Option{func(r *request.Request) {
 			// We call log.fatal inside the method if there is an error, no need to manage that here.
 			RefreshAndStoreIfRequired(DefaultConfig)
-
-			// s3Config := getS3ConfigFromSdkConfig(DefaultConfig)
-			// apiKey, _ := oidc.RetrieveToken(&DefaultConfig.SdkConfig)
-			// r.Config.WithCredentials(credentials.NewStaticCredentials(apiKey, s3Config.ApiSecret, ""))
 		}}
 	})
 
