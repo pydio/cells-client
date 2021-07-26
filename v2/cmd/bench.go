@@ -14,24 +14,27 @@ import (
 var (
 	benchPoolSize    int
 	benchMaxRequests int
+	benchSkipCreate  bool
 )
 
 var benchCmd = &cobra.Command{
 	Use: "bench",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Connect to the Pydio API via the sdkConfig
-		ctx, apiClient, err := rest.GetApiClient()
-		if err != nil {
-			log.Fatal(err)
+		if !benchSkipCreate {
+			ctx, apiClient, err := rest.GetApiClient()
+			if err != nil {
+				log.Fatal(err)
+			}
+			_, err = apiClient.TreeService.CreateNodes(&tree_service.CreateNodesParams{
+				Body: &models.RestCreateNodesRequest{
+					Nodes: []*models.TreeNode{{
+						Path: "common-files/test-bench-dir",
+					}},
+				},
+				Context: ctx,
+			})
 		}
-		_, err = apiClient.TreeService.CreateNodes(&tree_service.CreateNodesParams{
-			Body: &models.RestCreateNodesRequest{
-				Nodes: []*models.TreeNode{{
-					Path: "common-files/test-bench-dir",
-				}},
-			},
-			Context: ctx,
-		})
 
 		wg := &sync.WaitGroup{}
 		wg.Add(benchMaxRequests)
@@ -72,4 +75,5 @@ func init() {
 	RootCmd.AddCommand(benchCmd)
 	benchCmd.Flags().IntVarP(&benchPoolSize, "pool", "p", 1, "Pool Size")
 	benchCmd.Flags().IntVarP(&benchMaxRequests, "max", "m", 100, "Max Requests")
+	benchCmd.Flags().BoolVarP(&benchSkipCreate, "no-create", "n", false, "Skip test resource creation (already done)")
 }
