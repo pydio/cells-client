@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-openapi/strfmt"
 	"github.com/shibukawa/configdir"
+	openapiruntime "github.com/go-openapi/runtime"
 
 	cells_sdk "github.com/pydio/cells-sdk-go/v2"
 	"github.com/pydio/cells-sdk-go/v2/client"
@@ -24,8 +25,11 @@ import (
 
 var (
 	// DefaultConfig  stores the current active config.
-	DefaultConfig  *CecConfig
+	DefaultConfig    *CecConfig
+	DefaultContext   context.Context
+	DefaultTransport openapiruntime.ClientTransport
 	configFilePath string
+	once = &sync.Once{}
 )
 
 // CecConfig extends the default SdkConfig with custom parameters.
@@ -46,12 +50,17 @@ func GetApiClient(anonymous ...bool) (context.Context, *client.PydioCellsRest, e
 		anon = true
 	}
 	DefaultConfig.CustomHeaders = map[string]string{"User-Agent": common.AppName + "/" + common.Version}
-	c, t, e := sdk_rest.GetClientTransport(&DefaultConfig.SdkConfig, anon)
-	if e != nil {
-		return nil, nil, e
+	var err error
+	once.Do(func() {
+		DefaultContext, DefaultTransport, err = sdk_rest.GetClientTransport(&DefaultConfig.SdkConfig, anon)
+	})
+
+	if err != nil {
+		return nil, nil, err
 	}
-	cl := client.New(t, strfmt.Default)
-	return c, cl, nil
+
+	cl := client.New(DefaultTransport, strfmt.Default)
+	return DefaultContext, cl, nil
 
 }
 
