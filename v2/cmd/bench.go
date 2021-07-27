@@ -12,26 +12,32 @@ import (
 )
 
 var (
-	benchPoolSize    int
-	benchMaxRequests int
+	benchPoolSize     int
+	benchMaxRequests  int
+	benchSkipCreate   bool
+	benchResourcePath string
 )
 
 var benchCmd = &cobra.Command{
-	Use: "bench",
+	Use:   "bench",
+	Short: "Perform a set of stats calls in concurrency",
+	Long:  "This command creates a simple resource (a folder) and then sends tons of stats on this resource in parallel.",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Connect to the Pydio API via the sdkConfig
-		ctx, apiClient, err := rest.GetApiClient()
-		if err != nil {
-			log.Fatal(err)
+		if !benchSkipCreate {
+			ctx, apiClient, err := rest.GetApiClient()
+			if err != nil {
+				log.Fatal(err)
+			}
+			_, err = apiClient.TreeService.CreateNodes(&tree_service.CreateNodesParams{
+				Body: &models.RestCreateNodesRequest{
+					Nodes: []*models.TreeNode{{
+						Path: "common-files/test-bench-dir",
+					}},
+				},
+				Context: ctx,
+			})
 		}
-		_, err = apiClient.TreeService.CreateNodes(&tree_service.CreateNodesParams{
-			Body: &models.RestCreateNodesRequest{
-				Nodes: []*models.TreeNode{{
-					Path: "common-files/test-bench-dir",
-				}},
-			},
-			Context: ctx,
-		})
 
 		wg := &sync.WaitGroup{}
 		wg.Add(benchMaxRequests)
@@ -70,6 +76,8 @@ func benchStat(i int, node string) error {
 
 func init() {
 	RootCmd.AddCommand(benchCmd)
-	benchCmd.Flags().IntVarP(&benchPoolSize, "pool", "p", 1, "Pool Size")
-	benchCmd.Flags().IntVarP(&benchMaxRequests, "max", "m", 100, "Max Requests")
+	benchCmd.Flags().StringVarP(&benchResourcePath, "resource", "r", "common-files/test-bench-dir", "Folder created that will be stated")
+	benchCmd.Flags().IntVarP(&benchPoolSize, "pool", "p", 1, "Pool size (number of parallel requests)")
+	benchCmd.Flags().IntVarP(&benchMaxRequests, "max", "m", 100, "Total number of Stat requests sent")
+	benchCmd.Flags().BoolVarP(&benchSkipCreate, "no-create", "n", false, "Skip test resource creation (if it is already existing)")
 }
