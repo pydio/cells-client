@@ -1,6 +1,8 @@
 package rest
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/xml"
 	"fmt"
 	"net/url"
@@ -78,4 +80,11 @@ func StandardizeLink(old string) string {
 		return DefaultConfig.Url + old
 	}
 	return old
+}
+
+func Unique(length int) string {
+	rand := fmt.Sprintf("%d", time.Now().Nanosecond())
+	hasher := md5.New()
+	hasher.Write([]byte(rand))
+	return hex.EncodeToString(hasher.Sum(nil))[0:length]
 }

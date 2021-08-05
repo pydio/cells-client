@@ -9,6 +9,7 @@ var (
 	benchPoolSize    int
 	benchMaxRequests int
 	benchSkipCreate  bool
+	benchSkipClean   bool
 )
 
 var benchCmd = &cobra.Command{
@@ -24,5 +25,6 @@ func init() {
 	flags := benchCmd.PersistentFlags()
 	flags.IntVarP(&benchPoolSize, "pool", "p", 1, "Pool size (number of parallel requests)")
 	flags.IntVarP(&benchMaxRequests, "max", "m", 100, "Total number of Stat requests sent")
-	flags.BoolVarP(&benchSkipCreate, "no-create", "n", false, "Skip test resource creation (if it is already existing)")
+	flags.BoolVarP(&benchSkipCreate, "no_create", "n", false, "Skip test resource creation (if it is already existing)")
+	flags.BoolVar(&benchSkipClean, "no_clean", false, "Skip cleaning the resources that have been created for this test")
 }

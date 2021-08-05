@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"path"
+	"strings"
 	"sync"
 	"time"
 
@@ -29,6 +30,10 @@ var shareAccessCmd = &cobra.Command{
 	Long:  "This command creates a simple resource (a folder), shares it as a public link and then emulate access of many concurrent users in parallel",
 	Run: func(cmd *cobra.Command, args []string) {
 
+		if shareResourcePath == "" {
+			shareResourcePath = "common-files/test-public-link-" + rest.Unique(4)
+		}
+
 		link, err := createLink(shareResourcePath)
 		if err != nil {
 			log.Fatal(err)
@@ -46,6 +51,10 @@ var shareAccessCmd = &cobra.Command{
 			}(i)
 		}
 		wg.Wait()
+
+		if !benchSkipClean {
+			rest.DeleteNode([]string{shareResourcePath})
+		}
 	},
 }
 
@@ -71,9 +80,23 @@ func createLink(targetPath string) (*models.RestShareLink, error) {
 	}
 	var node *models.TreeNode
 	exists := false
-	for node, exists = rest.StatNode(targetPath); !exists; {
+	for {
+		node, exists = rest.StatNode(targetPath)
+		if exists {
+			break
+		}
 		log.Printf("No node found at %s, wait for a second before retry\n", targetPath)
-		<-time.After(1000)
+		time.Sleep(1 * time.Second)
+	}
+
+	// Put 2 files in the target folder
+	_, err = rest.PutFile(targetPath+"/dummyFile.txt", strings.NewReader("Simple test for sharing"), true)
+	if err != nil {
+		return nil, err
+	}
+	_, err = rest.PutFile(targetPath+"/dummyFile2.txt", strings.NewReader("Simple test for sharing - second file"), true)
+	if err != nil {
+		return nil, err
 	}
 
 	// Create a public link
@@ -187,5 +210,5 @@ func getState(token string) (activeRepoID string, e error) {
 
 func init() {
 	benchCmd.AddCommand(shareAccessCmd)
-	shareAccessCmd.Flags().StringVarP(&shareResourcePath, "resource", "r", "common-files/test-public-link", "Folder created that will be shared as a public link")
+	shareAccessCmd.Flags().StringVarP(&shareResourcePath, "resource", "r", "", "Folder created that will be shared as a public link")
 }
