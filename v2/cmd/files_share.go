@@ -42,7 +42,7 @@ EXAMPLES
 			log.Fatal(err)
 		}
 
-		cmd.Println("Public link created at " + rest.DefaultConfig.Url + l.LinkURL)
+		cmd.Println("Public link created at " + rest.StandardizeLink(l.LinkURL))
 		fmt.Println("") // Add a line to reduce glitches in the terminal
 	},
 }

@@ -72,3 +72,10 @@ func IsForbiddenError(err error) bool {
 	}
 	return false
 }
+
+func StandardizeLink(old string) string {
+	if strings.HasPrefix(old, "/") && !strings.HasPrefix(old, "http") {
+		return DefaultConfig.Url + old
+	}
+	return old
+}
