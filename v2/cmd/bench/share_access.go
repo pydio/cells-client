@@ -187,5 +187,5 @@ func getState(token string) (activeRepoID string, e error) {
 
 func init() {
 	benchCmd.AddCommand(shareAccessCmd)
-	shareAccessCmd.Flags().StringVarP(&benchResourcePath, "resource", "r", "common-files/test-public-link", "Folder created that will be shared as a public link")
+	shareAccessCmd.Flags().StringVarP(&shareResourcePath, "resource", "r", "common-files/test-public-link", "Folder created that will be shared as a public link")
 }
