@@ -6,6 +6,7 @@ import (
 )
 
 var (
+	benchTimeout     int
 	benchPoolSize    int
 	benchMaxRequests int
 	benchSkipCreate  bool
@@ -23,6 +24,7 @@ var benchCmd = &cobra.Command{
 func init() {
 	cmd.RootCmd.AddCommand(benchCmd)
 	flags := benchCmd.PersistentFlags()
+	flags.IntVar(&benchTimeout, "timeout", 2, "Timeout for HTTP requests (in minutes)")
 	flags.IntVarP(&benchPoolSize, "pool", "p", 1, "Pool size (number of parallel requests)")
 	flags.IntVarP(&benchMaxRequests, "max", "m", 100, "Total number of Stat requests sent")
 	flags.BoolVarP(&benchSkipCreate, "no_create", "n", false, "Skip test resource creation (if it is already existing)")

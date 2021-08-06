@@ -59,7 +59,7 @@ var shareAccessCmd = &cobra.Command{
 		}
 
 		log.Println("... Benchmark terminated")
-		log.Println("Public link accessed", benchMaxRequests,"times, with a pool size of", benchPoolSize, "in", time.Since(begin))
+		log.Println("Public link accessed", benchMaxRequests, "times, with a pool size of", benchPoolSize, "in", time.Since(begin))
 
 	},
 }
@@ -106,12 +106,13 @@ func createLink(targetPath string) (*models.RestShareLink, error) {
 	}
 
 	// Create a public link
-	createdLink, err := rest.CreateSimpleLink(node.UUID, path.Base(targetPath))
+	createdLink, err := rest.CreateSimpleFolderLink(node.UUID, path.Base(targetPath))
 	if err != nil {
 		return nil, err
 	}
 
 	log.Printf("Resource created, public link is at %s \n", rest.StandardizeLink(createdLink.LinkURL))
+
 	return createdLink, nil
 
 }
@@ -119,6 +120,8 @@ func createLink(targetPath string) (*models.RestShareLink, error) {
 func singleAccess(i int, l *models.RestShareLink) error {
 	s := time.Now()
 
+	// Define a 2 minutes timeout for the various requests
+	http.DefaultClient.Timeout = time.Duration(benchTimeout) * time.Minute
 	currURL := rest.StandardizeLink(l.LinkURL)
 
 	resp, err := http.Get(currURL)
@@ -139,7 +142,7 @@ func singleAccess(i int, l *models.RestShareLink) error {
 	t2 := time.Since(s2)
 	s3 := time.Now()
 
-	_, err = getState(token)
+	_, err = getState(token, l.UUID)
 	if err != nil {
 		return err
 	}
@@ -188,7 +191,7 @@ func getPublicToken(login string) (token string, e error) {
 	return jwt.(string), nil
 }
 
-func getState(token string) (activeRepoID string, e error) {
+func getState(token, workspaceID string) (activeRepoID string, e error) {
 
 	req, err := http.NewRequest(
 		"GET",
@@ -214,8 +217,10 @@ func getState(token string) (activeRepoID string, e error) {
 
 	v := &common.Cpydio_registry{}
 	xml.Unmarshal(body, v)
-	if v.Cuser == nil || v.Cuser.Cactive_repo == nil {
+	if v.Cuser == nil || v.Cuser.Cactive_repo == nil || v.Cuser.Cactive_repo.Attrid == "" {
 		return "", fmt.Errorf("no active repo found")
+	} else if v.Cuser.Cactive_repo.Attrid != workspaceID {
+		return "", fmt.Errorf("getState returned an unvalid active repository ID")
 	}
 
 	return v.Cuser.Cactive_repo.Attrid, nil

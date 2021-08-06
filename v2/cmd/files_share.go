@@ -37,7 +37,7 @@ EXAMPLES
 			return
 		}
 
-		l, err := rest.CreateSimpleLink(node.UUID, path.Base(p))
+		l, err := rest.CreateSimpleFolderLink(node.UUID, path.Base(p))
 		if err != nil {
 			log.Fatal(err)
 		}

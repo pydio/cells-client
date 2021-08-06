@@ -7,7 +7,7 @@ import (
 	"github.com/pydio/cells-sdk-go/v2/models"
 )
 
-func CreateSimpleLink(targetNodeUuid, label string) (*models.RestShareLink, error) {
+func CreateSimpleFolderLink(targetNodeUuid, label string) (*models.RestShareLink, error) {
 
 	ctx, client, e := GetApiClient()
 	if e != nil {
@@ -23,7 +23,7 @@ func CreateSimpleLink(targetNodeUuid, label string) (*models.RestShareLink, erro
 		Label:                   label,
 		RootNodes:               []*models.TreeNode{{UUID: targetNodeUuid}},
 		Permissions:             perm,
-		ViewTemplateName:        "pydio_unique_strip",
+		ViewTemplateName:        "pydio_shared_folder",
 		PoliciesContextEditable: true,
 	}
 
