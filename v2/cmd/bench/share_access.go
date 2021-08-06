@@ -30,6 +30,8 @@ var shareAccessCmd = &cobra.Command{
 	Long:  "This command creates a simple resource (a folder), shares it as a public link and then emulate access of many concurrent users in parallel",
 	Run: func(cmd *cobra.Command, args []string) {
 
+		begin := time.Now()
+
 		if shareResourcePath == "" {
 			shareResourcePath = "common-files/test-public-link-" + rest.Unique(4)
 		}
@@ -55,6 +57,10 @@ var shareAccessCmd = &cobra.Command{
 		if !benchSkipClean {
 			rest.DeleteNode([]string{shareResourcePath})
 		}
+
+		log.Println("... Benchmark terminated")
+		log.Println("Public link accessed", benchMaxRequests,"times, with a pool size of", benchPoolSize, "in", time.Since(begin))
+
 	},
 }
 
@@ -122,10 +128,16 @@ func singleAccess(i int, l *models.RestShareLink) error {
 		return fmt.Errorf("unvalid response when getting public link at %s: %d (%s)", l.LinkURL, resp.StatusCode, resp.Status)
 	}
 
+	t1 := time.Since(s)
+	s2 := time.Now()
+
 	token, err := getPublicToken(l.UserLogin)
 	if err != nil {
 		return err
 	}
+
+	t2 := time.Since(s2)
+	s3 := time.Now()
 
 	_, err = getState(token)
 	if err != nil {
@@ -133,11 +145,12 @@ func singleAccess(i int, l *models.RestShareLink) error {
 	}
 
 	res := time.Since(s)
+	t3 := time.Since(s3)
 	if err != nil {
 		log.Println(i, res, "error", err.Error())
 	} else {
 		//log.Println(i, res, "- OK, token used:", token)
-		log.Println(i, res, "ok")
+		log.Println(i, res, "ok", t1, t2, t3)
 	}
 
 	return err
