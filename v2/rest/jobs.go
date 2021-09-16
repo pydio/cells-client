@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pydio/cells-sdk-go/v2/client/jobs_service"
-	"github.com/pydio/cells-sdk-go/v2/models"
+	"github.com/pydio/cells-sdk-go/v3/client/jobs_service"
+	"github.com/pydio/cells-sdk-go/v3/models"
 )
 
 func MoveParams(source []string, targetFolder string) string {
@@ -77,8 +77,8 @@ func GetTaskStatusForJob(jobID string) (status models.JobsTaskStatus, msg string
 		return
 	}
 	body := &models.JobsListJobsRequest{
-		JobIds:    []string{jobID},
-		LoadTasks: models.JobsTaskStatusAny,
+		JobIDs:    []string{jobID},
+		LoadTasks: models.NewJobsTaskStatus(models.JobsTaskStatusAny),
 	}
 	params := jobs_service.NewUserListJobsParams()
 	params.Body = body
@@ -93,7 +93,7 @@ func GetTaskStatusForJob(jobID string) (status models.JobsTaskStatus, msg string
 			return
 		}
 		for _, task := range job.Tasks {
-			status = task.Status
+			status = *task.Status
 			msg = task.StatusMessage
 			if task.HasProgress {
 				pg = task.Progress
@@ -126,7 +126,7 @@ func MonitorJob(JobID string) (err error) {
 		case models.JobsTaskStatusUnknown:
 			err = fmt.Errorf("JobTask unknown status, this is abnormal")
 			return
-		case models.JobsTaskStatusIDLE:
+		case models.JobsTaskStatusIdle:
 			fmt.Println("IDLE")
 			return
 		case models.JobsTaskStatusFinished:

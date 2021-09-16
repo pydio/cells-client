@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	cells_sdk "github.com/pydio/cells-sdk-go/v2"
+	cells_sdk "github.com/pydio/cells-sdk-go/v3"
 
 	"github.com/pydio/cells-client/v2/common"
 )

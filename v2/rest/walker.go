@@ -13,7 +13,7 @@ import (
 
 	"github.com/gosuri/uiprogress"
 
-	"github.com/pydio/cells-sdk-go/v2/models"
+	"github.com/pydio/cells-sdk-go/v3/models"
 )
 
 var (
@@ -70,7 +70,7 @@ func NewLocalNode(fullPath string, i os.FileInfo) *CrawlNode {
 // NewRemoteNode creates the base node for crawling in case of a download.
 func NewRemoteNode(t *models.TreeNode) *CrawlNode {
 	n := &CrawlNode{
-		IsDir:    t.Type == models.TreeNodeTypeCOLLECTION,
+		IsDir:    *t.Type == models.TreeNodeTypeCOLLECTION,
 		FullPath: strings.Trim(t.Path, "/"),
 	}
 	n.Size, _ = strconv.ParseInt(t.Size, 10, 64)
@@ -141,7 +141,7 @@ func (c *CrawlNode) Walk(current ...string) (children []*CrawlNode, e error) {
 			remote := NewRemoteNode(n)
 			remote.RelPath = strings.TrimPrefix(remote.FullPath, c.FullPath)
 			children = append(children, remote)
-			if n.Type == models.TreeNodeTypeCOLLECTION {
+			if *n.Type == models.TreeNodeTypeCOLLECTION {
 				cc, er := c.Walk(remote.RelPath)
 				if er != nil {
 					e = er
@@ -162,9 +162,9 @@ func (c *CrawlNode) MkdirAll(dd []*CrawlNode, pool *BarsPool) error {
 	if !c.IsLocal {
 		// Remote : append root if required
 		if tn, b := StatNode(c.FullPath); !b {
-			mm = append(mm, &models.TreeNode{Path: c.FullPath, Type: models.TreeNodeTypeCOLLECTION})
+			mm = append(mm, &models.TreeNode{Path: c.FullPath, Type: models.NewTreeNodeType(models.TreeNodeTypeCOLLECTION)})
 			createRoot = true
-		} else if tn.Type != models.TreeNodeTypeCOLLECTION {
+		} else if *tn.Type != models.TreeNodeTypeCOLLECTION {
 			// target root is not a folder, fail fast.
 			return fmt.Errorf("%s exists on the server and is not a folder, cannot upload there", c.FullPath)
 		}
@@ -196,7 +196,7 @@ func (c *CrawlNode) MkdirAll(dd []*CrawlNode, pool *BarsPool) error {
 				pool.Done()
 			}
 		} else {
-			mm = append(mm, &models.TreeNode{Path: newFolder, Type: models.TreeNodeTypeCOLLECTION})
+			mm = append(mm, &models.TreeNode{Path: newFolder, Type: models.NewTreeNodeType(models.TreeNodeTypeCOLLECTION)})
 		}
 	}
 	if !c.IsLocal && !DryRun && len(mm) > 0 {
@@ -282,7 +282,7 @@ func (c *CrawlNode) upload(src *CrawlNode, bar *uiprogress.Bar) error {
 
 	fp := c.Join(c.FullPath, bname)
 	// Handle corner case when trying to upload a file and *folder* with same name already exists at target path
-	if tn, b := StatNode(fp); b && tn.Type == models.TreeNodeTypeCOLLECTION {
+	if tn, b := StatNode(fp); b && *tn.Type == models.TreeNodeTypeCOLLECTION {
 		// target root is not a folder, fail fast.
 		return fmt.Errorf("cannot upload file to %s, a folder with same name already exists at target path", fp)
 	}
@@ -414,7 +414,7 @@ func (b *BarsPool) Get(i int, total int, name string) *uiprogress.Bar {
 	bar := b.AddBar(total)
 	bar.PrependCompleted()
 	bar.AppendFunc(func(b *uiprogress.Bar) string {
-		return fmt.Sprintf("%s", name)
+		return fmt.Sprint(name)
 	})
 	return bar
 }

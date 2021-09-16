@@ -11,14 +11,14 @@ import (
 	"runtime"
 	"sync"
 
+	openapiruntime "github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
 	"github.com/shibukawa/configdir"
-	openapiruntime "github.com/go-openapi/runtime"
 
-	cells_sdk "github.com/pydio/cells-sdk-go/v2"
-	"github.com/pydio/cells-sdk-go/v2/client"
-	"github.com/pydio/cells-sdk-go/v2/transport"
-	sdk_rest "github.com/pydio/cells-sdk-go/v2/transport/rest"
+	cells_sdk "github.com/pydio/cells-sdk-go/v3"
+	"github.com/pydio/cells-sdk-go/v3/client"
+	"github.com/pydio/cells-sdk-go/v3/transport"
+	sdk_rest "github.com/pydio/cells-sdk-go/v3/transport/rest"
 
 	"github.com/pydio/cells-client/v2/common"
 )
@@ -28,8 +28,8 @@ var (
 	DefaultConfig    *CecConfig
 	DefaultContext   context.Context
 	DefaultTransport openapiruntime.ClientTransport
-	configFilePath string
-	once = &sync.Once{}
+	configFilePath   string
+	once             = &sync.Once{}
 )
 
 // CecConfig extends the default SdkConfig with custom parameters.
@@ -43,7 +43,7 @@ type CecConfig struct {
 // GetApiClient connects to the Pydio Cells server defined by this config, by sending an authentication
 // request to the OIDC service to get a valid JWT (or taking the JWT from cache).
 // It also returns a context to be used in subsequent requests.
-func GetApiClient(anonymous ...bool) (context.Context, *client.PydioCellsRest, error) {
+func GetApiClient(anonymous ...bool) (context.Context, *client.PydioCellsRestAPI, error) {
 
 	anon := false
 	if len(anonymous) > 0 && anonymous[0] {

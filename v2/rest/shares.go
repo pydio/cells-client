@@ -3,8 +3,8 @@ package rest
 import (
 	"fmt"
 
-	"github.com/pydio/cells-sdk-go/v2/client/share_service"
-	"github.com/pydio/cells-sdk-go/v2/models"
+	"github.com/pydio/cells-sdk-go/v3/client/share_service"
+	"github.com/pydio/cells-sdk-go/v3/models"
 )
 
 func CreateSimpleFolderLink(targetNodeUuid, label string) (*models.RestShareLink, error) {
@@ -14,9 +14,9 @@ func CreateSimpleFolderLink(targetNodeUuid, label string) (*models.RestShareLink
 		return nil, e
 	}
 
-	perm := []models.RestShareLinkAccessType{
-		models.RestShareLinkAccessTypeDownload,
-		models.RestShareLinkAccessTypePreview,
+	perm := []*models.RestShareLinkAccessType{
+		models.NewRestShareLinkAccessType(models.RestShareLinkAccessTypeDownload),
+		models.NewRestShareLinkAccessType(models.RestShareLinkAccessTypePreview),
 	}
 
 	link := &models.RestShareLink{

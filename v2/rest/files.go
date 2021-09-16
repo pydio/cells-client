@@ -13,9 +13,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 
-	"github.com/pydio/cells-sdk-go/v2/client/tree_service"
-	"github.com/pydio/cells-sdk-go/v2/models"
-	s3transport "github.com/pydio/cells-sdk-go/v2/transport/s3"
+	"github.com/pydio/cells-sdk-go/v3/client/tree_service"
+	"github.com/pydio/cells-sdk-go/v3/models"
+	s3transport "github.com/pydio/cells-sdk-go/v3/transport/s3"
 
 	"github.com/pydio/cells-client/v2/common"
 )

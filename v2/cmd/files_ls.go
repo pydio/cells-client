@@ -13,8 +13,8 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-sdk-go/v2/models"
-	"github.com/pydio/cells-sdk-go/v2/client/meta_service"
+	"github.com/pydio/cells-sdk-go/v3/client/meta_service"
+	"github.com/pydio/cells-sdk-go/v3/models"
 
 	"github.com/pydio/cells-client/v2/rest"
 )
@@ -189,7 +189,7 @@ EXAMPLES
 				t = "Cell"
 			} else if node.MetaStore != nil && node.MetaStore["ws_scope"] != "" {
 				t = "Workspace"
-			} else if node.Type == models.TreeNodeTypeCOLLECTION {
+			} else if *node.Type == models.TreeNodeTypeCOLLECTION {
 				t = "Folder"
 			}
 
@@ -203,7 +203,7 @@ EXAMPLES
 					// We do not want to list parent folder or workspace in simple lists
 					hiddenRowNb++
 					continue
-				} else if node.Type == models.TreeNodeTypeCOLLECTION {
+				} else if *node.Type == models.TreeNodeTypeCOLLECTION {
 					// replace path by "." notation
 					currName = "."
 				}
@@ -223,15 +223,13 @@ EXAMPLES
 				} else {
 					table.Append([]string{t, node.UUID, currName, sizeToBytes(node.Size), stampToDate(node.MTime)})
 				}
-				break
 			case raw:
-				if node.Type == models.TreeNodeTypeCOLLECTION {
+				if *node.Type == models.TreeNodeTypeCOLLECTION {
 					out := currPath + "/"
 					_, _ = fmt.Fprintln(os.Stdout, out)
 				} else {
 					_, _ = fmt.Fprintln(os.Stdout, node.Path)
 				}
-				break
 			default:
 				table.Append([]string{t, currName})
 			}
@@ -252,7 +250,6 @@ EXAMPLES
 				table.SetHeader([]string{"Type", "Uuid", "Name", "Size", "Modified"})
 			}
 			table.Render()
-			break
 		case raw: // Nothing to add: we just want the raw values that we already displayed while looping
 			break
 		default:

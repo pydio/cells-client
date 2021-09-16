@@ -10,7 +10,7 @@ import (
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-sdk-go/v2/models"
+	"github.com/pydio/cells-sdk-go/v3/models"
 
 	"github.com/pydio/cells-client/v2/rest"
 )
@@ -68,7 +68,7 @@ EXAMPLE
 		// Pre-process target path
 		targetNode, targetExists := rest.StatNode(toPath)
 		if targetExists {
-			if targetNode.Type == models.TreeNodeTypeCOLLECTION {
+			if *targetNode.Type == models.TreeNodeTypeCOLLECTION {
 				// target is a folder as expected nothing to do
 			} else {
 				// Target is an existing file, we throw an error for the time being
@@ -82,7 +82,7 @@ EXAMPLE
 			targetNode, targetExists := rest.StatNode(parPath)
 			if !targetExists {
 				log.Fatalf("Parent target location %s does not exist on server, double check your parameters.", parPath)
-			} else if targetNode.Type != models.TreeNodeTypeCOLLECTION {
+			} else if *targetNode.Type != models.TreeNodeTypeCOLLECTION {
 				log.Fatalf("Parent target location %s exists on server but is not a folder. It cannot be used as a copy target location.", parPath)
 			}
 			// parent exists and is a folder => we assume we have been passed a full target path including target file name.

@@ -13,11 +13,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/spf13/cobra"
+
+	"github.com/pydio/cells-sdk-go/v3/client/tree_service"
+	"github.com/pydio/cells-sdk-go/v3/models"
+
 	"github.com/pydio/cells-client/v2/common"
 	"github.com/pydio/cells-client/v2/rest"
-	"github.com/pydio/cells-sdk-go/v2/client/tree_service"
-	"github.com/pydio/cells-sdk-go/v2/models"
-	"github.com/spf13/cobra"
 )
 
 var (
