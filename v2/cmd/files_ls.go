@@ -189,7 +189,7 @@ EXAMPLES
 				t = "Cell"
 			} else if node.MetaStore != nil && node.MetaStore["ws_scope"] != "" {
 				t = "Workspace"
-			} else if *node.Type == models.TreeNodeTypeCOLLECTION {
+			} else if node.Type != nil && *node.Type == models.TreeNodeTypeCOLLECTION {
 				t = "Folder"
 			}
 
@@ -203,7 +203,7 @@ EXAMPLES
 					// We do not want to list parent folder or workspace in simple lists
 					hiddenRowNb++
 					continue
-				} else if *node.Type == models.TreeNodeTypeCOLLECTION {
+				} else if node.Type != nil && *node.Type == models.TreeNodeTypeCOLLECTION {
 					// replace path by "." notation
 					currName = "."
 				}
@@ -224,7 +224,7 @@ EXAMPLES
 					table.Append([]string{t, node.UUID, currName, sizeToBytes(node.Size), stampToDate(node.MTime)})
 				}
 			case raw:
-				if *node.Type == models.TreeNodeTypeCOLLECTION {
+				if node.Type != nil && *node.Type == models.TreeNodeTypeCOLLECTION {
 					out := currPath + "/"
 					_, _ = fmt.Fprintln(os.Stdout, out)
 				} else {
