@@ -3,7 +3,7 @@ package common
 
 var (
 	// AppName stores the technical name of the Cells Client application.
-	AppName string
+	AppName = "cells-client"
 
 	PackageType   string
 	PackageLabel  string
@@ -13,7 +13,6 @@ var (
 )
 
 const (
-
 	// OAuthType uses OAuth2 credentil retrival flow.
 	OAuthType = "OAuth2"
 	// PatType relies on a Personal Access Token generated on the server for a given user.

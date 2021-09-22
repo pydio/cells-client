@@ -6,7 +6,6 @@ import (
 )
 
 func main() {
-	common.AppName = "cells-client"
 	common.PackageType = "CellsClient"
 	common.PackageLabel = "Cells Client"
 	cmd.RootCmd.Execute()
