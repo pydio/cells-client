@@ -70,7 +70,7 @@ func NewLocalNode(fullPath string, i os.FileInfo) *CrawlNode {
 // NewRemoteNode creates the base node for crawling in case of a download.
 func NewRemoteNode(t *models.TreeNode) *CrawlNode {
 	n := &CrawlNode{
-		IsDir:    *t.Type == models.TreeNodeTypeCOLLECTION,
+		IsDir:    t.Type != nil && *t.Type == models.TreeNodeTypeCOLLECTION,
 		FullPath: strings.Trim(t.Path, "/"),
 	}
 	n.Size, _ = strconv.ParseInt(t.Size, 10, 64)
