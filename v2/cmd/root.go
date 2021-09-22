@@ -98,9 +98,16 @@ ENVIRONMENT
 
 		// Manually bind to viper instead of flags.StringVar, flags.BoolVar, etc
 		// => This is useful to ease implementation of retrocompatibility
-		configFilePath = viper.GetString("config") + "/" + confFileName
-		tmpURLStr := viper.GetString("url")
+
+		// Enable defining another AppName in extending apps
+		parPath := viper.GetString("config")
+		if parPath == "" {
+			parPath = rest.DefaultConfigDirPath()
+		}
+		configFilePath = parPath + "/" + confFileName
+
 		// Clean URL string
+		tmpURLStr := viper.GetString("url")
 		if tmpURLStr != "" {
 			var err error
 			serverURL, err = rest.CleanURL(tmpURLStr)
@@ -140,7 +147,8 @@ func init() {
 
 	flags := RootCmd.PersistentFlags()
 
-	flags.String("config", rest.DefaultConfigDirPath(), "Location of Cells Client's config files")
+	flags.String("config", "", "Location of Cells Client's config files, usually "+rest.DefaultConfigDirPath())
+	// flags.String("config", rest.DefaultConfigDirPath(), "Location of Cells Client's config files")
 	flags.StringP("url", "u", "", "The full URL of the target server")
 	flags.StringP("token", "t", "", "A valid Personal Access Token")
 	flags.String("login", "", "The user login, for Client auth only")
