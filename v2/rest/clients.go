@@ -35,6 +35,7 @@ var (
 // CecConfig extends the default SdkConfig with custom parameters.
 type CecConfig struct {
 	cells_sdk.SdkConfig
+	Label            string `json:"label"`
 	SkipKeyring      bool   `json:"skipKeyring"`
 	AuthType         string `json:"authType"`
 	CreatedAtVersion string `json:"createdAtVersion"`

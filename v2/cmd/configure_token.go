@@ -3,8 +3,6 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"net/url"
-	"os"
 
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
@@ -29,20 +27,11 @@ DESCRIPTION
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
-		//var err error
+		var err error
 		var p promptui.Prompt
 		newConf := &rest.CecConfig{
 			AuthType:    common.PatType,
 			SkipKeyring: true,
-		}
-
-		cl, err := rest.GetConfigList()
-		if errors.Is(err, os.ErrNotExist) {
-			cl = &rest.ConfigList{Configs: map[string]*rest.CecConfig{}}
-		} else {
-			if err != nil {
-				return err
-			}
 		}
 
 		// non interactive
@@ -75,39 +64,14 @@ DESCRIPTION
 			}
 		}
 
-		label := createLabel(newConf)
-		if err := cl.Add(label, newConf); err != nil {
+		label, err := rest.AddNewConfig(newConf)
+		if err != nil {
 			return err
 		}
 
-		if err := cl.SaveConfigFile(); err != nil {
-			return err
-		}
-		cmd.Println("config saved under label ", label)
+		cmd.Println("Config saved under:", label)
 		return nil
 	},
-}
-
-func createLabel(c *rest.CecConfig) string {
-	rest.DefaultConfig = c
-	uname, e := rest.RetrieveCurrentSessionLogin()
-	if e != nil {
-		uname = "username_not_found"
-	}
-
-	var port string
-	u, _ := url.Parse(c.Url)
-	port = u.Port()
-	if port == "" {
-		switch u.Scheme {
-		case "http":
-			port = "80"
-		case "https":
-			port = "443"
-		}
-	}
-
-	return fmt.Sprintf("%s-%s:%s", uname, u.Host, port)
 }
 
 func init() {

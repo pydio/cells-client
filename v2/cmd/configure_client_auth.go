@@ -51,7 +51,7 @@ USAGE
 			log.Fatal(err)
 		}
 
-		err = rest.SaveConfig(newConf)
+		_, err = rest.AddNewConfig(newConf)
 		if err != nil {
 			fmt.Println(promptui.IconBad + " Cannot save configuration, cause: " + err.Error())
 		}
@@ -100,7 +100,7 @@ func interactive(newConf *rest.CecConfig) error {
 	if newConf.Password, e = p.Run(); e != nil {
 		return e
 	}
-	
+
 	return nil
 }
 

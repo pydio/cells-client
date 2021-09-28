@@ -2,8 +2,11 @@ package rest
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
+	"net/url"
+	"os"
 
 	cells_sdk "github.com/pydio/cells-sdk-go/v3"
 )
@@ -95,6 +98,50 @@ func (list *ConfigList) updateActiveConfig(cf *CecConfig) error {
 	//	return err
 	//}
 	return nil
+}
+
+func AddNewConfig(newConf *CecConfig) (string, error) {
+	cl, err := GetConfigList()
+	if errors.Is(err, os.ErrNotExist) {
+		cl = &ConfigList{Configs: map[string]*CecConfig{}}
+	} else {
+		if err != nil {
+			return "", err
+		}
+	}
+
+	label := createID(newConf)
+	if err := cl.Add(label, newConf); err != nil {
+		return "", err
+	}
+
+	if err := cl.SaveConfigFile(); err != nil {
+		return "", err
+	}
+	return label, nil
+}
+
+func createID(c *CecConfig) string {
+	// TODO update label
+	DefaultConfig = c
+	uname, e := RetrieveCurrentSessionLogin()
+	if e != nil {
+		uname = "username_not_found"
+	}
+
+	var port string
+	u, _ := url.Parse(c.Url)
+	port = u.Port()
+	if port == "" {
+		switch u.Scheme {
+		case "http":
+			port = "80"
+		case "https":
+			port = "443"
+		}
+	}
+
+	return fmt.Sprintf("%s@%s:%s", uname, u.Hostname(), port)
 }
 
 //SaveConfigFile saves inside the config file

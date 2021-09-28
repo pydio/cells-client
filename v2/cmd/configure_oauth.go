@@ -75,7 +75,7 @@ USAGE
 		}
 
 		// TODO
-		err = rest.SaveConfig(newConf)
+		_, err = rest.AddNewConfig(newConf)
 		if err != nil {
 			fmt.Println(promptui.IconBad + " Cannot save configuration, cause: " + err.Error())
 		}
@@ -199,7 +199,7 @@ func oAuthInteractive(newConf *rest.CecConfig) error {
 		log.Fatal(err)
 	}
 	fmt.Printf("%s Successfully Received Token. It will be refreshed at %v\n", promptui.IconGood, time.Unix(int64(newConf.TokenExpiresAt), 0))
-	
+
 	return nil
 }
 
