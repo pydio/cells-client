@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
@@ -54,7 +55,13 @@ DESCRIPTION
 				return fmt.Errorf("%s %s", promptui.IconBad, err.Error())
 			}
 
-			p = promptui.Prompt{Label: "Token"}
+			p = promptui.Prompt{Label: "Token", Validate: func(s string) error {
+				s = strings.TrimSpace(s)
+				if len(s) == 0 {
+					return fmt.Errorf("field cannot be empty")
+				}
+				return nil
+			}}
 			newConf.IdToken, err = p.Run()
 			if err != nil {
 				if errors.Is(err, promptui.ErrInterrupt) {
@@ -64,12 +71,11 @@ DESCRIPTION
 			}
 		}
 
-		label, err := rest.AddNewConfig(newConf)
+		_, err = rest.AddNewConfig(newConf)
 		if err != nil {
 			return err
 		}
 
-		cmd.Println("Config saved under:", label)
 		return nil
 	},
 }
