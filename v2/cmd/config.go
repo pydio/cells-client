@@ -28,9 +28,11 @@ var configListCmd = &cobra.Command{
 
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetHeader([]string{"label", "user", "URL", "type"})
+		table.SetAlignment(tablewriter.ALIGN_LEFT)
+		table.SetAutoWrapText(false)
 
-		for k, v := range list.Configs {
-			table.Append([]string{k, v.User, v.Url, v.AuthType})
+		for _, v := range list.Configs {
+			table.Append([]string{v.Label, v.User, v.Url, v.AuthType})
 		}
 		table.Render()
 
