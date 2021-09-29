@@ -31,52 +31,57 @@ func GetConfigList() (*ConfigList, error) {
 	}
 
 	var oldConf *cells_sdk.SdkConfig
-	// tries to unmarshall with the old format and migrate
+	// tries to unmarshall with the old format and migrate if necessary
 	if err = json.Unmarshal(data, &oldConf); err != nil {
 		return nil, fmt.Errorf("unknown config format: %s", err)
 	}
-	// cfg = new(ConfigList)
-	defaultLabel := "default"
-	cfg.ActiveConfig = defaultLabel
+
+	defaultID := "default"
+	cfg.ActiveConfig = defaultID
 	cfg = &ConfigList{
 		Configs: map[string]*CecConfig{"default": {
 			SdkConfig: *oldConf,
 		}},
-		ActiveConfig: defaultLabel,
+		ActiveConfig: defaultID,
 	}
 
 	return cfg, nil
 }
 
 // Add appends the new config to the list and set it as default
-func (list *ConfigList) Add(label string, config *CecConfig) error {
+func (list *ConfigList) Add(id string, config *CecConfig) error {
 	// TODO push to keyring
 	//if err := ConfigToKeyring(config); err != nil {
 	//	return err
 	//}
-	_, ok := list.Configs[label]
+	_, ok := list.Configs[id]
 	if ok {
-		return fmt.Errorf("[%s] label is already used: ", label)
+		for i := 1; i < 255; i++ {
+			id = fmt.Sprintf("%d-%s", i, id)
+			if _, ok := list.Configs[id]; !ok {
+				break
+			}
+		}
 	}
-	list.ActiveConfig = label
-	list.Configs[label] = config
+	list.ActiveConfig = id
+	list.Configs[id] = config
 	return nil
 }
 
 // Remove removes a config from the list of available configurations by its label
-func (list *ConfigList) Remove(label string) error {
-	if _, ok := list.Configs[label]; !ok {
-		return fmt.Errorf("config not found, this label is not valid [%s]", label)
+func (list *ConfigList) Remove(id string) error {
+	if _, ok := list.Configs[id]; !ok {
+		return fmt.Errorf("config not found, ID is not valid [%s]", id)
 	}
-	delete(list.Configs, label)
+	delete(list.Configs, id)
 	return nil
 }
 
-func (list *ConfigList) SetActiveConfig(label string) error {
-	if _, ok := list.Configs[label]; !ok {
-		return fmt.Errorf("this label does not exist %s", label)
+func (list *ConfigList) SetActiveConfig(id string) error {
+	if _, ok := list.Configs[id]; !ok {
+		return fmt.Errorf("this ID does not exist %s", id)
 	}
-	list.ActiveConfig = label
+	list.ActiveConfig = id
 	return nil
 }
 
@@ -110,24 +115,27 @@ func AddNewConfig(newConf *CecConfig) (string, error) {
 		}
 	}
 
-	label := createID(newConf)
-	if err := cl.Add(label, newConf); err != nil {
+	id := createID(newConf)
+	newConf.Label = createLabel(newConf)
+	if err := cl.Add(id, newConf); err != nil {
 		return "", err
 	}
 
 	if err := cl.SaveConfigFile(); err != nil {
 		return "", err
 	}
-	return label, nil
+	return id, nil
 }
 
 func createID(c *CecConfig) string {
-	// TODO update label
 	DefaultConfig = c
 	uname, e := RetrieveCurrentSessionLogin()
 	if e != nil {
 		uname = "username_not_found"
 	}
+
+	// Also set the username
+	c.User = uname
 
 	var port string
 	u, _ := url.Parse(c.Url)
@@ -142,6 +150,19 @@ func createID(c *CecConfig) string {
 	}
 
 	return fmt.Sprintf("%s@%s:%s", uname, u.Hostname(), port)
+}
+
+func createLabel(c *CecConfig) string {
+	DefaultConfig = c
+	uname, e := RetrieveCurrentSessionLogin()
+	if e != nil {
+		uname = "username_not_found"
+	}
+
+	u, _ := url.Parse(c.Url)
+
+	// TODO have a proper formatted label
+	return fmt.Sprintf("%s - %s", uname, u.Hostname())
 }
 
 //SaveConfigFile saves inside the config file
