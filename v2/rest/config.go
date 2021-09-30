@@ -10,7 +10,6 @@ import (
 
 	"github.com/manifoldco/promptui"
 	"github.com/pydio/cells-client/v2/common"
-	cells_sdk "github.com/pydio/cells-sdk-go/v3"
 )
 
 type ConfigList struct {
@@ -34,23 +33,36 @@ func GetConfigList() (*ConfigList, error) {
 	}
 
 	err = json.Unmarshal(data, &configList)
-	if err == nil {
-		return &configList, nil
-	}
-
-	// tries to unmarshall with the old format and migrate if necessary
-	var oldConf *cells_sdk.SdkConfig
-	if err = json.Unmarshal(data, &oldConf); err != nil {
+	if err != nil {
 		return nil, fmt.Errorf("unknown config format: %s", err)
 	}
 
-	defaultID := "default"
-	return &ConfigList{
-		Configs: map[string]*CecConfig{defaultID: {
-			SdkConfig: *oldConf,
-		}},
-		ActiveConfigID: defaultID,
-	}, nil
+	// Double-check to detect and migrate legacy configs
+	if configList.Configs == nil || len(configList.Configs) == 0 {
+		var oldConf *CecConfig
+		if err = json.Unmarshal(data, &oldConf); err != nil {
+			return nil, fmt.Errorf("unknown config format: %s", err)
+		}
+
+		id := createID(oldConf)
+		oldConf.Label = createLabel(oldConf)
+		oldConf.CreatedAtVersion = common.Version
+		configs := make(map[string]*CecConfig)
+		configs[id] = oldConf
+
+		configList = ConfigList{
+			Configs:        configs,
+			ActiveConfigID: id,
+		}
+
+		err = configList.SaveConfigFile()
+		if err != nil {
+			return nil, fmt.Errorf("could not save after config migration: %s", err.Error())
+		}
+
+	}
+
+	return &configList, nil
 }
 
 func UpdateConfig(newConf *CecConfig) error {
@@ -90,26 +102,6 @@ func UpdateConfig(newConf *CecConfig) error {
 	cl.ActiveConfigID = id
 
 	return cl.SaveConfigFile()
-}
-
-// Add appends the new config to the list and set it as default.
-func (list *ConfigList) Add(id string, config *CecConfig) error {
-	// TODO push to keyring
-	//if err := ConfigToKeyring(config); err != nil {
-	//	return err
-	//}
-	_, ok := list.Configs[id]
-	if ok {
-		for i := 1; i < 255; i++ {
-			id = fmt.Sprintf("%d-%s", i, id)
-			if _, ok := list.Configs[id]; !ok {
-				break
-			}
-		}
-	}
-	list.ActiveConfigID = id
-	list.Configs[id] = config
-	return nil
 }
 
 // Remove removes a config from the list of available configurations by its ID.
