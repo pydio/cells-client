@@ -73,10 +73,59 @@ var configUseCmd = &cobra.Command{
 		return nil
 	},
 }
+var configRemoveCmd = &cobra.Command{
+	Use: "rm",
+	RunE: func(cmd *cobra.Command, args []string) error {
+
+		cl, err := rest.GetConfigList()
+		if err != nil {
+			return err
+		}
+
+		// interactive mode with promptui
+		var items []string
+		for k := range cl.Configs {
+			items = append(items, k)
+		}
+
+		var removed string
+		var active string
+		if len(items) > 0 {
+			pSelect := promptui.Select{Label: "Select a configuration to remove", Items: items, Size: len(items)}
+			_, removed, err = pSelect.Run()
+			if err != nil {
+				return err
+			}
+
+			if err := cl.Remove(removed); err != nil {
+				return err
+			}
+
+			pSelect2 := promptui.Select{Label: "Please select the new active configuration", Items: items, Size: len(items)}
+			_, active, err = pSelect2.Run()
+			if err != nil {
+				return err
+			}
+
+			if err := cl.SetActiveConfig(active); err != nil {
+				return err
+			}
+
+		}
+		if err := cl.SaveConfigFile(); err != nil {
+			return err
+		}
+
+		cmd.Printf("Removed the following configuration %s\n\n", removed)
+		cmd.Printf("The new active configuration is: %s\n", active)
+		return nil
+	},
+}
 
 func init() {
 	configCmd.AddCommand(configUseCmd)
 	configCmd.AddCommand(configListCmd)
+	configCmd.AddCommand(configRemoveCmd)
 	RootCmd.AddCommand(configCmd)
 
 }
