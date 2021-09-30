@@ -55,12 +55,12 @@ USAGE
 `,
 	Run: func(cm *cobra.Command, args []string) {
 
-		var err error
 		newConf := &rest.CecConfig{
 			SkipKeyring: skipKeyring,
 			AuthType:    common.OAuthType,
 		}
 
+		var err error
 		if serverURL != "" && oauthIDToken != "" {
 			err = oAuthNonInteractive(newConf)
 		} else {
@@ -68,16 +68,13 @@ USAGE
 		}
 		if err != nil {
 			if err == promptui.ErrInterrupt {
-				fmt.Println("Operation aborted by user")
-				return
+				log.Fatal("operation aborted by user")
 			}
-			log.Fatal(err)
+			log.Fatal(err.Error())
 		}
-
-		// TODO
-		_, err = rest.AddNewConfig(newConf)
+		err = PersistConfig(newConf)
 		if err != nil {
-			fmt.Println(promptui.IconBad + " Cannot save configuration, cause: " + err.Error())
+			log.Fatal(err.Error())
 		}
 	},
 }

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/manifoldco/promptui"
@@ -29,30 +30,27 @@ WARNING
 If no keyring is defined in the client machine, all information is stored in *clear text* in a config file of the Cells Client working directory.
 `,
 
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Run: func(cmd *cobra.Command, args []string) {
 		items := []string{"OAuth2 login (requires a browser access)", "Personal Access Token (unique token generated server-side)", "Client Auth (direct login/password, less secure)"}
 		s := promptui.Select{Label: "Select authentication method", Size: 3, Items: items}
 		n, _, err := s.Run()
 		if err != nil {
 			if err == promptui.ErrInterrupt {
-				return fmt.Errorf("operation aborted by user")
+				log.Fatal("operation aborted by user")
 			}
-			return err
+			log.Fatal(err)
 		}
 
 		switch n {
 		case 0:
 			configureOAuthCmd.Run(cmd, args)
 		case 1:
-			if err := configurePersonalAccessTokenCmd.RunE(cmd, args); err != nil {
-				return err
-			}
+			configurePersonalAccessTokenCmd.Run(cmd, args)
 		case 2:
 			configureClientAuthCmd.Run(cmd, args)
 		default:
-			return fmt.Errorf("no authentication method was selected")
+			log.Fatal("no authentication method was selected")
 		}
-		return nil
 	},
 }
 
@@ -85,20 +83,17 @@ DESCRIPTION
 
 func notEmpty(input string) error {
 	if len(input) == 0 {
-		return fmt.Errorf("Field cannot be empty")
+		return fmt.Errorf("field cannot be empty")
 	}
 	return nil
 }
 
-// TODO methode pour faire label
-func getIDFromConfig(conf *rest.CecConfig) (id, defaultLabel string) {
-	// u, _ := url.Parse()
-	// u.Port()
-	// u.Scheme http/https 80 / 443
-	//user + host + port
-	id = ""
+func PersistConfig(newConf *rest.CecConfig) error {
 
-	// label lisible
-
-	return id, defaultLabel
+	err := rest.UpdateConfig(newConf)
+	if err != nil {
+		return fmt.Errorf(promptui.IconBad + " could not save configuration: " + err.Error())
+	}
+	fmt.Printf("%s Configuration saved. You can now use the Cells Client to interact as %s with %s\n", promptui.IconGood, newConf.User, newConf.Url)
+	return nil
 }

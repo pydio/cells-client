@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"os"
 
+	"github.com/manifoldco/promptui"
+	"github.com/pydio/cells-client/v2/common"
 	cells_sdk "github.com/pydio/cells-sdk-go/v3"
 )
 
@@ -19,34 +21,75 @@ type ConfigList struct {
 // GetConfigList retrieves the current configurations stored in the config.json file.
 func GetConfigList() (*ConfigList, error) {
 
-	// assuming they are located in the default folder
+	var configList ConfigList
+
+	// TODO this assumes config are located in the default folder
 	data, err := ioutil.ReadFile(GetConfigFilePath())
 	if err != nil {
-		return nil, err
+		if errors.Is(err, os.ErrNotExist) {
+			return &ConfigList{Configs: make(map[string]*CecConfig)}, nil
+		} else {
+			return nil, err
+		}
 	}
 
-	cfg := &ConfigList{Configs: make(map[string]*CecConfig)}
-	err = json.Unmarshal(data, cfg)
+	err = json.Unmarshal(data, &configList)
 	if err == nil {
-		return cfg, nil
+		return &configList, nil
 	}
 
-	var oldConf *cells_sdk.SdkConfig
 	// tries to unmarshall with the old format and migrate if necessary
+	var oldConf *cells_sdk.SdkConfig
 	if err = json.Unmarshal(data, &oldConf); err != nil {
 		return nil, fmt.Errorf("unknown config format: %s", err)
 	}
 
 	defaultID := "default"
-	cfg.ActiveConfigID = defaultID
-	cfg = &ConfigList{
-		Configs: map[string]*CecConfig{"default": {
+	return &ConfigList{
+		Configs: map[string]*CecConfig{defaultID: {
 			SdkConfig: *oldConf,
 		}},
 		ActiveConfigID: defaultID,
+	}, nil
+}
+
+func UpdateConfig(newConf *CecConfig) error {
+
+	var err error
+	oldConfig := DefaultConfig
+	defer func() {
+		if err != nil {
+			DefaultConfig = oldConfig
+		}
+	}()
+
+	DefaultConfig = newConf
+	uname, e := RetrieveCurrentSessionLogin()
+	if e != nil {
+		return fmt.Errorf("could not connect to distant server with provided parameters. Discarding change")
+	}
+	newConf.User = uname
+
+	if err = ConfigToKeyring(newConf); err != nil {
+		// We still save info in clear text but warn the user
+		fmt.Println(promptui.IconWarn + " " + NoKeyringMsg)
+		// Force skip keyring flag in the config file to be explicit
+		newConf.SkipKeyring = true
 	}
 
-	return cfg, nil
+	cl, err := GetConfigList()
+	if err != nil {
+		return err
+	}
+
+	id := createID(newConf)
+	newConf.Label = createLabel(newConf)
+	newConf.CreatedAtVersion = common.Version
+
+	cl.Configs[id] = newConf
+	cl.ActiveConfigID = id
+
+	return cl.SaveConfigFile()
 }
 
 // Add appends the new config to the list and set it as default.
@@ -87,57 +130,14 @@ func (list *ConfigList) SetActiveConfig(id string) error {
 }
 
 func (list *ConfigList) GetActiveConfig() (*CecConfig, error) {
-	//TODO retrieve data from keyring
-	//if err := ConfigFromKeyring(list.Configs[list.ActiveConfig]); err != nil {
-	//	return nil, err
-	//}
-	return list.Configs[list.ActiveConfigID], nil
-}
-
-func (list *ConfigList) updateActiveConfig(cf *CecConfig) error {
-	// TODO retrieve from keyring update and push
-	//if err := ConfigFromKeyring(list.Configs[list.ActiveConfig]); err != nil {
-	//	return err
-	//}
-	list.Configs[list.ActiveConfigID] = cf
-	//if err := ConfigToKeyring(list.Configs[list.ActiveConfig]); err != nil {
-	//	return err
-	//}
-	return nil
-}
-
-func AddNewConfig(newConf *CecConfig) (string, error) {
-	cl, err := GetConfigList()
-	if errors.Is(err, os.ErrNotExist) {
-		cl = &ConfigList{Configs: map[string]*CecConfig{}}
-	} else {
-		if err != nil {
-			return "", err
-		}
+	c := list.Configs[list.ActiveConfigID]
+	if err := ConfigFromKeyring(c); err != nil {
+		return nil, err
 	}
-
-	id := createID(newConf)
-	newConf.Label = createLabel(newConf)
-	if err := cl.Add(id, newConf); err != nil {
-		return "", err
-	}
-
-	if err := cl.SaveConfigFile(); err != nil {
-		return "", err
-	}
-	return id, nil
+	return c, nil
 }
 
 func createID(c *CecConfig) string {
-	DefaultConfig = c
-	uname, e := RetrieveCurrentSessionLogin()
-	if e != nil {
-		uname = "username_not_found"
-	}
-
-	// Also set the username
-	c.User = uname
-
 	var port string
 	u, _ := url.Parse(c.Url)
 	port = u.Port()
@@ -150,19 +150,12 @@ func createID(c *CecConfig) string {
 		}
 	}
 
-	return fmt.Sprintf("%s@%s:%s", uname, u.Hostname(), port)
+	return fmt.Sprintf("%s@%s:%s", c.User, u.Hostname(), port)
 }
 
 func createLabel(c *CecConfig) string {
-	DefaultConfig = c
-	uname, e := RetrieveCurrentSessionLogin()
-	if e != nil {
-		uname = "username_not_found"
-	}
-
 	u, _ := url.Parse(c.Url)
-
-	return fmt.Sprintf("%s@%s", uname, u.Hostname())
+	return fmt.Sprintf("%s@%s", c.User, u.Hostname())
 }
 
 // SaveConfigFile saves inside the config file.

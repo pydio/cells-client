@@ -86,7 +86,6 @@ func SaveConfig(config *CecConfig) error {
 
 	uname, e := RetrieveCurrentSessionLogin()
 	if e != nil {
-		err = e
 		return fmt.Errorf("could not connect to distant server with provided parameters. Discarding change")
 	}
 	config.User = uname
@@ -113,8 +112,6 @@ func SaveConfig(config *CecConfig) error {
 	if err = ioutil.WriteFile(file, data, 0600); err != nil {
 		return err
 	}
-
-	fmt.Printf("%s Configuration saved. You can now use the Cells Client to interact as %s with %s\n", promptui.IconGood, config.User, config.Url)
 
 	return nil
 }

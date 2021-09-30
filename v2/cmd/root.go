@@ -5,8 +5,6 @@
 package cmd
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -104,9 +102,9 @@ ENVIRONMENT
 		}
 		configFilePath = parPath + "/" + confFileName
 
-		// Clean URL string
 		tmpURLStr := viper.GetString("url")
 		if tmpURLStr != "" {
+			// Also sanitize the passed URL
 			var err error
 			serverURL, err = rest.CleanURL(tmpURLStr)
 			if err != nil {
@@ -184,36 +182,14 @@ func setUpEnvironment() error {
 		activeConfig, _ := cl.GetActiveConfig()
 		c = *activeConfig
 
-		//configPath := rest.GetConfigFilePath()
-		//if _, err := os.Stat(confPath); os.IsNotExist(err) {
-		//	return fmt.Errorf(unconfiguredMsg)
-		//}
-		//
-		//s, err := ioutil.ReadFile(confPath)
-		//if err != nil {
-		//	return err
-		//}
-		//err = json.Unmarshal(s, &c)
-		//if err != nil {
-		//	return err
-		//}
-		// Retrieves sensible info from the keyring if one is present
-		// Ignore error: if we cannot access the keyring, we assume we retrieved the full conf from the JSON file
-		//_ = rest.ConfigFromKeyring(&c)
-		//
-		//// Refresh token if required
+		// Refresh token if required
 		if refreshed, err := rest.RefreshIfRequired(&c); refreshed {
 			if err != nil {
 				log.Fatal("Could not refresh authentication token:", err)
 			}
 			// Copy config as IdToken will be cleared
 			storeConfig := c
-			if !c.SkipKeyring {
-				rest.ConfigToKeyring(&storeConfig)
-			}
-			// Save config to renew TokenExpireAt
-			confData, _ := json.MarshalIndent(&storeConfig, "", "\t")
-			ioutil.WriteFile(rest.GetConfigFilePath(), confData, 0666)
+			rest.UpdateConfig(&storeConfig)
 		}
 	}
 

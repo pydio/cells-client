@@ -54,7 +54,7 @@ var configUseCmd = &cobra.Command{
 		}
 
 		if len(items) > 0 {
-			pSelect := promptui.Select{Label: "Please select the active configuration", Items: items, Size: len(items)}
+			pSelect := promptui.Select{Label: "Select the account you want to use", Items: items, Size: len(items)}
 			_, result, err := pSelect.Run()
 			if err != nil {
 				return err

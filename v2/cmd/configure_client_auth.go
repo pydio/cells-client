@@ -32,12 +32,12 @@ USAGE
 `,
 	Run: func(cm *cobra.Command, args []string) {
 
-		var err error
 		newConf := &rest.CecConfig{
 			SkipKeyring: skipKeyring,
 			AuthType:    common.ClientAuthType,
 		}
 
+		var err error
 		if notEmpty(serverURL) == nil && notEmpty(login) == nil && notEmpty(password) == nil {
 			err = nonInteractive(newConf)
 		} else {
@@ -45,15 +45,13 @@ USAGE
 		}
 		if err != nil {
 			if err == promptui.ErrInterrupt {
-				fmt.Println("Operation aborted by User")
-				return
+				log.Fatalf("operation aborted by user")
 			}
-			log.Fatal(err)
+			log.Fatalf(err.Error())
 		}
-
-		_, err = rest.AddNewConfig(newConf)
+		err = PersistConfig(newConf)
 		if err != nil {
-			fmt.Println(promptui.IconBad + " Cannot save configuration, cause: " + err.Error())
+			log.Fatal(err.Error())
 		}
 	},
 }
@@ -119,7 +117,7 @@ func nonInteractive(conf *rest.CecConfig) error {
 	// Test a simple ping with this config before saving
 	rest.DefaultConfig = conf
 	if _, _, e := rest.GetApiClient(); e != nil {
-		return fmt.Errorf("Could not connect to newly configured server, cause: %s", e.Error())
+		return fmt.Errorf("could not connect to newly configured server: %s", e.Error())
 	}
 
 	return nil

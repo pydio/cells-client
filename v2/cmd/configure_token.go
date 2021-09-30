@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/manifoldco/promptui"
@@ -26,33 +27,33 @@ DESCRIPTION
 
   This is the preferred way to handle authentication between Cells and your client.
 `,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Run: func(cmd *cobra.Command, args []string) {
 
-		var err error
-		var p promptui.Prompt
 		newConf := &rest.CecConfig{
 			AuthType:    common.PatType,
 			SkipKeyring: true,
 		}
 
-		// non interactive
+		var err error
 		if token != "" && serverURL != "" {
+			// non interactive
 			newConf.IdToken = token
 			newConf.Url = serverURL
-		} else {
 
+		} else {
 			// interactive
-			p = promptui.Prompt{Label: "Server URL", Validate: rest.ValidURL}
+
+			p := promptui.Prompt{Label: "Server URL", Validate: rest.ValidURL}
 			newConf.Url, err = p.Run()
 			if err != nil {
 				if errors.Is(err, promptui.ErrInterrupt) {
-					return fmt.Errorf("operation aborted by user")
+					log.Fatalf("operation aborted by user")
 				}
-				return fmt.Errorf("%s URL is not valid %s", promptui.IconBad, err.Error())
+				log.Fatalf("%s URL is not valid %s", promptui.IconBad, err.Error())
 			}
 			newConf.Url, err = rest.CleanURL(newConf.Url)
 			if err != nil {
-				return fmt.Errorf("%s %s", promptui.IconBad, err.Error())
+				log.Fatalf("%s %s", promptui.IconBad, err.Error())
 			}
 
 			p = promptui.Prompt{Label: "Token", Validate: func(s string) error {
@@ -65,18 +66,16 @@ DESCRIPTION
 			newConf.IdToken, err = p.Run()
 			if err != nil {
 				if errors.Is(err, promptui.ErrInterrupt) {
-					return fmt.Errorf("operation aborted by user")
+					log.Fatalf("operation aborted by user")
 				}
-				return err
+				log.Fatalf(err.Error())
 			}
 		}
 
-		_, err = rest.AddNewConfig(newConf)
+		err = PersistConfig(newConf)
 		if err != nil {
-			return err
+			log.Fatalf(err.Error())
 		}
-
-		return nil
 	},
 }
 
