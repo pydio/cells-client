@@ -137,7 +137,7 @@ func ListNodesPath(path string) ([]string, error) {
 		return nil, e
 	}
 	var nodes []string
-	if len(res.Payload.Nodes) < 0 {
+	if len(res.Payload.Nodes) == 0 {
 		return nil, nil
 	}
 	for _, node := range res.Payload.Nodes {
@@ -147,7 +147,7 @@ func ListNodesPath(path string) ([]string, error) {
 }
 
 func DeleteNode(paths []string) (jobUUIDs []string, e error) {
-	if len(paths) < 0 {
+	if len(paths) == 0 {
 		e = fmt.Errorf("no paths found to delete")
 		return
 	}
@@ -189,7 +189,7 @@ func GetBulkMetaNode(path string) ([]*models.TreeNode, error) {
 	}
 	res, e := client.TreeService.BulkStatNodes(params)
 	if e != nil {
-		return nil, err
+		return nil, e
 	}
 	return res.Payload.Nodes, nil
 }
