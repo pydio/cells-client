@@ -12,12 +12,13 @@ import (
 )
 
 type ConfigList struct {
-	Configs      map[string]*CecConfig
-	ActiveConfig string
+	ActiveConfigID string
+	Configs        map[string]*CecConfig
 }
 
-// GetConfigList retrieves the current configurations stored in the config.json file
+// GetConfigList retrieves the current configurations stored in the config.json file.
 func GetConfigList() (*ConfigList, error) {
+
 	// assuming they are located in the default folder
 	data, err := ioutil.ReadFile(GetConfigFilePath())
 	if err != nil {
@@ -37,18 +38,18 @@ func GetConfigList() (*ConfigList, error) {
 	}
 
 	defaultID := "default"
-	cfg.ActiveConfig = defaultID
+	cfg.ActiveConfigID = defaultID
 	cfg = &ConfigList{
 		Configs: map[string]*CecConfig{"default": {
 			SdkConfig: *oldConf,
 		}},
-		ActiveConfig: defaultID,
+		ActiveConfigID: defaultID,
 	}
 
 	return cfg, nil
 }
 
-// Add appends the new config to the list and set it as default
+// Add appends the new config to the list and set it as default.
 func (list *ConfigList) Add(id string, config *CecConfig) error {
 	// TODO push to keyring
 	//if err := ConfigToKeyring(config); err != nil {
@@ -63,12 +64,12 @@ func (list *ConfigList) Add(id string, config *CecConfig) error {
 			}
 		}
 	}
-	list.ActiveConfig = id
+	list.ActiveConfigID = id
 	list.Configs[id] = config
 	return nil
 }
 
-// Remove removes a config from the list of available configurations by its label
+// Remove removes a config from the list of available configurations by its ID.
 func (list *ConfigList) Remove(id string) error {
 	if _, ok := list.Configs[id]; !ok {
 		return fmt.Errorf("config not found, ID is not valid [%s]", id)
@@ -81,7 +82,7 @@ func (list *ConfigList) SetActiveConfig(id string) error {
 	if _, ok := list.Configs[id]; !ok {
 		return fmt.Errorf("this ID does not exist %s", id)
 	}
-	list.ActiveConfig = id
+	list.ActiveConfigID = id
 	return nil
 }
 
@@ -90,7 +91,7 @@ func (list *ConfigList) GetActiveConfig() (*CecConfig, error) {
 	//if err := ConfigFromKeyring(list.Configs[list.ActiveConfig]); err != nil {
 	//	return nil, err
 	//}
-	return list.Configs[list.ActiveConfig], nil
+	return list.Configs[list.ActiveConfigID], nil
 }
 
 func (list *ConfigList) updateActiveConfig(cf *CecConfig) error {
@@ -98,7 +99,7 @@ func (list *ConfigList) updateActiveConfig(cf *CecConfig) error {
 	//if err := ConfigFromKeyring(list.Configs[list.ActiveConfig]); err != nil {
 	//	return err
 	//}
-	list.Configs[list.ActiveConfig] = cf
+	list.Configs[list.ActiveConfigID] = cf
 	//if err := ConfigToKeyring(list.Configs[list.ActiveConfig]); err != nil {
 	//	return err
 	//}
@@ -161,11 +162,10 @@ func createLabel(c *CecConfig) string {
 
 	u, _ := url.Parse(c.Url)
 
-	// TODO have a proper formatted label
-	return fmt.Sprintf("%s - %s", uname, u.Hostname())
+	return fmt.Sprintf("%s@%s", uname, u.Hostname())
 }
 
-//SaveConfigFile saves inside the config file
+// SaveConfigFile saves inside the config file.
 func (list *ConfigList) SaveConfigFile() error {
 	confData, _ := json.MarshalIndent(&list, "", "\t")
 	if err := ioutil.WriteFile(GetConfigFilePath(), confData, 0666); err != nil {

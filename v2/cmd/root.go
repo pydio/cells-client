@@ -23,8 +23,7 @@ const (
 	// EnvPrefix represents the prefix used to insure we have a reserved namespacce for cec specific ENV vars.
 	EnvPrefix = "CEC"
 
-	unconfiguredMsg = "unconfigured"
-	confFileName    = "config.json"
+	confFileName = "config.json"
 )
 
 var (
@@ -125,7 +124,7 @@ ENVIRONMENT
 		if needSetup {
 			e := setUpEnvironment()
 			if e != nil {
-				if e.Error() != unconfiguredMsg {
+				if !os.IsNotExist(e) {
 					log.Fatalf("unexpected error during initialisation phase: %s", e.Error())
 				}
 				// TODO Directly launch necessary configure command

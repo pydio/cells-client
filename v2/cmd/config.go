@@ -69,7 +69,7 @@ var configUseCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Printf("The active configuration is: %s\n", cl.ActiveConfig)
+		fmt.Printf("The active configuration is: %s\n", cl.ActiveConfigID)
 		return nil
 	},
 }
