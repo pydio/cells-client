@@ -13,11 +13,11 @@ var (
 )
 
 const (
-	// OAuthType uses OAuth2 credentil retrival flow.
+	// OAuthType uses OAuth2 credential retrieval flow.
 	OAuthType = "OAuth2"
 	// PatType relies on a Personal Access Token generated on the server for a given user.
 	PatType = "Personal Access Token"
-	// ClientAuthType is the legacy authenticaion method, based on user password.
+	// ClientAuthType is the legacy authentication method, based on user password.
 	ClientAuthType = "Client Credentials"
 
 	// UpdateServerURL gives access to Pydio's update server.

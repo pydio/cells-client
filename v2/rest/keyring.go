@@ -21,7 +21,6 @@ const NoKeyringMsg = "Could not access local keyring: sensitive information like
 func ConfigToKeyring(conf *CecConfig) error {
 
 	currKey := key(conf.Url, conf.User)
-
 	switch conf.AuthType {
 	case common.PatType:
 		if e := keyring.Set(keyringService, currKey, conf.IdToken); e != nil {

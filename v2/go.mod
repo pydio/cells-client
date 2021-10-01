@@ -7,7 +7,6 @@ require (
 	github.com/beevik/ntp v0.3.0 // indirect
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fatih/color v1.12.0
-	github.com/go-log/log v0.2.0 // indirect
 	github.com/go-openapi/runtime v0.19.31
 	github.com/go-openapi/strfmt v0.20.2
 	github.com/google/go-cmp v0.5.6 // indirect
@@ -24,7 +23,6 @@ require (
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/manifoldco/promptui v0.8.0
 	github.com/mattn/go-runewidth v0.0.13 // indirect
-	github.com/micro/go-log v0.1.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/ory/viper v1.7.5
 	github.com/pydio/cells v2.3.6+incompatible

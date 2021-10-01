@@ -2,10 +2,10 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"net/url"
 
 	"github.com/manifoldco/promptui"
-	"github.com/micro/go-log"
 	"github.com/spf13/cobra"
 
 	"github.com/pydio/cells-client/v2/common"
@@ -63,7 +63,7 @@ func interactive(newConf *rest.CecConfig) error {
 	var e error
 
 	// PROMPT URL
-	p := promptui.Prompt{Label: "Server Address (provide a valid URL)", Validate: validURL}
+	p := promptui.Prompt{Label: "Server Address (provide a valid URL)", Validate: rest.ValidURL}
 	if newConf.Url, e = p.Run(); e != nil {
 		return e
 	}
@@ -100,17 +100,7 @@ func interactive(newConf *rest.CecConfig) error {
 	if newConf.Password, e = p.Run(); e != nil {
 		return e
 	}
-
-	// Rather done in the factorized save method
-	// // Test a simple PING with this config before saving
-	// fmt.Println(promptui.IconWarn + " Testing this configuration before saving")
-	// rest.DefaultConfig = newConf
-	// if _, _, e := rest.GetApiClient(); e != nil {
-	// 	fmt.Println("\r" + promptui.IconBad + " Could not connect to server, please recheck your configuration")
-	// 	fmt.Println("Cause: " + e.Error())
-	// 	return fmt.Errorf("test connection failed")
-	// }
-	// fmt.Println("\r" + promptui.IconGood + " Successfully logged to server")
+	
 	return nil
 }
 
@@ -122,7 +112,7 @@ func nonInteractive(conf *rest.CecConfig) error {
 	conf.SkipVerify = skipVerify
 
 	// Insure values are legit
-	if err := validURL(conf.Url); err != nil {
+	if err := rest.ValidURL(conf.Url); err != nil {
 		return fmt.Errorf("URL %s is not valid: %s", conf.Url, err.Error())
 	}
 

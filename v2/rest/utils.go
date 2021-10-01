@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/xml"
 	"fmt"
+	"math/rand"
 	"net/url"
 	"strings"
 	"time"
@@ -84,7 +85,32 @@ func StandardizeLink(old string) string {
 
 func Unique(length int) string {
 	rand := fmt.Sprintf("%d", time.Now().Nanosecond())
-	hasher := md5.New()
-	hasher.Write([]byte(rand))
-	return hex.EncodeToString(hasher.Sum(nil))[0:length]
+	hash := md5.New()
+	hash.Write([]byte(rand))
+	return hex.EncodeToString(hash.Sum(nil))[0:length]
+}
+
+func ValidURL(input string) error {
+	// Warning: trim must also be performed when retrieving the final value.
+	// Here we only validate that the trimmed input is valid, but do not modify it.
+	input = strings.TrimSpace(input)
+	if len(input) == 0 {
+		return fmt.Errorf("field cannot be empty")
+	}
+	u, e := url.Parse(input)
+	if e != nil || u == nil || u.Scheme == "" || u.Host == "" {
+		return fmt.Errorf("please, provide a valid URL")
+	}
+	return nil
+}
+
+const LetterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+func RandString(n int) string {
+	b := make([]byte, n)
+	rand.Seed(time.Now().Unix())
+	for i := range b {
+		b[i] = LetterBytes[rand.Intn(len(LetterBytes))]
+	}
+	return string(b)
 }

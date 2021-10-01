@@ -2,12 +2,12 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path"
 	"strings"
 	"time"
 
-	"github.com/micro/go-log"
 	"github.com/spf13/cobra"
 
 	"github.com/pydio/cells-sdk-go/v3/client/tree_service"

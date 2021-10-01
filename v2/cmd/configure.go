@@ -2,9 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"net/url"
 	"os"
-	"strings"
 
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
@@ -31,27 +29,30 @@ WARNING
 If no keyring is defined in the client machine, all information is stored in *clear text* in a config file of the Cells Client working directory.
 `,
 
-	Run: func(cmd *cobra.Command, args []string) {
-
-		s := promptui.Select{Label: "Select authentication method", Size: 3, Items: []string{"OAuth2 login (requires a browser access)", "Personal Access Token (unique token generated server-side)", "Client Auth (direct login/password, less secure)"}}
+	RunE: func(cmd *cobra.Command, args []string) error {
+		items := []string{"OAuth2 login (requires a browser access)", "Personal Access Token (unique token generated server-side)", "Client Auth (direct login/password, less secure)"}
+		s := promptui.Select{Label: "Select authentication method", Size: 3, Items: items}
 		n, _, err := s.Run()
 		if err != nil {
 			if err == promptui.ErrInterrupt {
-				fmt.Println("Operation aborted by user")
+				return fmt.Errorf("operation aborted by user")
 			}
-			return
+			return err
 		}
 
 		switch n {
 		case 0:
 			configureOAuthCmd.Run(cmd, args)
 		case 1:
-			withPatCmd.Run(cmd, args)
+			if err := configurePersonalAccessTokenCmd.RunE(cmd, args); err != nil {
+				return err
+			}
 		case 2:
 			configureClientAuthCmd.Run(cmd, args)
 		default:
-			return
+			return fmt.Errorf("no authentication method was selected")
 		}
+		return nil
 	},
 }
 
@@ -82,23 +83,22 @@ DESCRIPTION
 
 // Local helpers
 
-func validURL(input string) error {
-	// Warning: trim must also be performed when retrieving the final value.
-	// Here we only validate that the trimmed input is valid, but do not modify it.
-	input = strings.TrimSpace(input)
-	if len(input) == 0 {
-		return fmt.Errorf("Field cannot be empty")
-	}
-	u, e := url.Parse(input)
-	if e != nil || u == nil || u.Scheme == "" || u.Host == "" {
-		return fmt.Errorf("Please, provide a valid URL")
-	}
-	return nil
-}
-
 func notEmpty(input string) error {
 	if len(input) == 0 {
 		return fmt.Errorf("Field cannot be empty")
 	}
 	return nil
+}
+
+// TODO methode pour faire label
+func getIDFromConfig(conf *rest.CecConfig) (id, defaultLabel string) {
+	// u, _ := url.Parse()
+	// u.Port()
+	// u.Scheme http/https 80 / 443
+	//user + host + port
+	id = ""
+
+	// label lisible
+
+	return id, defaultLabel
 }

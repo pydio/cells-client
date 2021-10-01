@@ -6,7 +6,6 @@ package cmd
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -30,7 +29,7 @@ const (
 
 var (
 	// These commands and respective children do not need an already configured environment.
-	infoCommands = []string{"help", "configure", "version", "completion", "oauth", "clear", "doc", "update", "token", "--help"}
+	infoCommands = []string{"help", "configure", "version", "completion", "oauth", "clear", "doc", "update", "token", "--help", "config"}
 
 	configFilePath string
 
@@ -178,24 +177,32 @@ func setUpEnvironment() error {
 	c := getCecConfigFromEnv()
 
 	if c.Url == "" {
-		confPath := rest.GetConfigFilePath()
-		if _, err := os.Stat(confPath); os.IsNotExist(err) {
-			return fmt.Errorf(unconfiguredMsg)
+		cl, err := rest.GetConfigList()
+		if err != nil {
+			return err
 		}
 
-		s, err := ioutil.ReadFile(confPath)
-		if err != nil {
-			return err
-		}
-		err = json.Unmarshal(s, &c)
-		if err != nil {
-			return err
-		}
+		activeConfig, _ := cl.GetActiveConfig()
+		c = *activeConfig
+
+		//configPath := rest.GetConfigFilePath()
+		//if _, err := os.Stat(confPath); os.IsNotExist(err) {
+		//	return fmt.Errorf(unconfiguredMsg)
+		//}
+		//
+		//s, err := ioutil.ReadFile(confPath)
+		//if err != nil {
+		//	return err
+		//}
+		//err = json.Unmarshal(s, &c)
+		//if err != nil {
+		//	return err
+		//}
 		// Retrieves sensible info from the keyring if one is present
 		// Ignore error: if we cannot access the keyring, we assume we retrieved the full conf from the JSON file
-		_ = rest.ConfigFromKeyring(&c)
-
-		// Refresh token if required
+		//_ = rest.ConfigFromKeyring(&c)
+		//
+		//// Refresh token if required
 		if refreshed, err := rest.RefreshIfRequired(&c); refreshed {
 			if err != nil {
 				log.Fatal("Could not refresh authentication token:", err)
@@ -207,7 +214,7 @@ func setUpEnvironment() error {
 			}
 			// Save config to renew TokenExpireAt
 			confData, _ := json.MarshalIndent(&storeConfig, "", "\t")
-			ioutil.WriteFile(confPath, confData, 0666)
+			ioutil.WriteFile(rest.GetConfigFilePath(), confData, 0666)
 		}
 	}
 

@@ -3,7 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"math/rand"
+	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -11,7 +11,6 @@ import (
 
 	"github.com/gookit/color"
 	"github.com/manifoldco/promptui"
-	"github.com/micro/go-log"
 	"github.com/skratchdot/open-golang/open"
 	"github.com/spf13/cobra"
 
@@ -75,6 +74,7 @@ USAGE
 			log.Fatal(err)
 		}
 
+		// TODO
 		err = rest.SaveConfig(newConf)
 		if err != nil {
 			fmt.Println(promptui.IconBad + " Cannot save configuration, cause: " + err.Error())
@@ -108,23 +108,12 @@ func (o *oAuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	`))
 }
 
-const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
-func RandString(n int) string {
-	b := make([]byte, n)
-	rand.Seed(time.Now().Unix())
-	for i := range b {
-		b[i] = letterBytes[rand.Intn(len(letterBytes))]
-	}
-	return string(b)
-}
-
 func oAuthInteractive(newConf *rest.CecConfig) error {
 	var e error
 	// PROMPT URL
 	p := promptui.Prompt{
 		Label:    "Server Address (provide a valid URL)",
-		Validate: validURL,
+		Validate: rest.ValidURL,
 		Default:  "",
 	}
 
@@ -168,7 +157,7 @@ func oAuthInteractive(newConf *rest.CecConfig) error {
 
 	// Starting authentication process
 	var returnCode string
-	state := RandString(16)
+	state := rest.RandString(16)
 	directUrl, callbackUrl, err := rest.OAuthPrepareUrl(newConf.Url, state, openBrowser)
 	if err != nil {
 		log.Fatal(err)
@@ -210,19 +199,7 @@ func oAuthInteractive(newConf *rest.CecConfig) error {
 		log.Fatal(err)
 	}
 	fmt.Printf("%s Successfully Received Token. It will be refreshed at %v\n", promptui.IconGood, time.Unix(int64(newConf.TokenExpiresAt), 0))
-
-	// Rather done in the factorized save method
-	// // Test a simple PING with this config before saving!
-	// fmt.Println(promptui.IconWarn + " Testing this configuration before saving")
-	// rest.DefaultConfig = newConf
-	// if _, _, e := rest.GetApiClient(); e != nil {
-	// 	fmt.Println("\r" + promptui.IconBad + " Could not connect to server, please recheck your configuration")
-	// 	fmt.Printf("Id_token: [%s]\n", newConf.IdToken)
-
-	// 	fmt.Println("Cause: " + e.Error())
-	// 	return fmt.Errorf("test connection failed")
-	// }
-	// fmt.Println("\r" + promptui.IconGood + fmt.Sprintf(" Successfully logged to server, token will be refreshed at %v", time.Unix(int64(newConf.TokenExpiresAt), 0)))
+	
 	return nil
 }
 
@@ -242,7 +219,7 @@ func oAuthNonInteractive(conf *rest.CecConfig) error {
 	conf.SkipVerify = skipVerify
 
 	// Insure values are legal
-	err := validURL(conf.Url)
+	err := rest.ValidURL(conf.Url)
 	if err != nil {
 		return fmt.Errorf("URL %s is not valid: %s", conf.Url, err.Error())
 	}
