@@ -3,14 +3,17 @@ package rest
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"math"
 	"math/rand"
 	"net/url"
 	"strings"
 	"time"
 
 	"github.com/go-openapi/runtime"
+	"github.com/pydio/cells-client/v2/common"
 )
 
 // RetryCallback implements boiler plate code to easily call the same function until it suceeds
@@ -56,6 +59,33 @@ func RetrieveCurrentSessionLogin() (string, error) {
 		}
 	}
 	return "", fmt.Errorf("no <user> tag found in registry. Are you sure you are connected?")
+}
+
+// RetrieveRemoteServerVersion gets the version info from the distant server.
+// User must be authenticated (and admin ?).
+func RetrieveRemoteServerVersion() (*common.ServerVersion, error) {
+
+	uri := "/a/frontend/bootconf"
+	resp, err := AuthenticatedGet(uri)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	decoder := json.NewDecoder(resp.Body)
+
+	var result map[string]interface{}
+	err = decoder.Decode(&result)
+	if err != nil {
+		return nil, err
+	}
+
+	if tmp, ok := result["backend"]; ok {
+		backend := tmp.(map[string]interface{})
+		return safelyDecode(backend), nil
+	}
+
+	return nil, fmt.Errorf("no 'backend' key found in the boot conf, could not get remote server version")
 }
 
 func CleanURL(input string) (string, error) {
@@ -113,4 +143,31 @@ func RandString(n int) string {
 		b[i] = LetterBytes[rand.Intn(len(LetterBytes))]
 	}
 	return string(b)
+}
+
+func safelyDecode(src map[string]interface{}) *common.ServerVersion {
+
+	version := &common.ServerVersion{}
+	version.PackageType = sanitize(src, "PackageType")
+	version.PackageLabel = sanitize(src, "PackageLabel")
+	version.Version = sanitize(src, "Version")
+	version.License = sanitize(src, "License")
+	version.BuildRevision = sanitize(src, "BuildRevision")
+	if tmp, ok := src["ServerOffset"]; ok {
+		version.ServerOffset = int64(math.Round(tmp.(float64)))
+	}
+	if tmp, ok := src["BuildStamp"]; ok {
+		if v, err := time.Parse("2006-01-02T15:04:05", tmp.(string)); err == nil {
+			version.BuildStamp = v
+		}
+	}
+	return version
+}
+
+func sanitize(dic map[string]interface{}, key string) string {
+
+	if tmp, ok := dic[key]; ok {
+		return tmp.(string)
+	}
+	return ""
 }
