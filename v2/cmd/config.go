@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"sort"
 
 	"github.com/manifoldco/promptui"
 	"github.com/olekukonko/tablewriter"
@@ -27,12 +28,16 @@ var configListCmd = &cobra.Command{
 		}
 
 		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"label", "user", "URL", "type"})
+		table.SetHeader([]string{"label", "user", "URL", "type", "Active"})
 		table.SetAlignment(tablewriter.ALIGN_LEFT)
 		table.SetAutoWrapText(false)
 
-		for _, v := range list.Configs {
-			table.Append([]string{v.Label, v.User, v.Url, v.AuthType})
+		for id, v := range list.Configs {
+			if list.ActiveConfigID == id {
+				table.Append([]string{v.Label, v.User, v.Url, v.AuthType, promptui.IconGood})
+			} else {
+				table.Append([]string{v.Label, v.User, v.Url, v.AuthType, ""})
+			}
 		}
 		table.Render()
 
@@ -49,12 +54,22 @@ var configUseCmd = &cobra.Command{
 
 		// interactive mode with promptui
 		var items []string
-		for k := range cl.Configs {
+
+		for k, _ := range cl.Configs {
 			items = append(items, k)
 		}
 
+		sort.Strings(items)
+
+		var initialCursor int
+		for i, v := range items {
+			if cl.ActiveConfigID == v {
+				initialCursor = i
+			}
+		}
+
 		if len(items) > 0 {
-			pSelect := promptui.Select{Label: "Select the account you want to use", Items: items, Size: len(items)}
+			pSelect := promptui.Select{Label: "Select the account you want to use", Items: items, Size: len(items), CursorPos: initialCursor}
 			_, result, err := pSelect.Run()
 			if err != nil {
 				return err
