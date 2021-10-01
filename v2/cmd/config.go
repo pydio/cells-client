@@ -34,7 +34,7 @@ var configListCmd = &cobra.Command{
 
 		for id, v := range list.Configs {
 			if list.ActiveConfigID == id {
-				table.Append([]string{v.Label, v.User, v.Url, v.AuthType, promptui.IconGood})
+				table.Append([]string{v.Label, v.User, v.Url, v.AuthType, "\u2713"})
 			} else {
 				table.Append([]string{v.Label, v.User, v.Url, v.AuthType, ""})
 			}
