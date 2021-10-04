@@ -58,7 +58,7 @@ var configUseCmd = &cobra.Command{
 		// interactive mode with promptui
 		var items []string
 
-		for k, _ := range cl.Configs {
+		for k := range cl.Configs {
 			items = append(items, k)
 		}
 
