@@ -12,7 +12,7 @@ import (
 	"github.com/pydio/cells-client/v2/common"
 )
 
-const keyringService = "com.pydio.cells-client"
+var keyringService = "com.pydio." + common.AppName
 
 // NoKeyringMsg warns end user when no keyring is found
 const NoKeyringMsg = "Could not access local keyring: sensitive information like token or password will end up stored in clear text in the client machine."
@@ -119,6 +119,8 @@ func SaveConfig(config *CecConfig) error {
 // CheckKeyring simply tries a write followed by a read in the local keyring and
 // returns nothing if it works or an error otherwise.
 func CheckKeyring() error {
+
+	fmt.Println("Checking keyring service", keyringService)
 
 	testKey := key("https://test.example.com", "john.doe")
 	testValue := "A very complicated value !!#%<{}//\\q"
