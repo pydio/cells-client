@@ -13,14 +13,16 @@ import (
 )
 
 var configCmd = &cobra.Command{
-	Use: "config",
+	Use:   "config",
+	Short: "Manage authentication profiles.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Help()
 	},
 }
 
 var configListCmd = &cobra.Command{
-	Use: "ls",
+	Use:   "ls",
+	Short: "List the current authentication profiles.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		list, err := rest.GetConfigList()
 		if err != nil {
@@ -45,7 +47,8 @@ var configListCmd = &cobra.Command{
 	},
 }
 var configUseCmd = &cobra.Command{
-	Use: "use",
+	Use:   "use",
+	Short: "Define as active, one of the current authentication profiles.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cl, err := rest.GetConfigList()
 		if err != nil {
@@ -89,7 +92,8 @@ var configUseCmd = &cobra.Command{
 	},
 }
 var configRemoveCmd = &cobra.Command{
-	Use: "rm",
+	Use:   "rm",
+	Short: "Remove a profile from the cells-client authentication profiles.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 
 		cl, err := rest.GetConfigList()
