@@ -28,15 +28,15 @@ var configListCmd = &cobra.Command{
 		}
 
 		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"label", "user", "URL", "type", "Active"})
+		table.SetHeader([]string{"Active", "Label", "User", "URL", "Type"})
 		table.SetAlignment(tablewriter.ALIGN_LEFT)
 		table.SetAutoWrapText(false)
 
 		for id, v := range list.Configs {
 			if list.ActiveConfigID == id {
-				table.Append([]string{v.Label, v.User, v.Url, v.AuthType, "\u2713"})
+				table.Append([]string{"\u2713", v.Label, v.User, v.Url, v.AuthType})
 			} else {
-				table.Append([]string{v.Label, v.User, v.Url, v.AuthType, ""})
+				table.Append([]string{"", v.Label, v.User, v.Url, v.AuthType})
 			}
 		}
 		table.Render()
