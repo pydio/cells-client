@@ -109,21 +109,28 @@ var configRemoveCmd = &cobra.Command{
 
 		var removed string
 		var active string
+		var index int
 		if len(items) > 0 {
 			pSelect := promptui.Select{Label: "Select a configuration to remove", Items: items, Size: len(items)}
-			_, removed, err = pSelect.Run()
+			index, removed, err = pSelect.Run()
 			if err != nil {
 				return err
 			}
+
+			items = append(items[:index], items[index+1:]...)
 
 			if err := cl.Remove(removed); err != nil {
 				return err
 			}
 
-			pSelect2 := promptui.Select{Label: "Please select the new active configuration", Items: items, Size: len(items)}
-			_, active, err = pSelect2.Run()
-			if err != nil {
-				return err
+			if len(items) > 1 {
+				pSelect2 := promptui.Select{Label: "Please select the new active configuration", Items: items, Size: len(items)}
+				_, active, err = pSelect2.Run()
+				if err != nil {
+					return err
+				}
+			} else {
+				active = items[0]
 			}
 
 			if err := cl.SetActiveConfig(active); err != nil {
