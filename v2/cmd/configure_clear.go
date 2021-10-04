@@ -44,9 +44,11 @@ DESCRIPTION
 		}
 
 		for id, conf := range configs.Configs {
-			err = rest.ClearKeyring(conf)
-			if err != nil {
-				log.Fatalf("could not clear keyring for %s: %s \n ==> Aborting...", id, err.Error())
+			if !conf.SkipKeyring {
+				err = rest.ClearKeyring(conf)
+				if err != nil {
+					log.Fatalf("could not clear keyring for %s: %s \n ==> Aborting...", id, err.Error())
+				}
 			}
 		}
 		if err := os.Remove(filePath); err != nil {
