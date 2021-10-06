@@ -180,6 +180,7 @@ func sanitizeLines(dic map[string]interface{}, key string) []string {
 		for _, item := range tmpArr {
 			res = append(res, item.(string))
 		}
+		fmt.Println("[DEBUG] packaging infos: ", res)
 		return res
 	}
 	return nil
