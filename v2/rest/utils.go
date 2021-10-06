@@ -161,6 +161,7 @@ func safelyDecode(src map[string]interface{}) *common.ServerVersion {
 			version.BuildStamp = v
 		}
 	}
+	version.PackagingInfo = sanitize(src, "PackagingInfo")
 	return version
 }
 

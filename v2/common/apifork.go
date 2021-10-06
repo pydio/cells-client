@@ -6,12 +6,12 @@ package common
 import "time"
 
 type ServerVersion struct {
-	//Distribution string
 	PackageType   string
 	PackageLabel  string
 	Version       string
 	License       string
 	BuildRevision string
 	BuildStamp    time.Time
+	PackagingInfo string
 	ServerOffset  int64
 }
