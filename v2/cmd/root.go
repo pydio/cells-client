@@ -179,7 +179,10 @@ func setUpEnvironment() error {
 			return err
 		}
 
-		activeConfig, _ := cl.GetActiveConfig()
+		activeConfig, err := cl.GetActiveConfig()
+		if err != nil {
+			return err
+		}
 		c = *activeConfig
 
 		// Refresh token if required
