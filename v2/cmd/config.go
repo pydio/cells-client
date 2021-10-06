@@ -24,6 +24,7 @@ var configListCmd = &cobra.Command{
 	Use:   "ls",
 	Short: "List the current authentication profiles.",
 	RunE: func(cmd *cobra.Command, args []string) error {
+
 		list, err := rest.GetConfigList()
 		if err != nil {
 			return err

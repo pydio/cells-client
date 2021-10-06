@@ -161,14 +161,26 @@ func safelyDecode(src map[string]interface{}) *common.ServerVersion {
 			version.BuildStamp = v
 		}
 	}
-	version.PackagingInfo = sanitize(src, "PackagingInfo")
+	version.PackagingInfo = sanitizeLines(src, "PackagingInfo")
 	return version
 }
 
 func sanitize(dic map[string]interface{}, key string) string {
 
-	if tmp, ok := dic[key]; ok {
+	if tmp, ok := dic[key]; ok && tmp != nil {
 		return tmp.(string)
 	}
 	return ""
+}
+
+func sanitizeLines(dic map[string]interface{}, key string) []string {
+	if tmp, ok := dic[key]; ok && tmp != nil {
+		res := make([]string, 0)
+		tmpArr := tmp.([]interface{})
+		for _, item := range tmpArr {
+			res = append(res, item.(string))
+		}
+		return res
+	}
+	return nil
 }
