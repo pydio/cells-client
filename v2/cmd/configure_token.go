@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/url"
 	"strings"
 
 	"github.com/manifoldco/promptui"
@@ -54,6 +55,18 @@ DESCRIPTION
 			newConf.Url, err = rest.CleanURL(newConf.Url)
 			if err != nil {
 				log.Fatalf("%s %s", promptui.IconBad, err.Error())
+			}
+
+			u, e := url.Parse(newConf.Url)
+			if e != nil {
+				log.Fatal("", err)
+			}
+			if u.Scheme == "https" {
+				// PROMPT SKIP VERIFY
+				p2 := promptui.Select{Label: "Skip SSL Verification? (not recommended)", Items: []string{"No", "Yes"}}
+				if _, y, e := p2.Run(); y == "Yes" && e == nil {
+					newConf.SkipVerify = true
+				}
 			}
 
 			p = promptui.Prompt{Label: "Token", Validate: func(s string) error {
