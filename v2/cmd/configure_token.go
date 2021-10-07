@@ -31,7 +31,7 @@ DESCRIPTION
 
 		newConf := &rest.CecConfig{
 			AuthType:    common.PatType,
-			SkipKeyring: true,
+			SkipKeyring: skipKeyring,
 		}
 
 		var err error
