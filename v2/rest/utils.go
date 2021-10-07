@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/go-openapi/runtime"
+
 	"github.com/pydio/cells-client/v2/common"
 )
 
@@ -166,7 +167,6 @@ func safelyDecode(src map[string]interface{}) *common.ServerVersion {
 }
 
 func sanitize(dic map[string]interface{}, key string) string {
-
 	if tmp, ok := dic[key]; ok && tmp != nil {
 		return tmp.(string)
 	}
@@ -180,7 +180,6 @@ func sanitizeLines(dic map[string]interface{}, key string) []string {
 		for _, item := range tmpArr {
 			res = append(res, item.(string))
 		}
-		fmt.Println("[DEBUG] packaging infos: ", res)
 		return res
 	}
 	return nil

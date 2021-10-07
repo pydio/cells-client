@@ -45,23 +45,22 @@ DESCRIPTION
 
 		binaries, e := rest.LoadUpdates(context.Background(), defaultChannel)
 		if e != nil {
-			log.Fatal("Cannot retrieve available updates", e)
+			log.Fatal(fmt.Sprintf("Cannot list packages in the %s channel: %s", defaultChannel, e.Error()))
 		}
 		if len(binaries) == 0 {
-			c := color.New(color.FgRed)
-			c.Println("\nNo updates are available for this version")
+			c := color.New(color.FgGreen)
 			c.Println("")
+			c.Println("You are running the latest version of the Cells Client.")
+			c.Printf("No update is available in the %s channel.", defaultChannel)
+			c.Println("\n")
 			return
 		}
 
 		if updateToVersion == "" {
 			// List versions
-			c := color.New(color.FgGreen)
-			c.Println("\nNew packages are available. Please run the following command to upgrade to a given version")
-			c.Println("")
-			c = color.New(color.FgBlack, color.Bold)
-			c.Println(os.Args[0] + " update --version=x.y.z")
-			c.Println("")
+			//c := color.New(color.FgGreen)
+			c := color.New(color.FgBlack)
+			c.Printf("\nNew packages are available in the %s channel:\n\n", defaultChannel)
 
 			table := tablewriter.NewWriter(cmd.OutOrStdout())
 			table.SetHeader([]string{"Version", "UpdatePackage Name", "Description"})
@@ -72,6 +71,25 @@ DESCRIPTION
 
 			table.SetAlignment(tablewriter.ALIGN_LEFT)
 			table.Render()
+
+			c.Println("")
+			c.Println("Please run the following command to upgrade to a given version:")
+			c = color.New(color.FgBlack, color.Bold)
+			c.Println("")
+			c.Printf("  %s update --version=<your target version> ", os.Args[0])
+			if devChannel {
+				c.Printf("--dev")
+			}
+			c.Println("")
+			c.Println("")
+
+			if devChannel {
+				c = color.New(color.FgRed, color.Bold)
+				c.Println(" Warning: using the dev channel might prove unsafe. Insure you know what you are doing!")
+				c.Println("")
+
+				defaultChannel = common.UpdateDevChannel
+			}
 
 		} else {
 
@@ -104,7 +122,7 @@ DESCRIPTION
 						return
 					case <-doneChan:
 						// TODO use another color or let the default color
-						fmt.Printf("\n\nCells Client binary successfully upgraded\n")
+						fmt.Printf("\n\nCells Client has been updated, you are now running version %s\n", apply.Version)
 						return
 					}
 				}
