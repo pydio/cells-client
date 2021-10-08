@@ -76,7 +76,7 @@ func PutFile(pathToFile string, content io.ReadSeeker, checkExists bool, errChan
 			if len(errChan) > 0 {
 				errChan[0] <- err
 			} else {
-				fmt.Println(" ## Trying to Put file:", key)
+				fmt.Println(" ## Trying to Put file:", key, "Error:", err.Error())
 			}
 		}
 		return err
