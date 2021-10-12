@@ -69,7 +69,7 @@ func RetrieveRemoteServerVersion() (*common.ServerVersion, error) {
 	uri := "/a/frontend/bootconf"
 	resp, err := AuthenticatedGet(uri)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not retrieve bootconf: %s", err.Error())
 	}
 	defer resp.Body.Close()
 
@@ -78,15 +78,15 @@ func RetrieveRemoteServerVersion() (*common.ServerVersion, error) {
 	var result map[string]interface{}
 	err = decoder.Decode(&result)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could unmarshall bootconf in map[string]interface{}: %s", err.Error())
 	}
 
-	if tmp, ok := result["backend"]; ok {
-		backend := tmp.(map[string]interface{})
-		return safelyDecode(backend), nil
+	tmp, ok := result["backend"]
+	if !ok {
+		return nil, fmt.Errorf("no 'backend' key found in the boot conf, could not get remote server version")
 	}
-
-	return nil, fmt.Errorf("no 'backend' key found in the boot conf, could not get remote server version")
+	backend := tmp.(map[string]interface{})
+	return safelyDecode(backend), nil
 }
 
 func CleanURL(input string) (string, error) {
