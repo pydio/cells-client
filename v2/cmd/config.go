@@ -117,38 +117,45 @@ var configRemoveCmd = &cobra.Command{
 		sort.Strings(items)
 
 		var removed string
-		var active string
 		var index int
-		if len(items) > 0 {
+		var active string
+
+		if len(items) > 1 {
 			pSelect := promptui.Select{Label: "Select a configuration to remove", Items: items, Size: len(items)}
 			index, removed, err = pSelect.Run()
 			if err != nil {
 				return err
 			}
-
 			items = append(items[:index], items[index+1:]...)
-
 			if err := cl.Remove(removed); err != nil {
 				return err
 			}
-
-			if len(items) > 1 {
+			if removed != cl.ActiveConfigID && len(items) > 1 {
 				pSelect2 := promptui.Select{Label: "Please select the new active configuration", Items: items, Size: len(items)}
 				_, active, err = pSelect2.Run()
 				if err != nil {
 					return err
 				}
-			} else {
+			} else if len(items) == 1 {
 				active = items[0]
 			}
-
+		} else if len(items) < 1 {
+			return fmt.Errorf("configuration list is empty")
+		} else {
+			return nil
 		}
-		if err := cl.SaveConfigFile(); err != nil {
+
+		if err := cl.SetActiveConfig(active); err != nil {
 			return err
 		}
 
+		if err := cl.SaveConfigFile(); err != nil {
+			return err
+		}
+		// TODO also remove the key from the keyring
+
 		cmd.Printf("Removed the following configuration %s\n\n", removed)
-		cmd.Printf("The new active configuration is: %s\n", active)
+		cmd.Printf("The new active configuration is: %s\n", cl.ActiveConfigID)
 		return nil
 	},
 }
