@@ -127,9 +127,19 @@ var configRemoveCmd = &cobra.Command{
 				return err
 			}
 			items = append(items[:index], items[index+1:]...)
+
+			// TODO also remove the key from the keyring
+			if !cl.Configs[removed].SkipKeyring {
+				err = rest.ClearKeyring(cl.Configs[removed])
+				if err != nil {
+					return fmt.Errorf("could not clear keyring for %s: %s \n ==> Aborting...", removed, err.Error())
+				}
+			}
+
 			if err := cl.Remove(removed); err != nil {
 				return err
 			}
+
 			if removed != cl.ActiveConfigID && len(items) > 1 {
 				pSelect2 := promptui.Select{Label: "Please select the new active configuration", Items: items, Size: len(items)}
 				_, active, err = pSelect2.Run()
@@ -152,7 +162,6 @@ var configRemoveCmd = &cobra.Command{
 		if err := cl.SaveConfigFile(); err != nil {
 			return err
 		}
-		// TODO also remove the key from the keyring
 
 		cmd.Printf("Removed the following configuration %s\n\n", removed)
 		cmd.Printf("The new active configuration is: %s\n", cl.ActiveConfigID)
