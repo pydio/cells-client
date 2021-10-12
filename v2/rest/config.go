@@ -109,6 +109,9 @@ func (list *ConfigList) Remove(id string) error {
 	if _, ok := list.Configs[id]; !ok {
 		return fmt.Errorf("config not found, ID is not valid [%s]", id)
 	}
+	if list.ActiveConfigID == id {
+		list.ActiveConfigID = ""
+	}
 	delete(list.Configs, id)
 	return nil
 }
