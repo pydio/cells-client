@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/manifoldco/promptui"
+
 	"github.com/pydio/cells-client/v2/common"
 )
 
@@ -54,7 +55,6 @@ func GetConfigList() (*ConfigList, error) {
 			Configs:        configs,
 			ActiveConfigID: id,
 		}
-
 		err = configList.SaveConfigFile()
 		if err != nil {
 			return nil, fmt.Errorf("could not save after config migration: %s", err.Error())
