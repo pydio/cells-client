@@ -62,6 +62,10 @@ func GetConfigList() (*ConfigList, error) {
 
 	}
 
+	if configList.ActiveConfigID == "" {
+		return nil, fmt.Errorf("no active config is defined, select a config with (cec config use)")
+	}
+
 	return &configList, nil
 }
 
