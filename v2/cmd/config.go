@@ -35,11 +35,18 @@ var configListCmd = &cobra.Command{
 		table.SetAlignment(tablewriter.ALIGN_LEFT)
 		table.SetAutoWrapText(false)
 
-		for id, v := range list.Configs {
-			if list.ActiveConfigID == id {
-				table.Append([]string{"\u2713", v.Label, v.User, v.Url, v.AuthType})
+		// Sorts the keys of the map
+		var keys []string
+		for k := range list.Configs {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+
+		for _, val := range keys {
+			if val == list.ActiveConfigID {
+				table.Append([]string{"\u2713", list.Configs[val].Label, list.Configs[val].User, list.Configs[val].Url, list.Configs[val].AuthType})
 			} else {
-				table.Append([]string{"", v.Label, v.User, v.Url, v.AuthType})
+				table.Append([]string{"", list.Configs[val].Label, list.Configs[val].User, list.Configs[val].Url, list.Configs[val].AuthType})
 			}
 		}
 		table.Render()
@@ -107,6 +114,7 @@ var configRemoveCmd = &cobra.Command{
 		for k := range cl.Configs {
 			items = append(items, k)
 		}
+		sort.Strings(items)
 
 		var removed string
 		var active string
@@ -132,10 +140,6 @@ var configRemoveCmd = &cobra.Command{
 				}
 			} else {
 				active = items[0]
-			}
-
-			if err := cl.SetActiveConfig(active); err != nil {
-				return err
 			}
 
 		}
