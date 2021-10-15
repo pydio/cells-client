@@ -88,7 +88,7 @@ func GetTaskStatusForJob(jobID string) (status models.JobsTaskStatus, msg string
 		return
 	}
 	for _, job := range jobs.Payload.Jobs {
-		if len(job.Tasks) < 0 {
+		if len(job.Tasks) == 0 {
 			e = fmt.Errorf("no task found")
 			return
 		}
