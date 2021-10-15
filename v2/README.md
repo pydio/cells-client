@@ -160,7 +160,7 @@ You will be guided through a few steps to configure and persist your connection:
 - Choose OAuth2 process either by opening a browser or copy/pasting the URL in your browser to get a valid token
 - Test and validate the connection.
 
-The token is saved locally and will be refreshed automatically as required. If a keyring mechanism is available on the machine, it used to store sensitive information. You can verify this with the following command:
+The token is saved locally and will be refreshed automatically as required. If a keyring mechanism is available on the machine, it is used to store sensitive information. You can verify this with the following command:
 
 ```sh
 cec configure check-keyring 
@@ -181,7 +181,14 @@ $ cells admin user token -u robot -e 90d
 ⚠ Make sure to secure it as it grants access to the user resources!
 ```
 
-Then use environment variables (or the corresponding command flags) to pass connection information:
+Note: if you have the Enterprise Distribution, you can also manage Personal Access Token via the web GUI:
+
+- Go to `Cells Admin Console >> Identity Management >> People`
+- Edit the user you want to create a token for
+- Go to the `Personal Access Token` page.
+
+
+Then use environment variables (o gr the corresponding command flags) to pass connection information:
 
 ```sh
 export CEC_URL=https://files.example.com
