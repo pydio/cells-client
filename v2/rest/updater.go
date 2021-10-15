@@ -23,7 +23,6 @@ import (
 	"github.com/hashicorp/go-version"
 	update2 "github.com/inconshreveable/go-update"
 	"github.com/kardianos/osext"
-	"github.com/pydio/cells/common/utils/net"
 
 	"github.com/pydio/cells-client/v2/common"
 )
@@ -224,7 +223,7 @@ func ApplyUpdate(ctx context.Context, p *UpdatePackage, dryRun bool, pgChan chan
 		defaultConfPath := DefaultConfigFilePath()
 		backupFile := filepath.Join(filepath.Dir(defaultConfPath), "cec-"+common.Version+"-"+common.BuildStamp)
 
-		reader := net.BodyWithProgressMonitor(resp, pgChan, nil)
+		reader := common.BodyWithProgressMonitor(resp, pgChan, nil)
 
 		er := update2.Apply(reader, update2.Options{
 			Checksum:    checksum,
