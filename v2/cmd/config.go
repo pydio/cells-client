@@ -120,7 +120,10 @@ var configRemoveCmd = &cobra.Command{
 		var index int
 		var active string
 
-		if len(items) > 1 {
+		if len(items) == 1 {
+			return ClearConfig()
+		} else if len(items) > 1 {
+
 			pSelect := promptui.Select{Label: "Select a configuration to remove", Items: items, Size: len(items)}
 			index, removed, err = pSelect.Run()
 			if err != nil {
@@ -136,10 +139,6 @@ var configRemoveCmd = &cobra.Command{
 				}
 			}
 
-			if err := cl.Remove(removed); err != nil {
-				return err
-			}
-
 			if removed != cl.ActiveConfigID && len(items) > 1 {
 				pSelect2 := promptui.Select{Label: "Please select the new active configuration", Items: items, Size: len(items)}
 				_, active, err = pSelect2.Run()
@@ -149,14 +148,61 @@ var configRemoveCmd = &cobra.Command{
 			} else if len(items) == 1 {
 				active = items[0]
 			}
-		} else if len(items) < 1 {
-			return fmt.Errorf("configuration list is empty")
+
 		} else {
-			return nil
+			return fmt.Errorf("configuration list is empty")
 		}
 
-		if err := cl.SetActiveConfig(active); err != nil {
+		//if len(items) > 1 {
+		//	pSelect := promptui.Select{Label: "Select a configuration to remove", Items: items, Size: len(items)}
+		//	index, removed, err = pSelect.Run()
+		//	if err != nil {
+		//		return err
+		//	}
+		//	items = append(items[:index], items[index+1:]...)
+		//
+		//	// TODO also remove the key from the keyring
+		//	if !cl.Configs[removed].SkipKeyring {
+		//		err = rest.ClearKeyring(cl.Configs[removed])
+		//		if err != nil {
+		//			return fmt.Errorf("could not clear keyring for %s: %s \n ==> Aborting...", removed, err.Error())
+		//		}
+		//	}
+		//
+		//	if err := cl.Remove(removed); err != nil {
+		//		return err
+		//	}
+		//
+		//	if removed != cl.ActiveConfigID && len(items) > 1 {
+		//		pSelect2 := promptui.Select{Label: "Please select the new active configuration", Items: items, Size: len(items)}
+		//		_, active, err = pSelect2.Run()
+		//		if err != nil {
+		//			return err
+		//		}
+		//	} else if len(items) == 1 {
+		//		active = items[0]
+		//	}
+		//} else if len(items) < 1 {
+		//	return fmt.Errorf("configuration list is empty")
+		//} else {
+		//	return nil
+		//}
+
+		if !cl.Configs[removed].SkipKeyring {
+			err = rest.ClearKeyring(cl.Configs[removed])
+			if err != nil {
+				return fmt.Errorf("could not clear keyring for %s: %s \n ==> Aborting...", removed, err.Error())
+			}
+		}
+
+		if err := cl.Remove(removed); err != nil {
 			return err
+		}
+
+		if active != "" {
+			if err := cl.SetActiveConfig(active); err != nil {
+				return err
+			}
 		}
 
 		if err := cl.SaveConfigFile(); err != nil {
@@ -164,7 +210,10 @@ var configRemoveCmd = &cobra.Command{
 		}
 
 		cmd.Printf("Removed the following configuration %s\n\n", removed)
-		cmd.Printf("The new active configuration is: %s\n", cl.ActiveConfigID)
+		if active != "" {
+			cmd.Printf("The new active configuration is: %s\n", cl.ActiveConfigID)
+		}
+
 		return nil
 	},
 }

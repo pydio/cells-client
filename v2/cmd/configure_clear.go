@@ -37,25 +37,33 @@ DESCRIPTION
 			return
 		}
 
-		filePath := rest.DefaultConfigFilePath()
-		configs, err := rest.GetConfigList()
-		if err != nil {
-			log.Fatal("could not retrieve config list, aborting: ", err)
-		}
-
-		for id, conf := range configs.Configs {
-			if !conf.SkipKeyring {
-				err = rest.ClearKeyring(conf)
-				if err != nil {
-					log.Fatalf("could not clear keyring for %s: %s \n ==> Aborting...", id, err.Error())
-				}
-			}
-		}
-		if err := os.Remove(filePath); err != nil {
+		if err := ClearConfig(); err != nil {
 			log.Fatal(err)
 		}
+
 		fmt.Println(promptui.IconGood + " All defined accounts have been erased.")
 	},
+}
+
+func ClearConfig() error {
+	filePath := rest.DefaultConfigFilePath()
+	configs, err := rest.GetConfigList()
+	if err != nil {
+		return fmt.Errorf("could not retrieve config list, aborting: %s", err)
+	}
+
+	for id, conf := range configs.Configs {
+		if !conf.SkipKeyring {
+			err = rest.ClearKeyring(conf)
+			if err != nil {
+				return fmt.Errorf("could not clear keyring for %s: %s \n ==> Aborting...", id, err.Error())
+			}
+		}
+	}
+	if err := os.Remove(filePath); err != nil {
+		return err
+	}
+	return nil
 }
 
 func init() {
