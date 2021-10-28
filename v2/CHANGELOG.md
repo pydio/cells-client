@@ -1,59 +1,17 @@
-# Changes between v2.1.0 and v2.2.0-rc3
+# Changes between v2.2.0-rc3 and v2.2.0-rc4
 
-[See Full Changelog](https://github.com/pydio/cells-client/compare/v2.1.0...v2.2.0-rc3)
+[See Full Changelog](https://github.com/pydio/cells-client/compare/v2.2.0-rc3...v2.2.0-rc4)
 
-- [#9985b79](https://github.com/pydio/cells-client/commit/9985b7990f478f7a9e2c76f4ba31696b6d303844): Improve messages of the update command
-- [#2d8901c](https://github.com/pydio/cells-client/commit/2d8901ccec01b5fd25bbdcb16def714e58e200c3): Add a debug log
-- [#f6860f5](https://github.com/pydio/cells-client/commit/f6860f57b565ac59683c1a9c167d7a979d0a1400): Packaging info is rather a []string of lines
-- [#bad604f](https://github.com/pydio/cells-client/commit/bad604f93f926e8cca4de6f3e4b27a84902723dd): Add new packaging info
-- [#74228be](https://github.com/pydio/cells-client/commit/74228be49bb18d72a749c3c6bae6cfc6f9d3700a): Use latest RC of the SDK
-- [#7c66c74](https://github.com/pydio/cells-client/commit/7c66c74957d824b358982dc42b4f60965671208c): Do not eat error
-- [#5002d03](https://github.com/pydio/cells-client/commit/5002d030ad4a8155a99d5ae4827b08841daa37e7): Fix (very old) legacy key migration
-- [#117a715](https://github.com/pydio/cells-client/commit/117a715b121798d1be80b1d403e2d6ba3280b022): Merge remote-tracking branch 'origin/master'
-- [#59ab886](https://github.com/pydio/cells-client/commit/59ab886170403077f2f4cc5005b1cd9ed534d6e1): Update list when removing and handle case when only one config is available.
-- [#5730640](https://github.com/pydio/cells-client/commit/5730640fb353ec16a9fdcf9196e23ca64e86a6b1): Removed redundant _.
-- [#427f527](https://github.com/pydio/cells-client/commit/427f52718f51c0749a50c68d4a3ccf6343d37c5f): Add a short description.
-- [#f55b1e3](https://github.com/pydio/cells-client/commit/f55b1e39f8784d6a5e69468ae26dfccc2b2e399b): Used keyring service now includes app name
-- [#78c8927](https://github.com/pydio/cells-client/commit/78c892784db97a8ed02020c9254290e2abd771fb): Rather display "active column first"
-- [#27d1fe9](https://github.com/pydio/cells-client/commit/27d1fe968ce7cba3153a648d235d1953574b6116): If the keyring was not defined do not attempt to clear it.
-- [#c3d296e](https://github.com/pydio/cells-client/commit/c3d296e66e45ceabda47483dc0f0ec0f9a1e8e7e): Fix config retrieval when no keyring is available
-- [#a0f8285](https://github.com/pydio/cells-client/commit/a0f8285c94ca4e93c75c405c400cd4c8ba26dd8b): Use a basic character.
-- [#da18d92](https://github.com/pydio/cells-client/commit/da18d9267718bff940a62df11dd1c1ce8a6eaabe): Put the initial cursor on the position of the current active configuration.
-- [#6a138d7](https://github.com/pydio/cells-client/commit/6a138d777dbea52efa681ea674c0e7e43792da01): Merge remote-tracking branch 'origin/master'
-- [#f819e52](https://github.com/pydio/cells-client/commit/f819e52123447c198ce44373337ab913ebfc77d0): Add a confirmation prompt before clearing the configuration.
-- [#2dcf48c](https://github.com/pydio/cells-client/commit/2dcf48c9bc904d1ed2137edcea3148e4494151cc): Add a simple method to get distant server version
-- [#d395a0b](https://github.com/pydio/cells-client/commit/d395a0b9a902c274869b242b7a373c6c1f23ca85): Fix migration of existing config at first call
-- [#d20505c](https://github.com/pydio/cells-client/commit/d20505c410044331ad39df4921389ce5693fdf44): Replug keyring
-- [#6c2824b](https://github.com/pydio/cells-client/commit/6c2824b09dae3d938123be0bf60aa7f844ffe860): Fix error message on un-configured setups
-- [#5a07303](https://github.com/pydio/cells-client/commit/5a0730345b7b1952138e7299bc89aa813fc35c96): Fix typo in error management
-- [#6d29acb](https://github.com/pydio/cells-client/commit/6d29acb9827788fac650a71cb95e9494747f6bbb): Remove config.
-- [#f68c651](https://github.com/pydio/cells-client/commit/f68c651dfdc2f108ef70f944c118408ad2876662): Validate token to make sure it is not empty.
-- [#0af2b4d](https://github.com/pydio/cells-client/commit/0af2b4da3ecb95eef33f9db76554b20a6982553c): Refactoring to use ID instead of Label when using a configuration.
-- [#ad831b6](https://github.com/pydio/cells-client/commit/ad831b62ce32112af225fb93669941cb50758048): Display correct label.
-- [#1589954](https://github.com/pydio/cells-client/commit/1589954f64aafc54641448f590214e77b1be26a1): Finalise first draft of multi-config support
-- [#dc5978a](https://github.com/pydio/cells-client/commit/dc5978a992d112c521d68f274dab0502c37c6474): First draft for multi config by jthabet
-- [#854734b](https://github.com/pydio/cells-client/commit/854734bab2b7877fdfa3dd3b7e1c9013ceadc0ab): Fix init when AppName is overwritten
-- [#f6da01a](https://github.com/pydio/cells-client/commit/f6da01a71afd0949289a5eb19c9465adad008b29): Keep a default to be backward compatible
-- [#fd0ef28](https://github.com/pydio/cells-client/commit/fd0ef286ae34744ee99ff00f6f90b5f8fcc0bb57): Make AppName overwrite-able by extending apps
-- [#6111ed2](https://github.com/pydio/cells-client/commit/6111ed2826452657a63b779d379888a00e44dac5): Prevent NPE on pointer dereference
-- [#e56d592](https://github.com/pydio/cells-client/commit/e56d592296ef021caefa4c850e93c49f44bceaff): Rather use SDK 3.0.0 rc1 and prepare v2.2.0 release
-- [#bfb5d8f](https://github.com/pydio/cells-client/commit/bfb5d8f9f574dcd755ee80c772cb9b3fc4ef2580): Use SDK v3.0.0-rc1
-- [#adbb7b9](https://github.com/pydio/cells-client/commit/adbb7b983298d58c087263ce53b6d50ab0eae1fb): First path to adapt the cec to API v3 and more recent swagger generator
-- [#90b963d](https://github.com/pydio/cells-client/commit/90b963d000e67399c8037f100c5444d709a59146): Improve public link benchmark
-- [#1fa6fcb](https://github.com/pydio/cells-client/commit/1fa6fcb81836007b431cef27f60293306636a6c5): Add more info during public link bench
-- [#343cc4f](https://github.com/pydio/cells-client/commit/343cc4f046d710c39d938adf2ea39f5e9b3b9151): Clean target after the benchmark
-- [#5c5b51c](https://github.com/pydio/cells-client/commit/5c5b51ccfefd568d3d0f38d4f62599be726815c8): Revert go-hostfile library
-- [#9228caa](https://github.com/pydio/cells-client/commit/9228caa32095b2b07860cfbd18063171249c75ad): Fix typo
-- [#c7475d4](https://github.com/pydio/cells-client/commit/c7475d4d50f36631502a5ca14433208b1da45ad8): Add a command to benchmark massive concurrant access to public links
-- [#5caf845](https://github.com/pydio/cells-client/commit/5caf8454c47a3d36af23545515d6be31e80db395): Copy registry definition from Cells' main repo
-- [#e4d6c06](https://github.com/pydio/cells-client/commit/e4d6c06bbf314426eeefeea651fe06438e063d8b): Add a vanilla command to create a public link on an existing node
-- [#a0ac092](https://github.com/pydio/cells-client/commit/a0ac092e995fa4ad15d3b232339acacafdef9048): Update TP
-- [#56fea93](https://github.com/pydio/cells-client/commit/56fea939cccf6b284103735dd45f9e30725080de): Setting once the transport so that tcp connection is reused
-- [#332504c](https://github.com/pydio/cells-client/commit/332504c2b426a31acd50b9220cd7d9d87b62e4dd): New params on bench command
-- [#9af974c](https://github.com/pydio/cells-client/commit/9af974cc7bc67bdaa59a49b211352f88ed66e5d5): Add --no-create if test resource already exists
-- [#9e29717](https://github.com/pydio/cells-client/commit/9e297177e7735136c67a02a3c7d3b1fee672ccba): Basic bench tool to spam Rest API
-- [#1aefe51](https://github.com/pydio/cells-client/commit/1aefe51117ef5b44c73efd3173201b358cc27a7f): Update TPs
-- [#33ae4ba](https://github.com/pydio/cells-client/commit/33ae4ba20edcb05406f0c8642675c84a95c2fbcf): Cosmetic changes
-- [#3377c27](https://github.com/pydio/cells-client/commit/3377c279115750739ab952e42eba5f839c545cfe): Update dependencies
-- [#c1c8c5e](https://github.com/pydio/cells-client/commit/c1c8c5e162ef3152b0f11bda8546d31f2f3e8307): Adapt for Cells SDK go v2
-- [#f3a21c7](https://github.com/pydio/cells-client/commit/f3a21c78edd40629eb541cf8e4e8c4d6de9f7496): Next development cycle
+- [#c39310f](https://github.com/pydio/cells-client/commit/c39310f8201c8147f17125d4eacbcff965723bb3): A few improvments before the release
+- [#ad03e7a](https://github.com/pydio/cells-client/commit/ad03e7a782839f940209626a6c9593e4af670b4c): Remove dependency to main Cells repo
+- [#5fd3c49](https://github.com/pydio/cells-client/commit/5fd3c499823d586661b801c260fb4b34c3cce662): Fix Typo
+- [#48a1308](https://github.com/pydio/cells-client/commit/48a13082f9d9914ef4d5a6fd7fe878b2bd005466): Remove entry from keyring.
+- [#6ef122e](https://github.com/pydio/cells-client/commit/6ef122e26ba05586b6fff76d8ffadf995cf97c83): Check that activeConfig is set otherwise warn the user.
+- [#2d3aef7](https://github.com/pydio/cells-client/commit/2d3aef7670a5009c31db686d9182594f4b5a338d): Clear active config if the same config is removed.
+- [#6210715](https://github.com/pydio/cells-client/commit/6210715153befdaf568e933daaba207dc3e43649): Handle removal when only the config list has 1 item.
+- [#5c2888f](https://github.com/pydio/cells-client/commit/5c2888fc4063e2b442c746c1586d9839e950122d): Sort the displayed items to have the same order of configs.
+- [#ad297d3](https://github.com/pydio/cells-client/commit/ad297d35c239d60e4ce252a88be4b1dc7012b09f): Sort import path.
+- [#a4f34aa](https://github.com/pydio/cells-client/commit/a4f34aaba389f5b0d56f098540059c29372cc44d): Add more info in error checks
+- [#f597daf](https://github.com/pydio/cells-client/commit/f597daf0867fc5a8c2aef219880e28c65d1ea9be): Print error on retry
+- [#8c2f88b](https://github.com/pydio/cells-client/commit/8c2f88ba92a362bd0f29da2dc437e01487ebdee5): Prompt to skip certificate verification.
+- [#15e6364](https://github.com/pydio/cells-client/commit/15e636419dd0ddb034a048a6c9406768113e0c8c): Use default value.
