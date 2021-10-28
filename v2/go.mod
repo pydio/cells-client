@@ -3,15 +3,14 @@ module github.com/pydio/cells-client/v2
 go 1.15
 
 require (
-	github.com/aws/aws-sdk-go v1.40.43
+	github.com/aws/aws-sdk-go v1.41.12
 	github.com/dustin/go-humanize v1.0.0
-	github.com/fatih/color v1.12.0
-	github.com/go-openapi/runtime v0.19.31
-	github.com/go-openapi/strfmt v0.20.2
-	github.com/google/go-cmp v0.5.6 // indirect
+	github.com/fatih/color v1.13.0
+	github.com/go-openapi/runtime v0.20.0
+	github.com/go-openapi/strfmt v0.20.3
 	github.com/google/uuid v1.3.0 // indirect
-	github.com/gookit/color v1.4.2
-	github.com/gopherjs/gopherjs v0.0.0-20210803090616-8f023c250c89 // indirect
+	github.com/gookit/color v1.5.0
+	github.com/gopherjs/gopherjs v0.0.0-20211023200351-1e6abe791855 // indirect
 	github.com/gosuri/uilive v0.0.4 // indirect
 	github.com/gosuri/uiprogress v0.0.1
 	github.com/hashicorp/go-version v1.3.0
@@ -26,7 +25,7 @@ require (
 	github.com/pydio/go v0.0.0-20191211170306-d00ac19450ef
 	github.com/shibukawa/configdir v0.0.0-20170330084843-e180dbdc8da0
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
-	github.com/smartystreets/assertions v1.2.0 // indirect
+	github.com/smartystreets/assertions v1.2.1 // indirect
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/objx v0.3.0 // indirect
