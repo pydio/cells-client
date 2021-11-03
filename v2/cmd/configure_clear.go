@@ -48,7 +48,7 @@ DESCRIPTION
 }
 
 func ClearConfig() error {
-	filePath := rest.DefaultConfigFilePath()
+	filePath := rest.GetConfigFilePath()
 	configs, err := rest.GetConfigList()
 	if err != nil {
 		return fmt.Errorf("could not retrieve config list, aborting: %s", err)
