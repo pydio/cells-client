@@ -13,10 +13,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var scpFileExample = `
-
-`
-
 const (
 	prefixA = "cells://"
 	prefixB = "cells//"
@@ -158,14 +154,14 @@ func targetToFullPath(from, to string) (string, bool, bool, error) {
 			parPath, _ := path.Split(toPath)
 			if parPath == "" {
 				// unexisting workspace
-				return toPath, true, false, fmt.Errorf("Target path %s does not exist on remote server, please double check and correct. ", toPath)
+				return toPath, true, false, fmt.Errorf("target path %s does not exist on remote server, please double check and correct. ", toPath)
 			}
 
 			// Check if parent exists. In such case, we rename the file or root folder that has been passed as local source
 			// Typically, `cec scp README.txt cells//common-files/readMe.md` or `cec scp local-folder cells//common-files/remote-folder`
 			if _, ok2 := rest.StatNode(parPath); !ok2 {
 				// Target parent folder does not exist, we do not create it
-				return toPath, true, false, fmt.Errorf("Target parent folder %s does not exist on remote server. ", parPath)
+				return toPath, true, false, fmt.Errorf("target parent folder %s does not exist on remote server. ", parPath)
 			}
 
 			// Parent folder exists on remote, we rename src file or folder
@@ -184,16 +180,16 @@ func targetToFullPath(from, to string) (string, bool, bool, error) {
 			parPath := filepath.Dir(toPath)
 			if parPath == "." {
 				// this should never happen
-				return toPath, true, false, fmt.Errorf("Target path %s does not exist on client machine, please double check and correct. ", toPath)
+				return toPath, true, false, fmt.Errorf("target path %s does not exist on client machine, please double check and correct. ", toPath)
 			}
 
 			// Check if parent exists. In such case, we rename the file or root folder that has been passed as remote source
 			if ln, err2 := os.Stat(parPath); err2 != nil {
 				// Target parent folder does not exist on client machine, we do not create it
-				return "", true, false, fmt.Errorf("Target parent folder %s does not exist in client machine. ", parPath)
+				return "", true, false, fmt.Errorf("target parent folder %s does not exist in client machine. ", parPath)
 			} else if !ln.IsDir() {
 				// Local parent is not a folder
-				return "", true, false, fmt.Errorf("Target parent %s is not a folder, could not download to it. ", parPath)
+				return "", true, false, fmt.Errorf("target parent %s is not a folder, could not download to it. ", parPath)
 			} else {
 				// Parent folder exists on local, we rename src file or folder
 				return toPath, false, true, nil

@@ -3,21 +3,20 @@ module github.com/pydio/cells-client/v2
 go 1.15
 
 require (
-	github.com/aws/aws-sdk-go v1.41.12
+	github.com/aws/aws-sdk-go v1.41.16
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fatih/color v1.13.0
-	github.com/go-openapi/runtime v0.20.0
-	github.com/go-openapi/strfmt v0.20.3
+	github.com/go-openapi/runtime v0.21.0
+	github.com/go-openapi/strfmt v0.21.0
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/gookit/color v1.5.0
-	github.com/gopherjs/gopherjs v0.0.0-20211023200351-1e6abe791855 // indirect
+	github.com/gopherjs/gopherjs v0.0.0-20211101210129-f9bde24e5ca2 // indirect
 	github.com/gosuri/uilive v0.0.4 // indirect
 	github.com/gosuri/uiprogress v0.0.1
 	github.com/hashicorp/go-version v1.3.0
 	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
-	github.com/lunixbochs/vtclean v1.0.0 // indirect
-	github.com/manifoldco/promptui v0.8.0
+	github.com/manifoldco/promptui v0.9.0
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/ory/viper v1.7.5

@@ -63,7 +63,7 @@ EXAMPLES
 
 		// Checking existence of parent workspace
 		if _, e := apiClient.TreeService.HeadNode(&tree_service.HeadNodeParams{Node: crt, Context: ctx}); e != nil {
-			log.Fatalf("Could not find workspace %s. Please specify a parent workspace that exists.")
+			log.Fatalf("could not find workspace %s. Please specify a parent workspace that exists", crt)
 		}
 
 		for i := 1; i < len(parts)-1; i++ {

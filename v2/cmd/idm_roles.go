@@ -43,9 +43,9 @@ DESCRIPTION
 			fmt.Printf("Found %d roles\n", len(result.Payload.Roles))
 			for _, u := range result.Payload.Roles {
 				//fmt.Println("  -- " + u.Label)
-				if u.GroupRole == true {
+				if u.GroupRole {
 					fmt.Printf(" -- %s __ GROUP ROLE \n", u.Label)
-				} else if u.UserRole == true {
+				} else if u.UserRole {
 					fmt.Printf(" -- %s __ USER ROLE \n", u.Label)
 				} else {
 					fmt.Println(" -- " + u.Label)

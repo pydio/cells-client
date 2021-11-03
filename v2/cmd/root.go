@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -93,9 +94,10 @@ ENVIRONMENT
 		}
 
 		// Manually bind to viper instead of flags.StringVar, flags.BoolVar, etc
-		// => This is useful to ease implementation of retrocompatibility
+		// => This is useful to ease implementation of retro-compatibility
 
-		// Enable defining another AppName in extending apps
+		// We retrieve the config path at this point so that if none is explicitly defined,
+		// we can build the default path using AppName that might have been overriden by an extending app.
 		parPath := viper.GetString("config")
 		if parPath == "" {
 			parPath = rest.DefaultConfigDirPath()
@@ -174,6 +176,13 @@ func setUpEnvironment() error {
 	c := getCecConfigFromEnv()
 
 	if c.Url == "" {
+
+		// First check that we have a configuration file
+		_, err := ioutil.ReadFile(configFilePath)
+		if err != nil {
+			return err
+		}
+
 		cl, err := rest.GetConfigList()
 		if err != nil {
 			return err

@@ -11,8 +11,6 @@ import (
 	"github.com/pydio/cells-client/v2/rest"
 )
 
-var noKeyringDefined bool
-
 var clearCmd = &cobra.Command{
 	Use:   "clear",
 	Short: "Clear all configuration",
@@ -56,7 +54,7 @@ func ClearConfig() error {
 		if !conf.SkipKeyring {
 			err = rest.ClearKeyring(conf)
 			if err != nil {
-				return fmt.Errorf("could not clear keyring for %s: %s \n ==> Aborting...", id, err.Error())
+				return fmt.Errorf("could not clear keyring for %s: %s \n ==> Aborting... ", id, err.Error())
 			}
 		}
 	}
