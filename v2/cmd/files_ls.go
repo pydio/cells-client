@@ -152,7 +152,11 @@ EXAMPLES
 		}
 		result, err := apiClient.MetaService.GetBulkMeta(params)
 		if err != nil {
-			cmd.Printf("Could not list files at %s, cause: %s\n", p, err.Error())
+			if p == "" {
+				cmd.Printf("Could not list workspaces, cause: %s\n", err.Error())
+			} else {
+				cmd.Printf("Could not list files at %s, cause: %s\n", p, err.Error())
+			}
 			os.Exit(1)
 		}
 		if len(result.Payload.Nodes) == 0 {
@@ -178,7 +182,7 @@ EXAMPLES
 			currPath := node.Path
 			currName := path.Base(currPath)
 
-			// Useless, hidden foldersare not returned anyway
+			// Useless, hidden folders are not returned anyway
 			// // First, filter out unwanted nodes
 			// if currName == common.PYDIO_SYNC_HIDDEN_FILE_META {
 			// 	continue
