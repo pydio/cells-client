@@ -191,7 +191,7 @@ var configRemoveCmd = &cobra.Command{
 		if !cl.Configs[removed].SkipKeyring {
 			err = rest.ClearKeyring(cl.Configs[removed])
 			if err != nil {
-				return fmt.Errorf("could not clear keyring for %s: %s \n ==> Aborting...", removed, err.Error())
+				return fmt.Errorf("could not clear keyring for %s: %s \n ==> Aborting... ", removed, err.Error())
 			}
 		}
 

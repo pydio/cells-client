@@ -450,8 +450,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/posener/complete v1.1.1/go.mod h1:em0nMJCgc9GFtwrmVmEMR/ZL6WyhyjMBndrE9hABlRI=
 github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4/go.mod h1:xMI15A0UPsDsEKsMN9yxemIoYk6Tm2C1GtYGdfGttqA=
-github.com/pydio/cells-sdk-go/v3 v3.0.0 h1:DebyFjsUJComCWCphANHJcjHZ8bpJSvKhnL613hGA2M=
-github.com/pydio/cells-sdk-go/v3 v3.0.0/go.mod h1:ygVana5uN7LmJtqbZSpKK90rG8yyq4Z+fsyPZebbMOg=
+github.com/pydio/cells-sdk-go/v3 v3.0.1 h1:pBSzBcuHIRiI+Vua4Q/hBl79WlVK8p4LSTtcVAg9yeI=
+github.com/pydio/cells-sdk-go/v3 v3.0.1/go.mod h1:ygVana5uN7LmJtqbZSpKK90rG8yyq4Z+fsyPZebbMOg=
 github.com/pydio/go v0.0.0-20191211170306-d00ac19450ef h1:5FyN7pndX4GyCAb0gdZgN78qJ1IGL1/Mj19bTijXgfk=
 github.com/pydio/go v0.0.0-20191211170306-d00ac19450ef/go.mod h1:H+DrbjBEehySj5ykZVFHF12kpfWtmKpsoyDZ16kUyqk=
 github.com/rivo/uniseg v0.2.0 h1:S1pD9weZBuJdFmowNwbpi7BJ8TNftyUImj/0WQi72jY=
