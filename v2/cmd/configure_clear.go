@@ -26,15 +26,17 @@ DESCRIPTION
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		prompt := promptui.Prompt{
-			Label:     "Are you sure you wish to erase the configuration",
-			IsConfirm: true,
-		}
+		if !force {
+			prompt := promptui.Prompt{
+				Label:     "Are you sure you wish to erase the configuration",
+				IsConfirm: true,
+			}
 
-		_, err := prompt.Run()
-		if err != nil {
-			cmd.Println("Operation aborted nothing was removed")
-			return
+			_, err := prompt.Run()
+			if err != nil {
+				cmd.Println("Operation aborted nothing was removed")
+				return
+			}
 		}
 
 		if err := ClearConfig(); err != nil {
@@ -68,4 +70,5 @@ func ClearConfig() error {
 
 func init() {
 	RootCmd.AddCommand(clearCmd)
+	clearCmd.Flags().BoolVarP(&force, "force", "f", false, "Non interactive way to clear")
 }
