@@ -130,6 +130,9 @@ func (list *ConfigList) SetActiveConfig(id string) error {
 
 func (list *ConfigList) GetActiveConfig() (*CecConfig, error) {
 	c := list.Configs[list.ActiveConfigID]
+	if c == nil {
+		return nil, fmt.Errorf("active config not found")
+	}
 	if !c.SkipKeyring {
 		if err := ConfigFromKeyring(c); err != nil {
 			return nil, err
