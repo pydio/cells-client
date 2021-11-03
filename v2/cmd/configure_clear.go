@@ -32,7 +32,7 @@ DESCRIPTION
 
 			_, err := prompt.Run()
 			if err != nil {
-				cmd.Println("Operation aborted nothing was removed")
+				cmd.Println("Operation aborted by user, nothing has been removed.")
 				return
 			}
 		}
