@@ -59,11 +59,6 @@ func GetConfigList() (*ConfigList, error) {
 		if err != nil {
 			return nil, fmt.Errorf("could not save after config migration: %s", err.Error())
 		}
-
-	}
-
-	if configList.ActiveConfigID == "" {
-		return nil, fmt.Errorf("no active config is defined, select a config with (cec config use)")
 	}
 
 	return &configList, nil
