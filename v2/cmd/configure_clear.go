@@ -27,7 +27,7 @@ DESCRIPTION
 	Run: func(cmd *cobra.Command, args []string) {
 
 		prompt := promptui.Prompt{
-			Label:     "Are you sure you wish to erase the configuration ?",
+			Label:     "Are you sure you wish to erase the configuration",
 			IsConfirm: true,
 		}
 
