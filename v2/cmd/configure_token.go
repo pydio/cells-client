@@ -85,7 +85,7 @@ DESCRIPTION
 			}
 		}
 
-		err = PersistConfig(newConf)
+		err = persistConfig(newConf)
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
@@ -94,4 +94,5 @@ DESCRIPTION
 
 func init() {
 	configureCmd.AddCommand(configurePersonalAccessTokenCmd)
+	configAddCmd.AddCommand(configurePersonalAccessTokenCmd)
 }

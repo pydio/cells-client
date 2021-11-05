@@ -49,7 +49,7 @@ USAGE
 			}
 			log.Fatalf(err.Error())
 		}
-		err = PersistConfig(newConf)
+		err = persistConfig(newConf)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
@@ -125,4 +125,5 @@ func nonInteractive(conf *rest.CecConfig) error {
 
 func init() {
 	configureCmd.AddCommand(configureClientAuthCmd)
+	configAddCmd.AddCommand(configureClientAuthCmd)
 }

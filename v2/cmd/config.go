@@ -14,7 +14,7 @@ import (
 
 var configCmd = &cobra.Command{
 	Use:   "config",
-	Short: "Manage authentication profiles.",
+	Short: "Manage authentication profiles",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Help()
 	},
@@ -22,7 +22,7 @@ var configCmd = &cobra.Command{
 
 var configListCmd = &cobra.Command{
 	Use:   "ls",
-	Short: "List the current authentication profiles.",
+	Short: "List the current authentication profiles",
 	RunE: func(cmd *cobra.Command, args []string) error {
 
 		list, err := rest.GetConfigList()
@@ -56,7 +56,7 @@ var configListCmd = &cobra.Command{
 }
 var configUseCmd = &cobra.Command{
 	Use:   "use",
-	Short: "Define as active, one of the current authentication profiles.",
+	Short: "Define as active, one of the current authentication profiles",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cl, err := rest.GetConfigList()
 		if err != nil {
@@ -101,7 +101,7 @@ var configUseCmd = &cobra.Command{
 }
 var configRemoveCmd = &cobra.Command{
 	Use:   "rm",
-	Short: "Remove a profile from the cells-client authentication profiles.",
+	Short: "Remove a profile from the cells-client authentication profiles",
 	RunE: func(cmd *cobra.Command, args []string) error {
 
 		cl, err := rest.GetConfigList()
@@ -153,41 +153,6 @@ var configRemoveCmd = &cobra.Command{
 			return fmt.Errorf("configuration list is empty")
 		}
 
-		//if len(items) > 1 {
-		//	pSelect := promptui.Select{Label: "Select a configuration to remove", Items: items, Size: len(items)}
-		//	index, removed, err = pSelect.Run()
-		//	if err != nil {
-		//		return err
-		//	}
-		//	items = append(items[:index], items[index+1:]...)
-		//
-		//	// TODO also remove the key from the keyring
-		//	if !cl.Configs[removed].SkipKeyring {
-		//		err = rest.ClearKeyring(cl.Configs[removed])
-		//		if err != nil {
-		//			return fmt.Errorf("could not clear keyring for %s: %s \n ==> Aborting...", removed, err.Error())
-		//		}
-		//	}
-		//
-		//	if err := cl.Remove(removed); err != nil {
-		//		return err
-		//	}
-		//
-		//	if removed != cl.ActiveConfigID && len(items) > 1 {
-		//		pSelect2 := promptui.Select{Label: "Please select the new active configuration", Items: items, Size: len(items)}
-		//		_, active, err = pSelect2.Run()
-		//		if err != nil {
-		//			return err
-		//		}
-		//	} else if len(items) == 1 {
-		//		active = items[0]
-		//	}
-		//} else if len(items) < 1 {
-		//	return fmt.Errorf("configuration list is empty")
-		//} else {
-		//	return nil
-		//}
-
 		if !cl.Configs[removed].SkipKeyring {
 			err = rest.ClearKeyring(cl.Configs[removed])
 			if err != nil {
@@ -218,10 +183,30 @@ var configRemoveCmd = &cobra.Command{
 	},
 }
 
+var checkKeyringCmd = &cobra.Command{
+	Use:   "check-keyring",
+	Short: "Try to store and retrieve a dummy value in the local keyring to test it",
+	Long: `
+DESCRIPTION
+
+  Helper command to check if a keyring is present and correctly configured 
+  in the client machine by simply storing and retrieving a dummy password.
+`,
+	Run: func(cm *cobra.Command, args []string) {
+
+		if err := rest.CheckKeyring(); err != nil {
+			fmt.Println(promptui.IconWarn + " " + rest.NoKeyringMsg)
+			os.Exit(1)
+		} else {
+			fmt.Println(promptui.IconGood + " Keyring seems to be here and working.")
+		}
+	},
+}
+
 func init() {
 	configCmd.AddCommand(configUseCmd)
 	configCmd.AddCommand(configListCmd)
 	configCmd.AddCommand(configRemoveCmd)
+	configCmd.AddCommand(checkKeyringCmd)
 	RootCmd.AddCommand(configCmd)
-
 }

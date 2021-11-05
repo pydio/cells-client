@@ -26,7 +26,7 @@ DESCRIPTION
 
 WILD-CHARS
 
-  In version 2.1, we only support the '*' wild char as a standalone token of the source path, that is:
+  In version 2, we only support the '*' wild char as a standalone token of the source path, that is:
     - '` + os.Args[0] + ` cp common-files/test/* common-files/target' is legit and will copy 
 	  all files and folder found in test folder on your server to the target folder
 	- '` + os.Args[0] + ` cp common-files/test/*.jpg ...' or '` + os.Args[0] + ` cp common-files/test/ima* ...'  

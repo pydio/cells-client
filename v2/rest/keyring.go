@@ -74,7 +74,7 @@ func ConfigFromKeyring(conf *CecConfig) error {
 // returns nothing if it works or an error otherwise.
 func CheckKeyring() error {
 
-	fmt.Println("Checking keyring service", getKeyringServiceName())
+	fmt.Println("Checking keyring service for", getKeyringServiceName())
 
 	testKey := key("https://test.example.com", "john.doe")
 	testValue := "A very complicated value !!#%<{}//\\q"

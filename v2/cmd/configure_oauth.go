@@ -72,7 +72,7 @@ USAGE
 			}
 			log.Fatal(err.Error())
 		}
-		err = PersistConfig(newConf)
+		err = persistConfig(newConf)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
@@ -238,6 +238,6 @@ func oAuthNonInteractive(conf *rest.CecConfig) error {
 func init() {
 	flags := configureOAuthCmd.PersistentFlags()
 	flags.StringVar(&oauthIDToken, "id_token", "", "A currently valid OAuth2 ID token, retrived via the OIDC credential flow")
-
 	configureCmd.AddCommand(configureOAuthCmd)
+	configAddCmd.AddCommand(configureOAuthCmd)
 }
