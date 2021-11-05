@@ -6,7 +6,7 @@ GITREV:=$(shell git rev-parse HEAD)
 CELLS_CLIENT_VERSION?=${DEV_VERSION}.${TIMESTAMP}
 
 XGO_TARGETS?="linux/amd64,darwin/amd64,windows/amd64"
-XGO_IMAGE?=pydio/xgo:latest
+XGO_IMAGE?=techknowlogick/xgo:go-1.16.x
 
 .PHONY: all clean main dev xgo
 
