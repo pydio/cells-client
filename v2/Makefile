@@ -1,4 +1,4 @@
-DEV_VERSION=2.2.0-dev
+DEV_VERSION=2.2.1-dev
 ENV=env GOOS=linux
 TODAY:=$(shell date -u +%Y-%m-%dT%H:%M:%S)
 TIMESTAMP:=$(shell date -u +%Y%m%d%H%M%S)
@@ -19,7 +19,7 @@ main:
 	 .
 
 xgo:
-	${GOPATH}/bin/xgo -go 1.15 \
+	${GOPATH}/bin/xgo -go 1.16 \
 	 --image ${XGO_IMAGE} \
 	 --targets ${XGO_TARGETS} \
 	 -ldflags "-X github.com/pydio/cells-client/v2/common.Version=${CELLS_CLIENT_VERSION}\
