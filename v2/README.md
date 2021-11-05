@@ -16,7 +16,7 @@ Use the `cec --help` command to know about available commands. Below are a few i
 
 - `cec ls`: List files and folders on the server, when no path is provided, it lists the workspaces that the current user can access.
 - `cec scp`: Upload/Download file to/from a remote server.
-- `cec cp`, `cec cp` and `cec rm`: Copy, move, rename and delete files **within the server**.
+- `cec cp`, `cec mv` and `cec rm`: Copy, move, rename and delete files **within the server**.
 - `cec mkdir`: Create a folder on the remote server
 - `cec clear`: Clear authentication tokens stored in your keychain.
 
