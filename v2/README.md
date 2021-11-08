@@ -133,7 +133,7 @@ make dev
 Cells Client uses the Go Modules mechanism to manage dependencies, this has 2 consequences:
 
 - as current active development cycle is 2.x, the latest code from master is **in the v2 subfolder**
-- you can checkout the code anywhere in your local machine, it does not have to be within your `GOPATH`
+- you can checkout the code anywhere in your local machine, it does not have to be within your `GOPATH`.
 
 ## Connecting To Cells
 
@@ -146,12 +146,15 @@ Once a valid user is available, there are 2 options:
 
 ### Persistent Mode
 
-Connection can be configured and persisted locally on the client machine.
+Connections can be configured and persisted locally on the client machine. As from version **v2.2.0**, you can configure multiple _accounts_ on the client side and switch between them as necessary.
+Last used connection is persisted locally in the main configuration file and will be re-used the next time you call the `cec` command.
 
-Calling the `cec configure` command offers various authentication mechanisms. For persistent mode, we advise to use the default OAuth _Authorization Code_ flow.
+To switch between accounts, simply call `cec config use`. 
+
+Calling the `cec config add` command offers various authentication mechanisms. For persistent mode, we advise to use the default OAuth _Authorization Code_ flow.
 
 ```sh
-cec configure oauth
+cec config add oauth
 ```
 
 You will be guided through a few steps to configure and persist your connection:
@@ -163,7 +166,7 @@ You will be guided through a few steps to configure and persist your connection:
 The token is saved locally and will be refreshed automatically as required. If a keyring mechanism is available on the machine, it is used to store sensitive information. You can verify this with the following command:
 
 ```sh
-cec configure check-keyring 
+cec config check-keyring 
 ```
 
 Supported keyrings are MacOSX Keychain, Linux DBUS and Windows Credential Manager API.
@@ -181,25 +184,26 @@ $ cells admin user token -u robot -e 90d
 ⚠ Make sure to secure it as it grants access to the user resources!
 ```
 
-Note: if you have the Enterprise Distribution, you can also manage Personal Access Token via the web GUI:
+Note: if you have the Enterprise Edition, you can also manage Personal Access Token via the web GUI:
 
 - Go to `Cells Admin Console >> Identity Management >> People`
 - Edit the user you want to create a token for
 - Go to the `Personal Access Token` page.
 
-
-Then use environment variables (o gr the corresponding command flags) to pass connection information:
+Then use environment variables (or the corresponding command flags) to pass connection information:
 
 ```sh
 export CEC_URL=https://files.example.com
 export CEC_TOKEN=d-_-x3N8jg9VYegwf5KpKFTlYnQIzCrvbXHzS24uB7k.mibFBN2bGy3TUVzJvcrnUlI9UuM3-kzB1OekrPLLd4U
 ```
 
-Now you can directly talk to your server, for instance:
+You can now directly talk to your server, for instance:
 
 ```sh
 cec ls common-files 
 ```
+
+> Note that environment variables take the precedence as soon as you have the `CEC_URL` variable defined. In such case please insure you have the necessary variables defined depending on your target authentication mode. 
 
 ## Command Completion
 
