@@ -20,7 +20,6 @@ main:
 	 .
 
 xgo:
-	echo "XGO_BIN: $XGO_BIN"
 	${XGO_BIN} -go 1.16 \
 	 --image ${XGO_IMAGE} \
 	 --targets ${XGO_TARGETS} \
