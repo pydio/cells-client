@@ -7,6 +7,7 @@ CELLS_CLIENT_VERSION?=${DEV_VERSION}.${TIMESTAMP}
 
 XGO_TARGETS?="linux/amd64,darwin/amd64,windows/amd64"
 XGO_IMAGE?=techknowlogick/xgo:go-1.16.x
+XGO_BIN?=${GOPATH}/bin/xgo
 
 .PHONY: all clean main dev xgo
 
@@ -19,20 +20,20 @@ main:
 	 .
 
 xgo:
-	${GOPATH}/bin/xgo -go 1.16 \
+	${XGO_BIN} -go 1.16 \
 	 --image ${XGO_IMAGE} \
 	 --targets ${XGO_TARGETS} \
 	 -ldflags "-X github.com/pydio/cells-client/v2/common.Version=${CELLS_CLIENT_VERSION}\
 	 -X github.com/pydio/cells-client/v2/common.BuildStamp=${TODAY}\
 	 -X github.com/pydio/cells-client/v2/common.BuildRevision=${GITREV}"\
 	 -out cec\
-	 ${PWD}
+	 .
 
 dev:
-	go build\
-	 -tags dev\
+	go build \
+	 -tags dev \
 	 -ldflags "-X github.com/pydio/cells-client/v2/common.Version=${DEV_VERSION}\
-	 -X github.com/pydio/cells-client/v2/common.BuildStamp=2021-01-01T00:00:00\
+	 -X github.com/pydio/cells-client/v2/common.BuildStamp=2022-01-01T00:00:00\
 	 -X github.com/pydio/cells-client/v2/common.BuildRevision=dev"\
 	 -o cec\
 	 .
