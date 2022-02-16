@@ -20,7 +20,7 @@ import (
 
 var oauthIDToken string
 
-// This cannot be changed on the client side: the call back URL, including this port, must be registered on the server side.
+// This cannot be changed on the client side: the callback URL, including this port, must be registered on the server side.
 const callbackPort = 3000
 
 type oAuthHandler struct {
