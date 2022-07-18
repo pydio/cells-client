@@ -128,6 +128,32 @@ cd ./cells-client/v2
 make dev
 ```
 
+### Cross-compilation
+
+If you need the ability to cross-compile the source to different architectures, since parts of the code require libraries that still need non-native CGo to get compiled as well, you have essentially two options:
+
+#### xgo
+
+[xgo](https://github.com/techknowlogick/xgo) is a well-known (and field-tested) solution to deal with complex dependencies for different operating systems and CPU architectures. It achieves its goal of cross-compilation by essentially launching a series of Docker containers, one for each OS/architecture combination, and populates them with identical environments, taking care of the non-native dependencies on some of the packages by compiling them in the correct OS/arch environment. It's the perfect solution for those who love to work with Docker!
+
+To cross-compile using Docker containers, first install a cross-compiling C/C++ toolchain (such as `gcc` or `clang`), next install `xgo`, make sure you set your [GOOS and GOARCH](https://go.dev/doc/install/source#environment) environment variables properly, and finally you can run:
+
+```sh
+$ make xgo
+```
+
+#### Built-in Go cross-compiling abilities
+
+For Go packages using modules (and this is now the case for both `cells-client` and Pydio Cells 4.x), the `go` compiling tool automatically deals with CGo packages for different architectures, so long as you have a cross-compiling C/C++ toolchain installed (such as `gcc` or `clang`). With those in place, `go` will automatically manage packages for different OS/architecture combinations (all the usual commands to keep them up to date with their sources will also transparently update each particular OS/arch combination).
+
+This means that you don't need to use Docker containers or any other tool besides `go` itself. Just set the [GOOS and GOARCH](https://go.dev/doc/install/source#environment) environment variables properly (if you wish, you can set them directly on the `Makefile` itself) and run:
+
+```sh
+$ make cross-go
+```
+
+(**Note:** unlike `xgo`, currently the `Makefile` just supports a single OS/arch combination for the built-in cross-compiling command; TBD: cycle through all configured OS/arch pairs and do cross-compilation for each of them)
+
 #### Important Notes
 
 Cells Client uses the Go Modules mechanism to manage dependencies, this has 2 consequences:
@@ -149,7 +175,7 @@ Once a valid user is available, there are 2 options:
 Connections can be configured and persisted locally on the client machine. As from version **v2.2.0**, you can configure multiple _accounts_ on the client side and switch between them as necessary.
 Last used connection is persisted locally in the main configuration file and will be re-used the next time you call the `cec` command.
 
-To switch between accounts, simply call `cec config use`. 
+To switch between accounts, simply call `cec config use`.
 
 Calling the `cec config add` command offers various authentication mechanisms. For persistent mode, we advise to use the default OAuth _Authorization Code_ flow.
 
@@ -166,7 +192,7 @@ You will be guided through a few steps to configure and persist your connection:
 The token is saved locally and will be refreshed automatically as required. If a keyring mechanism is available on the machine, it is used to store sensitive information. You can verify this with the following command:
 
 ```sh
-cec config check-keyring 
+cec config check-keyring
 ```
 
 Supported keyrings are MacOSX Keychain, Linux DBUS and Windows Credential Manager API.
@@ -200,10 +226,10 @@ export CEC_TOKEN=d-_-x3N8jg9VYegwf5KpKFTlYnQIzCrvbXHzS24uB7k.mibFBN2bGy3TUVzJvcr
 You can now directly talk to your server, for instance:
 
 ```sh
-cec ls common-files 
+cec ls common-files
 ```
 
-> Note that environment variables take the precedence as soon as you have the `CEC_URL` variable defined. In such case please insure you have the necessary variables defined depending on your target authentication mode. 
+> Note that environment variables take the precedence as soon as you have the `CEC_URL` variable defined. In such case please insure you have the necessary variables defined depending on your target authentication mode.
 
 ## Command Completion
 
@@ -233,7 +259,7 @@ Then, to add the completion in a persistent manner:
 ```sh
 # Linux users
 cec completion bash | sudo tee /etc/bash_completion.d/cec
-# MacOS users 
+# MacOS users
 cec completion bash | sudo tee /usr/local/etc/bash_completion.d/cec
 ```
 
