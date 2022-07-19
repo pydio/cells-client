@@ -32,7 +32,7 @@ xgo:
 	 .
 
 cross-go:
-	$(info Cross-compile & build for target '${GOOS}', architecture: '${GOARCH}':)
+	$(info Cross-compile & build for target '${GOOS}', architecture: '${GOARCH}')
 	env GOOS=${GOOS} GOARCH=${GOARCH} go build \
 	 -ldflags "-X github.com/pydio/cells-client/v2/common.Version=${CELLS_CLIENT_VERSION}\
 	 -X github.com/pydio/cells-client/v2/common.BuildStamp=${TODAY}\
