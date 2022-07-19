@@ -1,5 +1,7 @@
 DEV_VERSION=2.2.1-dev
-ENV=env GOOS=linux
+ENV=env
+GOOS:=linux
+GOARCH:=arm64
 TODAY:=$(shell date -u +%Y-%m-%dT%H:%M:%S)
 TIMESTAMP:=$(shell date -u +%Y%m%d%H%M%S)
 GITREV:=$(shell git rev-parse HEAD)
@@ -24,9 +26,18 @@ xgo:
 	 --image ${XGO_IMAGE} \
 	 --targets ${XGO_TARGETS} \
 	 -ldflags "-X github.com/pydio/cells-client/v2/common.Version=${CELLS_CLIENT_VERSION}\
-	 -X github.com/pydio/cells-client/v2/common.BuildStamp=${TODAY}\
+	 -X github.com/pydio/cells-cient/v2/common.BuildStamp=${TODAY}\
 	 -X github.com/pydio/cells-client/v2/common.BuildRevision=${GITREV}"\
 	 -out cec\
+	 .
+
+cross-go:
+	$(info Cross-compile & build for target '${GOOS}', architecture: '${GOARCH}')
+	env GOOS=${GOOS} GOARCH=${GOARCH} go build \
+	 -ldflags "-X github.com/pydio/cells-client/v2/common.Version=${CELLS_CLIENT_VERSION}\
+	 -X github.com/pydio/cells-client/v2/common.BuildStamp=${TODAY}\
+	 -X github.com/pydio/cells-client/v2/common.BuildRevision=${GITREV}"\
+	 -o cec\
 	 .
 
 dev:
