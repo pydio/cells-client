@@ -44,12 +44,13 @@ Temporary Items
 .apdisk
 
 # Stuff from the Nova editor
-.nova
+.nova/
 node_modules
 package.json
 package-lock.json
 .eslintrc.yml
 .prettierrc.json
+.editorconfig
 
 # ---> Go
 # Compiled Object files, Static and Dynamic libs (Shared Objects)
