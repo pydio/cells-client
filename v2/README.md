@@ -152,7 +152,7 @@ This means that you don't need to use Docker containers or any other tool beside
 $ make cross-go
 ```
 
-(**Note:** unlike `xgo`, currently the `Makefile` just supports a single OS/arch combination for the built-in cross-compiling command; TBD: cycle through all configured OS/arch pairs and do cross-compilation for each of them)
+(**Note:** unlike `xgo`, currently the `Makefile` just supports a single OS/arch combination for the built-in cross-compiling command; TBD: cycle through _all_ configured OS/arch pairs and do cross-compilation for each of them)
 
 #### Important Notes
 
