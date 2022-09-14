@@ -6,7 +6,7 @@ GITREV:=$(shell git rev-parse HEAD)
 CELLS_CLIENT_VERSION?=${DEV_VERSION}.${TIMESTAMP}
 
 XGO_TARGETS?="linux/amd64,darwin/amd64,windows/amd64"
-XGO_IMAGE?=techknowlogick/xgo:go-1.18.x
+XGO_IMAGE?=techknowlogick/xgo:go-1.19.x
 XGO_BIN?=${GOPATH}/bin/xgo
 
 .PHONY: all clean main dev xgo
@@ -20,7 +20,7 @@ main:
 	 .
 
 xgo:
-	${XGO_BIN} -go 1.18 \
+	${XGO_BIN} -go 1.19 \
 	 --image ${XGO_IMAGE} \
 	 --targets ${XGO_TARGETS} \
 	 -ldflags "-X github.com/pydio/cells-client/v2/common.Version=${CELLS_CLIENT_VERSION}\
