@@ -160,10 +160,10 @@ DESCRIPTION
 EXAMPLES
 
   A valid release version:
-   ` + os.Args[0] + ` version isvalid 2.0.6
+   ` + os.Args[0] + ` version isrelease 2.0.6
 
   A *non* release version:
-   ` + os.Args[0] + ` version isvalid 2.0.6-dev.20191205
+   ` + os.Args[0] + ` version isrelease 2.0.6-dev.20191205
 `,
 	Run: func(cm *cobra.Command, args []string) {
 		if len(args) != 1 {
