@@ -201,7 +201,6 @@ func targetToFullPath(from, to string) (string, bool, bool, error) {
 }
 
 func init() {
-
 	flags := scpFiles.PersistentFlags()
 	flags.BoolVarP(&scpQuiet, "quiet", "q", false, "Reduce the amount of logs")
 	RootCmd.AddCommand(scpFiles)

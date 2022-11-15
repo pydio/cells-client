@@ -1,5 +1,5 @@
-// Package cmd implements some basic use case to manage your files on your remote server
-// via the  command line of your local workstation or any server you can access with SSH.
+// Package cmd implements basic use cases to manage your files on your remote server
+// via the command line of your local workstation or any server you can access with SSH.
 // It also demonstrates what can be achieved when combining the use of the Go SDK for Cells
 // with the powerful Cobra framework to implement CLI client applications for Cells.
 package cmd

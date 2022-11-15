@@ -3,7 +3,7 @@ module github.com/pydio/cells-client/v2
 go 1.18
 
 require (
-	github.com/aws/aws-sdk-go v1.44.117
+	github.com/aws/aws-sdk-go v1.44.137
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fatih/color v1.13.0
 	github.com/go-openapi/runtime v0.24.2
@@ -20,7 +20,7 @@ require (
 	github.com/pydio/go v0.0.0-20191211170306-d00ac19450ef
 	github.com/shibukawa/configdir v0.0.0-20170330084843-e180dbdc8da0
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
-	github.com/spf13/cobra v1.6.0
+	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
 	github.com/zalando/go-keyring v0.2.1
 )
@@ -61,15 +61,14 @@ require (
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.4.2 // indirect
-	github.com/spf13/afero v1.9.2 // indirect
+	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
-	go.mongodb.org/mongo-driver v1.10.3 // indirect
-	golang.org/x/net v0.0.0-20221017152216-f25eb7ecb193 // indirect
-	golang.org/x/sys v0.1.0 // indirect
+	go.mongodb.org/mongo-driver v1.11.0 // indirect
+	golang.org/x/sys v0.2.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
