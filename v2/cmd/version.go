@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"runtime"
@@ -20,6 +21,8 @@ var cellsVersionTpl = `{{.PackageLabel}}
  OS/Arch: 	{{.OS}}/{{.Arch}}
  Go version: 	{{.GoVersion}}
 `
+
+var versionQuiet bool
 
 type cecVersion struct {
 	PackageLabel string
@@ -115,6 +118,9 @@ DESCRIPTION
    - If the passed version is *not* valid, the process exits with status 1.
    - When it is valid, the process simply exits with status 0.
 
+   If the "quiet" mode is enabled, the command simply returns 1 (true) or 0 (false), depending
+   on the passed argument, without writing to error out.
+
 EXAMPLES
 
   A valid version:
@@ -128,13 +134,20 @@ EXAMPLES
 			cm.Printf("Please provide a version to parse\n")
 			os.Exit(1)
 		}
-
 		versionStr := args[0]
-
 		_, err := hashivers.NewVersion(versionStr)
-		if err != nil {
-			cm.Printf("[%s] is *not* a valid version\n", versionStr)
-			os.Exit(1)
+		if versionQuiet {
+			if err == nil {
+				cm.Printf("1")
+			} else {
+				cm.Printf("0")
+			}
+			os.Exit(0)
+		} else {
+			if err != nil {
+				cm.Printf("[%s] is *not* a valid version\n", versionStr)
+				os.Exit(1)
+			}
 		}
 	},
 }
@@ -157,6 +170,9 @@ DESCRIPTION
   In case the passed version is *not* a valid release version, the process prints an error 
   and exits with status 1. Otherwise it simply exits silently with status 0.
 
+  If the "quiet" mode is enabled, the command simply returns 1 (true) or 0 (false), depending
+  on the passed argument, without writing to error out.
+
 EXAMPLES
 
   A valid release version:
@@ -170,19 +186,35 @@ EXAMPLES
 			cm.Printf("Please provide a single version to be parsed\n")
 			os.Exit(1)
 		}
-
 		versionStr := args[0]
+
+		resultOK := true
+		errMessage := ""
 
 		v, err := hashivers.NewVersion(versionStr)
 		if err != nil {
-			cm.Printf("[%s] is *not* a valid version\n", versionStr)
-			os.Exit(1)
+			resultOK = false
+			errMessage = fmt.Sprintf("[%s] is *not* a valid version\n", versionStr)
 		}
 
 		if v.Prerelease() != "" {
-			// This is a pre-release, throw an error
-			cm.Printf("[%s] is *not* a valid release version\n", versionStr)
-			os.Exit(1)
+			resultOK = false
+			errMessage = fmt.Sprintf("[%s] is *not* a valid release version\n", versionStr)
+		}
+
+		if versionQuiet {
+			if resultOK {
+				cm.Printf("1")
+			} else {
+				cm.Printf("0")
+			}
+			os.Exit(0)
+		} else {
+			if !resultOK {
+				cm.Println(errMessage)
+				os.Exit(1)
+			}
+			// Valid release version and not quiet mode, nothing to do.
 		}
 	},
 }
@@ -205,10 +237,17 @@ DESCRIPTION
 
   Otherwise, the command simply exits with status 0.	
 
+  If the "quiet" mode is enabled, the command simply returns 1 (true) or 0 (false), depending
+  on the passed arguments, without writing to error out.
+
 EXAMPLE
 
   This exits with status 1:
    ` + os.Args[0] + ` version isgreater 2.0.6-dev.20191205 2.0.6
+
+  This returns 0 - false (and exits with status 0):
+   ` + os.Args[0] + ` version isgreater --quiet 4.0.5-rc2 4.0.5
+
 `,
 	Run: func(cm *cobra.Command, args []string) {
 		if len(args) != 2 {
@@ -218,7 +257,6 @@ EXAMPLE
 
 		v1Str := args[0]
 		v2Str := args[1]
-		// fmt.Printf("Comparing versions %s & %s \n", v1Str, v2Str)
 
 		v1, err := hashivers.NewVersion(v1Str)
 		if err != nil {
@@ -238,10 +276,16 @@ EXAMPLE
 }
 
 func init() {
+
+	ivCmd.Flags().BoolVarP(&versionQuiet, "quiet", "q", false, "Simply returns 1 (true) or 0 (false) if the version is valid or not, without writing to standard error stream")
+	irCmd.Flags().BoolVarP(&versionQuiet, "quiet", "q", false, "Simply returns 1 (true) or 0 (false) if the version represents valid release or not, without writing to standard error stream")
+	igtCmd.Flags().BoolVarP(&versionQuiet, "quiet", "q", false, "Simply returns 1 (true) or 0 (false) if first passed version is greater than the second, without writing to standard error stream")
+	versionCmd.Flags().StringVarP(&format, "format", "f", "", "Use go template to format version output")
+
 	versionCmd.AddCommand(ivCmd)
 	versionCmd.AddCommand(irCmd)
 	versionCmd.AddCommand(igtCmd)
+
 	RootCmd.AddCommand(versionCmd)
 
-	versionCmd.Flags().StringVarP(&format, "format", "f", "", "Use go template to format version output")
 }
