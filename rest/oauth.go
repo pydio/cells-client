@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -9,7 +10,9 @@ import (
 	"strings"
 	"time"
 
-	cells_sdk "github.com/pydio/cells-sdk-go"
+	cells_sdk "github.com/pydio/cells-sdk-go/v3"
+
+	"github.com/pydio/cells-client/v2/common"
 )
 
 type tokenResponse struct {
@@ -17,19 +20,22 @@ type tokenResponse struct {
 	ExpiresIn    int    `json:"expires_in"`
 	IdToken      string `json:"id_token"`
 	RefreshToken string `json:"refresh_token"`
+	// if the server returns an error, we will have this field so that we can check.
+	StatusCode int `json:"status_code"`
 }
 
 // OAuthPrepareUrl makes a URL that can be opened in browser or copy/pasted by user
-func OAuthPrepareUrl(serverUrl, clientId, clientSecret, state string, browser bool) (redirectUrl string, callbackUrl string, e error) {
+func OAuthPrepareUrl(serverUrl, state string, browser bool) (redirectUrl string, callbackUrl string, e error) {
 
 	authU, _ := url.Parse(serverUrl)
 	authU.Path = "/oidc/oauth2/auth"
 	values := url.Values{}
 	values.Add("response_type", "code")
-	values.Add("client_id", clientId)
-	if clientSecret != "" {
-		values.Add("client_secret", clientSecret)
-	}
+	values.Add("client_id", common.AppName)
+	// if clientSecret != "" {
+	// 	values.Add("client_secret", clientSecret)
+	// }
+	values.Add("scope", "openid email profile pydio offline")
 	values.Add("state", state)
 	if browser {
 		callbackUrl = "http://localhost:3000/servers/callback"
@@ -52,9 +58,9 @@ func OAuthExchangeCode(c *cells_sdk.SdkConfig, code, callbackUrl string) error {
 	values.Add("grant_type", "authorization_code")
 	values.Add("code", code)
 	values.Add("redirect_uri", callbackUrl)
-	values.Add("client_id", c.ClientKey)
-	if c.ClientSecret != "" {
-		values.Add("client_secret", c.ClientSecret)
+	values.Add("client_id", common.AppName)
+	if c.SkipVerify {
+		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}
 	resp, err := http.Post(tokenU.String(), "application/x-www-form-urlencoded", strings.NewReader(values.Encode()))
 	if err != nil {
@@ -65,14 +71,20 @@ func OAuthExchangeCode(c *cells_sdk.SdkConfig, code, callbackUrl string) error {
 	if err := json.Unmarshal(b, &r); err != nil {
 		return err
 	}
+
+	if r.StatusCode > 299 {
+		return fmt.Errorf("could not perfom authentication flow: response body %s", string(b))
+	}
+
 	c.IdToken = r.AccessToken
 	c.RefreshToken = r.RefreshToken
 	c.TokenExpiresAt = int(time.Now().Unix()) + r.ExpiresIn
+
 	return nil
 }
 
-// RefreshIfRequired refreshes the token inside the given conf if required
-func RefreshIfRequired(conf *cells_sdk.SdkConfig) (bool, error) {
+// RefreshIfRequired refreshes the token inside the given conf if required.
+func RefreshIfRequired(conf *CecConfig) (bool, error) {
 	// No token to refresh
 	if conf.IdToken == "" || conf.RefreshToken == "" || conf.TokenExpiresAt == 0 {
 		return false, nil
@@ -83,11 +95,10 @@ func RefreshIfRequired(conf *cells_sdk.SdkConfig) (bool, error) {
 	}
 	data := url.Values{}
 	data.Add("grant_type", "refresh_token")
-	data.Add("client_id", conf.ClientKey)
-	if conf.ClientSecret != "" {
-		data.Add("client_secret", conf.ClientSecret)
-	}
+	data.Add("client_id", common.AppName)
 	data.Add("refresh_token", conf.RefreshToken)
+	data.Add("scope", "openid email profile pydio offline")
+
 	httpReq, err := http.NewRequest("POST", conf.Url+"/oidc/oauth2/token", strings.NewReader(data.Encode()))
 	if err != nil {
 		return true, err
@@ -96,6 +107,9 @@ func RefreshIfRequired(conf *cells_sdk.SdkConfig) (bool, error) {
 	httpReq.Header.Add("Cache-Control", "no-cache")
 
 	client := http.DefaultClient
+	if conf.SkipVerify {
+		client.Transport = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+	}
 	res, err := client.Do(httpReq)
 	if err != nil {
 		return true, err
@@ -112,6 +126,5 @@ func RefreshIfRequired(conf *cells_sdk.SdkConfig) (bool, error) {
 	conf.IdToken = respMap.AccessToken
 	conf.RefreshToken = respMap.RefreshToken
 	conf.TokenExpiresAt = int(time.Now().Unix()) + respMap.ExpiresIn
-	fmt.Printf("Got new token that will be refeshed at %v\n", time.Unix(int64(conf.TokenExpiresAt), 0))
 	return true, nil
 }

@@ -6,15 +6,21 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-client/rest"
-	"github.com/pydio/cells-sdk-go/client/workspace_service"
-	"github.com/pydio/cells-sdk-go/models"
+	"github.com/pydio/cells-sdk-go/v3/client/workspace_service"
+	"github.com/pydio/cells-sdk-go/v3/models"
+
+	"github.com/pydio/cells-client/v2/rest"
 )
 
 var listWorkspaces = &cobra.Command{
 	Use:   "list-workspaces",
-	Short: "w",
-	Long:  `List all the workspaces`,
+	Short: "List workspaces",
+	Long: `
+DESCRIPTION	
+
+  List all workspaces on which the current logged in user has *at least* Read Access.
+
+`,
 	Run: func(cm *cobra.Command, args []string) {
 
 		ctx, apiClient, err := rest.GetApiClient()

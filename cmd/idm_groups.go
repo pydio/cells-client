@@ -6,14 +6,19 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-client/rest"
-	"github.com/pydio/cells-sdk-go/client/user_service"
+	"github.com/pydio/cells-sdk-go/v3/client/user_service"
+
+	"github.com/pydio/cells-client/v2/rest"
 )
 
 var listGroups = &cobra.Command{
 	Use:   "list-groups",
-	Short: "lg",
-	Long:  `List groups on pydio cells`,
+	Short: "List groups",
+	Long: `
+DESCRIPION
+
+  List user groups that are defined in your Pydio Cells instance.
+`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		ctx, apiClient, err := rest.GetApiClient()

@@ -26,25 +26,31 @@ import (
 	"github.com/pydio/go/docs"
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-client/common"
+	"github.com/pydio/cells-client/v2/common"
 )
 
 var docPath string
 
-var generateDocCmd = &cobra.Command{
+var docCmd = &cobra.Command{
 	Use:   "doc",
-	Short: "Generate MD and YAML documentation for all CellsClient CLI commands",
-	Long: `Generate Markdown documentation for the Cells Client command line tool.
-Provide a target folder where to put the generated files.
-This command also generates yaml files for pydio.com documentation format.
+	Short: "Generate documentation of the Cells Client",
+	Long: `
+DESCRIPTION
+  This command automatically generates the documentation of the Cells Client.
+  It produces nice Markdown files based on the various comments that are in the code itself.
+
+  Please, provide the '-p' flag with a path to define where to put the generated files.
+
+  Also note that this command also generates the yaml files that we use for pydio.com documentation format.
 `,
+	Hidden: true,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if docPath == "" {
 			log.Fatal("Please provide a path to store output files")
 		} else {
 
-			docs.PydioDocsGeneratedBy = common.PackageName + " v" + common.Version
+			docs.PydioDocsGeneratedBy = common.PackageLabel + " v" + common.Version
 			err := docs.GenMarkdownTree(RootCmd, docPath)
 			if err != nil {
 				log.Fatal(err)
@@ -55,7 +61,7 @@ This command also generates yaml files for pydio.com documentation format.
 }
 
 func init() {
-	generateDocCmd.Flags().StringVarP(&docPath, "path", "p", "", "Target folder where to put the files")
-	generateDocCmd.Flags().StringVarP(&docs.PydioDocsMenuName, "menu", "m", "menu-admin-guide-v7", "Pydio Docs menu name")
-	RootCmd.AddCommand(generateDocCmd)
+	docCmd.Flags().StringVarP(&docPath, "path", "p", "", "Target folder where to put the files")
+	docCmd.Flags().StringVarP(&docs.PydioDocsMenuName, "menu", "m", "menu-admin-guide-v7", "Pydio Docs menu name")
+	RootCmd.AddCommand(docCmd)
 }

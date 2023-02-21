@@ -6,14 +6,19 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-client/rest"
-	"github.com/pydio/cells-sdk-go/client/user_service"
+	"github.com/pydio/cells-sdk-go/v3/client/user_service"
+
+	"github.com/pydio/cells-client/v2/rest"
 )
 
 var listUsers = &cobra.Command{
 	Use:   "list-users",
-	Short: "lu",
-	Long:  `List users on the pydio cells`,
+	Short: "List users",
+	Long: `
+DESCRIPTION	
+
+  List the users defined in your Pydio Cells instance.
+`,
 	Run: func(cm *cobra.Command, args []string) {
 
 		ctx, apiClient, err := rest.GetApiClient()

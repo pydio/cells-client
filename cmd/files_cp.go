@@ -2,217 +2,107 @@ package cmd
 
 import (
 	"fmt"
-	"io"
+	"log"
 	"os"
 	"path"
-	"path/filepath"
 	"strings"
-	"time"
 
-	"github.com/gosuri/uiprogress"
-
-	"github.com/micro/go-log"
+	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-client/rest"
-	"github.com/pydio/cells-sdk-go/models"
+	"github.com/pydio/cells-sdk-go/v3/models"
+
+	"github.com/pydio/cells-client/v2/rest"
 )
 
-var cpFiles = &cobra.Command{
+var cpCmd = &cobra.Command{
 	Use:   "cp",
-	Short: `Copy files from/to Cells`,
-	Long: `Copy files between local server and remote Cells server
+	Short: "Copy files from A to B within your remote server",
+	Long: `
+DESCRIPTION
 
-Prefix remote paths with cells:// to differentiate local from remote. Currently, copy can only be performed with both different ends.
-For example:
+  Copy files from one location to another *within* a *single* Pydio Cells instance. 
+  To copy files from the client machine to your server (and vice versa), rather see the '` + os.Args[0] + ` scp' command.
 
-1/ Uploading a file to server
+WILD-CHARS
 
-$ ./cec cp ./README.md cells://common-files/
-Copying ./README.md to cells://common-files/
- ## Waiting for file to be indexed...
- ## File correctly indexed
+  In version 2, we only support the '*' wild char as a standalone token of the source path, that is:
+    - '` + os.Args[0] + ` cp common-files/test/* common-files/target' is legit and will copy 
+	  all files and folder found in test folder on your server to the target folder
+	- '` + os.Args[0] + ` cp common-files/test/*.jpg ...' or '` + os.Args[0] + ` cp common-files/test/ima* ...'  
+	  will *not* work as some might expect: the system looks for a single file named respectively '*.jpg' or 'ima*'
+	  and will probably fail to find it (unless if a file with this name exists on your server...)
 
-2/ Download a file from server
+EXAMPLE
 
-$ ./cec cp cells://personal-files/IMG_9723.JPG ./
-Copying cells://personal-files/IMG_9723.JPG to ./
-Written 822601 bytes to file
+  # Copy file "test.txt" from workspace root inside target "folder-a":
+  ` + os.Args[0] + ` cp common-files/test.txt common-files/folder-a
 
+  # Copy a file from a workspace to another:
+  ` + os.Args[0] + ` cp common-files/test.txt personal-files/folder-b
 
+  # Copy the full content of a folder inside another
+  ` + os.Args[0] + ` cp common-files/test/* common-files/folder-c
 `,
+	Args: cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
+		fromPath := args[0]
+		toPath := args[1]
+		targetParent := true
 
-		if len(args) < 2 {
-			log.Fatal(fmt.Errorf("please provide at least a source and a destination target"))
-		}
-
-		from := args[0]
-		to := args[1]
-		fmt.Printf("Copying %s to %s\n", from, to)
-
-		if strings.HasPrefix(from, "cells://") {
-			// Download
-			fromPath := strings.TrimPrefix(from, "cells://")
-			toPath, remote, e := targetToFullPath(to, from)
-			if e != nil {
-				log.Fatal(e)
+		// Pre-process source path
+		var sourceNodes []string
+		if path.Base(fromPath) == "*" {
+			nodes, err := rest.ListNodesPath(fromPath)
+			if err != nil {
+				log.Fatalf("Preparing grouped copy, could not list all nodes under %s, cause: %s", path.Dir(fromPath), err.Error())
 			}
-			if remote {
-				log.Fatal(fmt.Errorf("source and target are both remote, copy remote to local or the opposite"))
-			}
-			reader, length, e := rest.GetFile(fromPath)
-			if e != nil {
-				log.Fatal(e)
-			}
-			bar := uiprogress.AddBar(length).PrependCompleted()
-			wrapper := &PgReader{
-				Reader: reader,
-				bar:    bar,
-				total:  length,
-			}
-			writer, e := os.OpenFile(toPath, os.O_CREATE|os.O_WRONLY, 0755)
-			if e != nil {
-				log.Fatal(e)
-			}
-			defer writer.Close()
-			uiprogress.Start()
-			_, e = io.Copy(writer, wrapper)
-			if e != nil {
-				log.Fatal(e)
-			}
-			// Wait that progress bar finish rendering
-			<-time.After(100 * time.Millisecond)
-			uiprogress.Stop()
+			sourceNodes = nodes
+		} else if strings.HasSuffix(path.Base(fromPath), "*") {
+			fmt.Println(promptui.IconWarn + " We currently only support the '*' wild char without prefix, see help for further details")
+			sourceNodes = []string{fromPath}
 		} else {
-			// Upload
-			toPath, remote, e := targetToFullPath(to, from)
-			if e != nil {
-				log.Fatal(e)
-			}
-			if !remote {
-				log.Fatal(fmt.Errorf("source and target are both local, copy remote to local or the opposite"))
-			}
-			var length int64
-			if s, e := os.Stat(from); e != nil || s.IsDir() {
-				log.Fatal(fmt.Errorf("local source is not a valid file"))
-			} else {
-				length = s.Size()
-			}
-			reader, e := os.Open(from)
-			bar := uiprogress.AddBar(int(length)).PrependCompleted()
-			wrapper := &PgReader{
-				Reader: reader,
-				Seeker: reader,
-				bar:    bar,
-				total:  int(length),
-				double: true,
-			}
-			if e != nil {
-				log.Fatal(e)
-			}
-			uiprogress.Start()
-			_, e = rest.PutFile(toPath, wrapper, false)
-			if e != nil {
-				log.Fatal(e)
-			}
-			<-time.After(500 * time.Millisecond)
-			uiprogress.Stop()
-			// Now stat Node to make sure it is indexed
-			e = rest.RetryCallback(func() error {
-				fmt.Println(" ## Waiting for file to be indexed...")
-				_, ok := rest.StatNode(toPath)
-				if !ok {
-					return fmt.Errorf("cannot stat node just after PutFile operation")
-				}
-				return nil
-
-			}, 3, 3*time.Second)
-			if e != nil {
-				log.Fatal("File does not seem to be indexed!")
-			}
-			fmt.Println(" ## File correctly indexed")
-
+			sourceNodes = []string{fromPath}
 		}
 
+		// Pre-process target path
+		targetNode, targetExists := rest.StatNode(toPath)
+		if targetExists {
+			if *targetNode.Type == models.TreeNodeTypeCOLLECTION {
+				// target is a folder as expected nothing to do
+			} else {
+				// Target is an existing file, we throw an error for the time being
+				log.Fatalf("A file already exists at %s. \nThe cells-client does not yet handle this case. If you want to overwrite, first delete the existing target file.", toPath)
+			}
+		} else { // We assume we have been given full path including target file name
+			parPath, _ := path.Split(toPath)
+			if parPath == "" {
+				log.Fatalf("Target location %s does not exist on server, double check your parameters.", toPath)
+			}
+			targetNode, targetExists := rest.StatNode(parPath)
+			if !targetExists {
+				log.Fatalf("Parent target location %s does not exist on server, double check your parameters.", parPath)
+			} else if *targetNode.Type != models.TreeNodeTypeCOLLECTION {
+				log.Fatalf("Parent target location %s exists on server but is not a folder. It cannot be used as a copy target location.", parPath)
+			}
+			// parent exists and is a folder => we assume we have been passed a full target path including target file name.
+			targetParent = false
+		}
+
+		// Prepare and launch effective copy
+		params := rest.BuildParams(sourceNodes, toPath, targetParent)
+		jobID, err := rest.CopyJob(params)
+		if err != nil {
+			log.Fatalln("could not run job:", err.Error())
+		}
+
+		err = rest.MonitorJob(jobID)
+		if err != nil {
+			log.Fatalln("could not monitor job", err.Error())
+		}
 	},
 }
 
 func init() {
-	RootCmd.AddCommand(cpFiles)
-}
-
-func targetToFullPath(to string, from string) (string, bool, error) {
-	var toPath string
-	var isDir bool
-	var isRemote bool
-	var e error
-	if strings.HasPrefix(to, "cells://") {
-		// This is remote
-		isRemote = true
-		toPath = strings.TrimPrefix(to, "cells://")
-		target, ok := rest.StatNode(toPath)
-		if !ok {
-			// Does not exists => will be created
-			return toPath, isRemote, nil
-		}
-		isDir = target.Type == models.TreeNodeTypeCOLLECTION
-	} else {
-		// This is local
-		toPath, e = filepath.Abs(to)
-		if e != nil {
-			return "", false, e
-		}
-		s, e := os.Stat(toPath)
-		if e != nil {
-			return "", false, e
-		}
-		isDir = s.IsDir()
-	}
-
-	if isDir {
-		toPath = path.Join(toPath, path.Base(from))
-	}
-	return toPath, isRemote, nil
-}
-
-type PgReader struct {
-	io.Reader
-	io.Seeker
-	bar   *uiprogress.Bar
-	total int
-	read  int
-
-	double bool
-	first  bool
-}
-
-func (r *PgReader) Read(p []byte) (n int, err error) {
-	n, err = r.Reader.Read(p)
-	if err == nil {
-		if r.double {
-			r.read += n / 2
-		} else {
-			r.read += n
-		}
-		r.bar.Set(r.read)
-	} else if err == io.EOF {
-		if r.double && !r.first {
-			r.first = true
-			r.bar.Set(r.total / 2)
-		} else {
-			r.bar.Set(r.total)
-		}
-	}
-	return
-}
-
-func (r *PgReader) Seek(offset int64, whence int) (int64, error) {
-	if r.double && r.first {
-		r.read = r.total/2 + int(offset)/2
-	} else {
-		r.read = int(offset)
-	}
-	r.bar.Set(r.read)
-	return r.Seeker.Seek(offset, whence)
+	RootCmd.AddCommand(cpCmd)
 }
