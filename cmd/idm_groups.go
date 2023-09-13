@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-sdk-go/v3/client/user_service"
+	"github.com/pydio/cells-sdk-go/v4/client/user_service"
 
 	"github.com/pydio/cells-client/v2/rest"
 )

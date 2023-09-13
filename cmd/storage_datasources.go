@@ -7,9 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-sdk-go/v3/client/config_service"
-	"github.com/pydio/cells-sdk-go/v3/client/jobs_service"
-	"github.com/pydio/cells-sdk-go/v3/models"
+	"github.com/pydio/cells-sdk-go/v4/client/config_service"
+	"github.com/pydio/cells-sdk-go/v4/client/jobs_service"
 
 	"github.com/pydio/cells-client/v2/rest"
 )
@@ -85,13 +84,12 @@ var resyncDs = &cobra.Command{
 		}
 
 		jsonParam := fmt.Sprintf("{\"dsName\":\"%s\"}", dsName)
-		body := &models.RestUserJobRequest{JobName: "datasource-resync", JSONParameters: jsonParam}
-
+		body := jobs_service.UserCreateJobBody{JSONParameters: jsonParam}
 		params := &jobs_service.UserCreateJobParams{JobName: "datasource-resync", Body: body, Context: ctx}
 
 		_, err = client.JobsService.UserCreateJob(params)
 		if err != nil {
-			log.Fatal(fmt.Sprintf("could not start the sync job for ds %s, cause: %s", dsName, err.Error()))
+			log.Fatalf(fmt.Sprintf("could not start the sync job for ds %s, cause: %s", dsName, err.Error()))
 		}
 		fmt.Printf("Starting resync on %s \n", dsName)
 	},

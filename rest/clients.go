@@ -15,10 +15,10 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/shibukawa/configdir"
 
-	cells_sdk "github.com/pydio/cells-sdk-go/v3"
-	"github.com/pydio/cells-sdk-go/v3/client"
-	"github.com/pydio/cells-sdk-go/v3/transport"
-	sdk_rest "github.com/pydio/cells-sdk-go/v3/transport/rest"
+	cells_sdk "github.com/pydio/cells-sdk-go/v4"
+	"github.com/pydio/cells-sdk-go/v4/client"
+	"github.com/pydio/cells-sdk-go/v4/transport"
+	sdk_rest "github.com/pydio/cells-sdk-go/v4/transport/rest"
 
 	"github.com/pydio/cells-client/v2/common"
 )

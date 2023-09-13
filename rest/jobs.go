@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pydio/cells-sdk-go/v3/client/jobs_service"
-	"github.com/pydio/cells-sdk-go/v3/models"
+	"github.com/pydio/cells-sdk-go/v4/client/jobs_service"
+	"github.com/pydio/cells-sdk-go/v4/models"
 )
 
 func MoveParams(source []string, targetFolder string) string {
@@ -56,10 +56,7 @@ func RunJob(jobName string, jsonParams string) (string, error) {
 		return "", err
 	}
 	param := jobs_service.NewUserCreateJobParams()
-	param.Body = &models.RestUserJobRequest{
-		JobName:        jobName,
-		JSONParameters: jsonParams,
-	}
+	param.Body = jobs_service.UserCreateJobBody{JSONParameters: jsonParams}
 	param.JobName = jobName
 
 	job, err := client.JobsService.UserCreateJob(param)

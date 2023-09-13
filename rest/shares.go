@@ -3,8 +3,8 @@ package rest
 import (
 	"fmt"
 
-	"github.com/pydio/cells-sdk-go/v3/client/share_service"
-	"github.com/pydio/cells-sdk-go/v3/models"
+	"github.com/pydio/cells-sdk-go/v4/client/share_service"
+	"github.com/pydio/cells-sdk-go/v4/models"
 )
 
 func CreateSimpleFolderLink(targetNodeUuid, label string) (*models.RestShareLink, error) {
