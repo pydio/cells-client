@@ -177,29 +177,45 @@ EXAMPLE
 		v1Str := args[0]
 		v2Str := args[1]
 
+		resultOK := true
+		errMessage := ""
+
 		v1, err := hashivers.NewVersion(v1Str)
 		if err != nil {
-			cm.Printf("Passed version [%s] is not a valid version\n", v1Str)
-			os.Exit(1)
+			resultOK = false
+			errMessage = fmt.Sprintf("Passed version [%s] is not a valid version\n", v1Str)
 		}
 		v2, err := hashivers.NewVersion(v2Str)
 		if err != nil {
-			cm.Printf("Passed version [%s] is not a valid version\n", v2Str)
-			os.Exit(1)
+			resultOK = false
+			errMessage = fmt.Sprintf("Passed version [%s] is not a valid version\n", v2Str)
 		}
-		if !v1.GreaterThan(v2) {
-			cm.Printf("Passed version [%s] is *not* greater than [%s]\n", v1Str, v2Str)
-			os.Exit(1)
+		if resultOK && !v1.GreaterThan(v2) {
+			resultOK = false
+			errMessage = fmt.Sprintf("Passed version [%s] is *not* greater than [%s]\n", v1Str, v2Str)
+		}
+
+		if versionQuiet {
+			if resultOK {
+				cm.Printf("1")
+			} else {
+				cm.Printf("0")
+			}
+			os.Exit(0)
+		} else {
+			if !resultOK {
+				cm.Println(errMessage)
+				os.Exit(1)
+			}
+			// Valid and ordered release versions, nothing to do.
 		}
 	},
 }
 
 func init() {
-
 	ivCmd.Flags().BoolVarP(&versionQuiet, "quiet", "q", false, "Simply returns 1 (true) or 0 (false) if the version is valid or not, without writing to standard error stream")
 	irCmd.Flags().BoolVarP(&versionQuiet, "quiet", "q", false, "Simply returns 1 (true) or 0 (false) if the version represents valid release or not, without writing to standard error stream")
 	igtCmd.Flags().BoolVarP(&versionQuiet, "quiet", "q", false, "Simply returns 1 (true) or 0 (false) if first passed version is greater than the second, without writing to standard error stream")
 	tvCmd.AddCommand(ivCmd, irCmd, igtCmd)
 	toolsCmd.AddCommand(tvCmd)
-
 }
