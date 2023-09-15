@@ -3,7 +3,7 @@ module github.com/pydio/cells-client/v4
 go 1.20
 
 require (
-	github.com/aws/aws-sdk-go v1.45.8
+	github.com/aws/aws-sdk-go v1.45.10
 	github.com/dustin/go-humanize v1.0.1
 	github.com/fatih/color v1.15.0
 	github.com/go-openapi/runtime v0.26.0
