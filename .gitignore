@@ -1,12 +1,7 @@
 .idea
 .vscode
 
-cec
 main
+cec
 cec-*
-
-v2/cec
-v2/main
-v2/cec-*
-v2/__debug_bin
-v2/target
+cec.exe
