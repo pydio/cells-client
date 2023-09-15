@@ -40,7 +40,7 @@ win:
 	 -ldflags "-X github.com/pydio/cells-client/v4/common.Version=${CELLS_CLIENT_VERSION}"\
 	 -o cec.exe .
 
-mac:
+darwin:
 	export CGO_ENABLED=0
 	env GOOS=darwin GOARCH=amd64 go build -a -trimpath\
 	 -ldflags "-X github.com/pydio/cells-client/v4/common.Version=${CELLS_CLIENT_VERSION}"\
