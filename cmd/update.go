@@ -130,7 +130,6 @@ DESCRIPTION
 			rest.ApplyUpdate(context.Background(), apply, updateDryRun, pgChan, doneChan, errorChan)
 			wg.Wait()
 		}
-
 	},
 }
 

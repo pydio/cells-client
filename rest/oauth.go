@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -66,7 +66,7 @@ func OAuthExchangeCode(c *cells_sdk.SdkConfig, code, callbackUrl string) error {
 	if err != nil {
 		return err
 	}
-	b, _ := ioutil.ReadAll(resp.Body)
+	b, _ := io.ReadAll(resp.Body)
 	var r tokenResponse
 	if err := json.Unmarshal(b, &r); err != nil {
 		return err
@@ -114,7 +114,7 @@ func RefreshIfRequired(conf *CecConfig) (bool, error) {
 	if err != nil {
 		return true, err
 	} else if res.StatusCode != 200 {
-		bb, _ := ioutil.ReadAll(res.Body)
+		bb, _ := io.ReadAll(res.Body)
 		return true, fmt.Errorf("received status code %d - %s", res.StatusCode, string(bb))
 	}
 	defer res.Body.Close()

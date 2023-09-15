@@ -10,7 +10,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -138,7 +138,7 @@ func LoadUpdates(ctx context.Context, channel string) ([]*UpdatePackage, error) 
 				Title  string
 				Detail string
 			}
-			data, _ := ioutil.ReadAll(response.Body)
+			data, _ := io.ReadAll(response.Body)
 			if e := json.Unmarshal(data, &jsonErr); e == nil {
 				rErr = fmt.Errorf("failed connecting to the update server (%s), error code %d", jsonErr.Title, response.StatusCode)
 			}
@@ -146,7 +146,7 @@ func LoadUpdates(ctx context.Context, channel string) ([]*UpdatePackage, error) 
 		return nil, rErr
 	}
 	var updateResponse UpdateResponse
-	data, _ := ioutil.ReadAll(response.Body)
+	data, _ := io.ReadAll(response.Body)
 	if e := json.Unmarshal(data, &updateResponse); e != nil {
 		return nil, e
 	}
@@ -174,7 +174,7 @@ func ApplyUpdate(ctx context.Context, p *UpdatePackage, dryRun bool, pgChan chan
 	} else {
 		defer resp.Body.Close()
 		if resp.StatusCode != 200 {
-			plain, _ := ioutil.ReadAll(resp.Body)
+			plain, _ := io.ReadAll(resp.Body)
 			errorChan <- fmt.Errorf("binary.download.error %s", string(plain))
 			return
 		}
