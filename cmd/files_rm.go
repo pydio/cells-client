@@ -11,9 +11,8 @@ import (
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-client/v2/rest"
+	"github.com/pydio/cells-client/v4/rest"
 )
-
 
 var (
 	force        bool
@@ -21,9 +20,9 @@ var (
 )
 
 var rmCmd = &cobra.Command{
-	Use:     "rm",
-	Short:   "Trash files or folders",
-	Long:    `
+	Use:   "rm",
+	Short: "Trash files or folders",
+	Long: `
 DESCRIPTION
 	
   Delete specified files or folders. 
@@ -53,7 +52,7 @@ EXAMPLES
   # You can force the deletion with the '--force' flag (to avoid the Yes or No)
   ` + os.Args[0] + ` rm -f common-files/file-1.txt
 `,
-	Args:    cobra.MinimumNArgs(1),
+	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 
 		// Ask for user approval before deleting

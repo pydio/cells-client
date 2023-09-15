@@ -14,7 +14,7 @@ import (
 
 	"github.com/go-openapi/runtime"
 
-	"github.com/pydio/cells-client/v2/common"
+	"github.com/pydio/cells-client/v4/common"
 )
 
 // RetryCallback implements boiler plate code to easily call the same function until it suceeds

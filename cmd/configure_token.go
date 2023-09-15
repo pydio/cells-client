@@ -10,8 +10,8 @@ import (
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-client/v2/common"
-	"github.com/pydio/cells-client/v2/rest"
+	"github.com/pydio/cells-client/v4/common"
+	"github.com/pydio/cells-client/v4/rest"
 )
 
 var configurePersonalAccessTokenCmd = &cobra.Command{

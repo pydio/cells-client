@@ -10,6 +10,8 @@ Cells Client provides an easy way to communicate with a [Pydio Cells](https://gi
 
 Cells Client a.k.a `cec` works like standard command line tools like **ls**, **scp**, etc.  Using the `cec` command, you can list, download and upload directly to your remote Cells server.
 
+The v4 version of this tools is meant to be used with a remote Cells server that is also at version v4+, please rather use cells-client v2 if your server is older (but you really should update your Cells server!).
+
 ## Usage
 
 Use the `cec --help` command to know about available commands. Below are a few interesting ones for manipulating files:
@@ -116,7 +118,7 @@ Cells Client
 
 If you rather want to directly compile the source code on your workstation, you require:
 
-- Go language 1.13 or higher (tested with latest 1.13, 1.14 & 1.15), with a [correctly configured](https://golang.org/doc/install#testing) Go toolchain,
+- Go language 1.20 or higher (tested with latest 1.20 & 1.21), with a [correctly configured](https://golang.org/doc/install#testing) Go toolchain,
 - The necessary build utils (typically `make`, `gcc`, ...)
 - A git client
 
@@ -124,16 +126,13 @@ You can then retrieve the source code and use the `Makefile` to compile a binary
 
 ```sh
 git clone https://github.com/pydio/cells-client.git
-cd ./cells-client/v2
+cd ./cells-client
 make dev
 ```
 
 #### Important Notes
 
-Cells Client uses the Go Modules mechanism to manage dependencies, this has 2 consequences:
-
-- as current active development cycle is 2.x, the latest code from master is **in the v2 subfolder**
-- you can checkout the code anywhere in your local machine, it does not have to be within your `GOPATH`.
+Cells Client uses the Go Modules mechanism to manage dependencies: you can checkout the code anywhere in your local machine, it does not have to be within your `GOPATH`.
 
 ## Connecting To Cells
 
@@ -219,8 +218,8 @@ To enable this feature, you must have `bash-completion` third party add-on insta
 # on Debian / Ubuntu
 sudo apt install bash-completion
 
-# on RHEL / CentOS
-sudo yum install bash-completion
+# on RHEL / Rocky Linux
+sudo dnf install bash-completion
 
 # on MacOS (make sure to follow the instructions displayed by Homebrew)
 brew install bash-completion

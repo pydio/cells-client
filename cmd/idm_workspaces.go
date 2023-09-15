@@ -9,7 +9,7 @@ import (
 	"github.com/pydio/cells-sdk-go/v4/client/workspace_service"
 	"github.com/pydio/cells-sdk-go/v4/models"
 
-	"github.com/pydio/cells-client/v2/rest"
+	"github.com/pydio/cells-client/v4/rest"
 )
 
 var listWorkspaces = &cobra.Command{

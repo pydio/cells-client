@@ -10,7 +10,7 @@ import (
 
 	"github.com/manifoldco/promptui"
 
-	"github.com/pydio/cells-client/v2/common"
+	"github.com/pydio/cells-client/v4/common"
 )
 
 type ConfigList struct {
@@ -160,7 +160,7 @@ func createLabel(c *CecConfig) string {
 // SaveConfigFile saves inside the config file.
 func (list *ConfigList) SaveConfigFile() error {
 	confData, _ := json.MarshalIndent(&list, "", "\t")
-	if err := ioutil.WriteFile(GetConfigFilePath(), confData, 0666); err != nil {
+	if err := os.WriteFile(GetConfigFilePath(), confData, 0666); err != nil {
 		return fmt.Errorf("could not save the config file, cause: %s", err)
 	}
 	return nil

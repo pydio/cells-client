@@ -6,7 +6,7 @@ import (
 
 	"github.com/zalando/go-keyring"
 
-	"github.com/pydio/cells-client/v2/common"
+	"github.com/pydio/cells-client/v4/common"
 )
 
 // NoKeyringMsg warns end user when no keyring is found

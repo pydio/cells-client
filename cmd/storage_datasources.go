@@ -10,7 +10,7 @@ import (
 	"github.com/pydio/cells-sdk-go/v4/client/config_service"
 	"github.com/pydio/cells-sdk-go/v4/client/jobs_service"
 
-	"github.com/pydio/cells-client/v2/rest"
+	"github.com/pydio/cells-client/v4/rest"
 )
 
 var (

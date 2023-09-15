@@ -6,7 +6,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/pydio/cells-client/v2/rest"
+	"github.com/pydio/cells-client/v4/rest"
 	"github.com/spf13/cobra"
 )
 

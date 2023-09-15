@@ -12,8 +12,8 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-client/v2/common"
-	"github.com/pydio/cells-client/v2/rest"
+	"github.com/pydio/cells-client/v4/common"
+	"github.com/pydio/cells-client/v4/rest"
 )
 
 var (
@@ -45,14 +45,14 @@ DESCRIPTION
 
 		binaries, e := rest.LoadUpdates(context.Background(), defaultChannel)
 		if e != nil {
-			log.Fatal(fmt.Sprintf("Cannot list packages in the %s channel: %s", defaultChannel, e.Error()))
+			log.Fatalf("Cannot list packages in the %s channel: %s", defaultChannel, e.Error())
 		}
 		if len(binaries) == 0 {
 			c := color.New(color.FgGreen)
 			c.Println("")
 			c.Println("You are running the latest version of the Cells Client.")
 			c.Printf("No update is available in the %s channel.", defaultChannel)
-			c.Println("\n")
+			c.Print("\n\n")
 			return
 		}
 

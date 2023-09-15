@@ -24,7 +24,7 @@ import (
 	update2 "github.com/inconshreveable/go-update"
 	"github.com/kardianos/osext"
 
-	"github.com/pydio/cells-client/v2/common"
+	"github.com/pydio/cells-client/v4/common"
 )
 
 type UpdateRequest struct {

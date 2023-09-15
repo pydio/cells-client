@@ -12,7 +12,7 @@ import (
 
 	cells_sdk "github.com/pydio/cells-sdk-go/v4"
 
-	"github.com/pydio/cells-client/v2/common"
+	"github.com/pydio/cells-client/v4/common"
 )
 
 type tokenResponse struct {

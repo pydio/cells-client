@@ -14,8 +14,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	"github.com/pydio/cells-client/v2/common"
-	"github.com/pydio/cells-client/v2/rest"
+	"github.com/pydio/cells-client/v4/common"
+	"github.com/pydio/cells-client/v4/rest"
 )
 
 const (

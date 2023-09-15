@@ -17,7 +17,7 @@ import (
 	"github.com/pydio/cells-sdk-go/v4/models"
 	s3transport "github.com/pydio/cells-sdk-go/v4/transport/s3"
 
-	"github.com/pydio/cells-client/v2/common"
+	"github.com/pydio/cells-client/v4/common"
 )
 
 func GetS3Client() (*s3.S3, string, error) {

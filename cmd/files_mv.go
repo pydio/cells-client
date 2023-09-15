@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-client/v2/rest"
+	"github.com/pydio/cells-client/v4/rest"
 )
 
 // filesMvCmd represents the filesMv command

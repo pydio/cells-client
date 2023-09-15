@@ -13,7 +13,7 @@ import (
 	"github.com/pydio/cells-sdk-go/v4/client/tree_service"
 	"github.com/pydio/cells-sdk-go/v4/models"
 
-	"github.com/pydio/cells-client/v2/rest"
+	"github.com/pydio/cells-client/v4/rest"
 )
 
 var createAncestors bool

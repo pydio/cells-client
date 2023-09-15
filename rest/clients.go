@@ -3,7 +3,6 @@ package rest
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -20,7 +19,7 @@ import (
 	"github.com/pydio/cells-sdk-go/v4/transport"
 	sdk_rest "github.com/pydio/cells-sdk-go/v4/transport/rest"
 
-	"github.com/pydio/cells-client/v2/common"
+	"github.com/pydio/cells-client/v4/common"
 )
 
 var (
@@ -145,7 +144,7 @@ func RefreshAndStoreIfRequired(c *CecConfig) bool {
 		}
 		// Save config to renew TokenExpireAt
 		confData, _ := json.MarshalIndent(&storeConfig, "", "\t")
-		ioutil.WriteFile(GetConfigFilePath(), confData, 0600)
+		os.WriteFile(GetConfigFilePath(), confData, 0600)
 	}
 
 	return refreshed
