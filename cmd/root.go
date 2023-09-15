@@ -5,7 +5,6 @@
 package cmd
 
 import (
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -56,6 +55,8 @@ DESCRIPTION
   It uses the Cells SDK for Go and the REST API under the hood.
 
   See the respective help pages of the various commands to get detailed explanation and some examples.
+
+  *WARNING*: cec v4 only supports remote servers that are in v4 or newer. 
 
 CONFIGURE
 
@@ -178,7 +179,7 @@ func setUpEnvironment() error {
 	if c.Url == "" {
 
 		// First check that we have a configuration file
-		_, err := ioutil.ReadFile(configFilePath)
+		_, err := os.ReadFile(configFilePath)
 		if err != nil {
 			return err
 		}
