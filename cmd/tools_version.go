@@ -57,9 +57,9 @@ EXAMPLES
 		_, err := hashivers.NewVersion(versionStr)
 		if versionQuiet {
 			if err == nil {
-				cm.Printf("1")
+				cm.Println("1")
 			} else {
-				cm.Printf("0")
+				cm.Println("0")
 			}
 			os.Exit(0)
 		} else {
@@ -123,9 +123,9 @@ EXAMPLES
 
 		if versionQuiet {
 			if resultOK {
-				cm.Printf("1")
+				cm.Println("1")
 			} else {
-				cm.Printf("0")
+				cm.Println("0")
 			}
 			os.Exit(0)
 		} else {
@@ -197,9 +197,9 @@ EXAMPLE
 
 		if versionQuiet {
 			if resultOK {
-				cm.Printf("1")
+				cm.Println("1")
 			} else {
-				cm.Printf("0")
+				cm.Println("0")
 			}
 			os.Exit(0)
 		} else {
@@ -209,6 +209,36 @@ EXAMPLE
 			}
 			// Valid and ordered release versions, nothing to do.
 		}
+	},
+}
+
+// hiddenIvCmd is a hidden shortcut to keep an alias to the pre v4 existing command.
+var hiddenIvCmd = &cobra.Command{
+	Use:    "isvalid",
+	Hidden: true,
+	Short:  "Check if a given string represents a valid version",
+	Run: func(cmd *cobra.Command, args []string) {
+		ivCmd.Run(cmd, args)
+	},
+}
+
+// hiddenIrCmd is a hidden shortcut to keep an alias to the pre v4 existing command.
+var hiddenIrCmd = &cobra.Command{
+	Use:    "isrelease",
+	Hidden: true,
+	Short:  "Check if a given string represents a valid **RELEASE** version",
+	Run: func(cmd *cobra.Command, args []string) {
+		irCmd.Run(cmd, args)
+	},
+}
+
+// hiddenIgtCmd is a hidden shortcut to keep an alias to the pre v4 existing command.
+var hiddenIgtCmd = &cobra.Command{
+	Use:    "isgreater",
+	Hidden: true,
+	Short:  "Compare the two versions, succeed when the first is greater than the second",
+	Run: func(cmd *cobra.Command, args []string) {
+		igtCmd.Run(cmd, args)
 	},
 }
 

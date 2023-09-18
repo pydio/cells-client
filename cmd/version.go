@@ -117,12 +117,11 @@ DESCRIPTION
 
 func init() {
 
+	// Add hidden deprecated commands to keep retro-compatibility
+	versionCmd.AddCommand(hiddenIvCmd)
+	versionCmd.AddCommand(hiddenIrCmd)
+	versionCmd.AddCommand(hiddenIgtCmd)
+
 	versionCmd.Flags().StringVarP(&format, "format", "f", "", "Use go template to format version output")
-
-	// versionCmd.AddCommand(ivCmd)
-	// versionCmd.AddCommand(irCmd)
-	// versionCmd.AddCommand(igtCmd)
-
 	RootCmd.AddCommand(versionCmd)
-
 }
