@@ -32,15 +32,8 @@ $ cec ls personal-files
 |  TYPE  |           NAME           |
 +--------+--------------------------+
 | Folder | personal-files           |
-| File   | Huge Photo-1.jpg         |
-| File   | Huge Photo.jpg           |
-| File   | IMG_9723.JPG             |
-| File   | P5021040.jpg             |
-| Folder | UPLOAD                   |
-| File   | anothercopy              |
-| File   | cec22                    |
+....
 | Folder | recycle_bin              |
-| File   | test_crud-1545206681.txt |
 | File   | test_crud-1545206846.txt |
 | File   | test_file2.txt           |
 +--------+--------------------------+
@@ -107,32 +100,12 @@ To verify that `cec` is correctly installed, simply run for instance:
 $ cec version
 # Should output something like below
 Cells Client
- Version:       2.1.0-rc1
- Built:         03 Mar 21 16:26 +0000
- Git commit:    4d09aa8e33fc60e65625e9f8435fd90b99c1b801
+ Version:       4.0.0-dev
+ Git commit:    ebf227c3519e16a91159c0e9a6304d3778827694
+ Timestamp:     2023-10-11T10:08:30Z
  OS/Arch:       linux/amd64
- Go version:    go1.15.5
+ Go version:    go1.21.3
 ```
-
-### Build from source
-
-If you rather want to directly compile the source code on your workstation, you require:
-
-- Go language 1.20 or higher (tested with latest 1.20 & 1.21), with a [correctly configured](https://golang.org/doc/install#testing) Go toolchain,
-- The necessary build utils (typically `make`, `gcc`, ...)
-- A git client
-
-You can then retrieve the source code and use the `Makefile` to compile a binary for your OS:
-
-```sh
-git clone https://github.com/pydio/cells-client.git
-cd ./cells-client
-make dev
-```
-
-#### Important Notes
-
-Cells Client uses the Go Modules mechanism to manage dependencies: you can checkout the code anywhere in your local machine, it does not have to be within your `GOPATH`.
 
 ## Connecting To Cells
 
@@ -169,6 +142,20 @@ cec config check-keyring
 ```
 
 Supported keyrings are MacOSX Keychain, Linux DBUS and Windows Credential Manager API.
+
+#### Troubleshooting
+
+When launching cells-client, following error is thrown:
+
+```sh
+2022/10/14 17:33:07 unexpected error during initialisation phase: exec: "dbus-launch": executable file not found in $PATH
+```
+
+This mostly happens when Cells Client cannot find a keyring that it expects to store credentials. Under Debian/Ubuntu Linux, you can install necessary software with (even if you do not use GNOME):
+
+```sh 
+sudo apt install dbus-launch libpam-gnome-keyring gnome-keyring-pkcs11
+```
 
 ### Non Persistent Mode
 
@@ -257,6 +244,24 @@ Note: when you update the Cells Client, you also have to update the completion f
 cec completion bash | sudo tee /etc/bash_completion.d/cec
 source /etc/bash_completion.d/cec
 ```
+
+## Build from source
+
+If you rather want to directly compile the source code on your workstation, you require:
+
+- Go language 1.20 or higher (tested with latest 1.20 & 1.21), with a [correctly configured](https://golang.org/doc/install#testing) Go toolchain,
+- The necessary build utils (typically `make`, `gcc`, ...)
+- A git client
+
+You can then retrieve the source code and use the `Makefile` to compile a binary for your OS:
+
+```sh
+git clone https://github.com/pydio/cells-client.git
+cd ./cells-client
+make dev
+```
+
+Cells Client uses the Go Modules mechanism to manage dependencies: you can checkout the code anywhere in your local machine, it does not have to be within your `GOPATH`.
 
 ## License
 
