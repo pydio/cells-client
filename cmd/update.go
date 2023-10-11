@@ -20,8 +20,7 @@ var (
 	updateToVersion string
 	updateDryRun    bool
 	devChannel      bool
-	// unstableChannel bool
-	defaultChannel = common.UpdateStableChannel
+	defaultChannel  = common.UpdateStableChannel
 )
 
 var updateBinCmd = &cobra.Command{
@@ -58,7 +57,6 @@ DESCRIPTION
 
 		if updateToVersion == "" {
 			// List versions
-			//c := color.New(color.FgGreen)
 			c := color.New(color.FgBlack)
 			c.Printf("\nNew packages are available in the %s channel:\n\n", defaultChannel)
 

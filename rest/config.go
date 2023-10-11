@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"os"
 
@@ -24,7 +23,7 @@ func GetConfigList() (*ConfigList, error) {
 	var configList ConfigList
 
 	// TODO this assumes config are located in the default folder
-	data, err := ioutil.ReadFile(GetConfigFilePath())
+	data, err := os.ReadFile(GetConfigFilePath())
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return &ConfigList{Configs: make(map[string]*CecConfig)}, nil

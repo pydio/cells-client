@@ -1,4 +1,6 @@
-// Package common centralize a "hard copy" of some of the objects that are defined in Cells
+// Package common centralizes constants for the cells-client application.
+//
+// It also holds a "hard copy" of some of the objects that are defined in Cells
 // to avoid getting all Cells dependency for just a few types. This will be refactored
 // once we have refactored and modulified the Cells main code.
 package common

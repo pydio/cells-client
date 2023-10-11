@@ -54,9 +54,10 @@ var configListCmd = &cobra.Command{
 		return nil
 	},
 }
+
 var configUseCmd = &cobra.Command{
 	Use:   "use",
-	Short: "Define as active, one of the current authentication profiles",
+	Short: "Define one of the authentication profiles as the current active one",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cl, err := rest.GetConfigList()
 		if err != nil {
@@ -99,9 +100,10 @@ var configUseCmd = &cobra.Command{
 		return nil
 	},
 }
+
 var configRemoveCmd = &cobra.Command{
 	Use:   "rm",
-	Short: "Remove a profile from the cells-client authentication profiles",
+	Short: "Remove a profile from the local storage",
 	RunE: func(cmd *cobra.Command, args []string) error {
 
 		cl, err := rest.GetConfigList()

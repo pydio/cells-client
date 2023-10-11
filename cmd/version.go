@@ -58,12 +58,6 @@ DESCRIPTION
    - Arch
 `,
 	Run: func(cm *cobra.Command, args []string) {
-		// var t time.Time
-		// if common.BuildStamp != "" {
-		// 	t, _ = time.Parse("2006-01-02T15:04:05", common.BuildStamp)
-		// } else {
-		// 	t = time.Now()
-		// }
 
 		sV := "N/A"
 		if v, e := hashivers.NewVersion(common.Version); e == nil {

@@ -149,17 +149,13 @@ func init() {
 	flags.String("config", "", "Location of Cells Client's config files, usually "+rest.DefaultConfigDirPath())
 	// flags.String("config", rest.DefaultConfigDirPath(), "Location of Cells Client's config files")
 	flags.StringP("url", "u", "", "The full URL of the target server")
-	flags.StringP("token", "t", "", "A valid Personal Access Token")
+	flags.StringP("token", "t", "", "A valid Personal Access Token (PAT)")
 	flags.String("login", "", "The user login, for Client auth only")
 	flags.String("password", "", "The user password, for Client auth only")
 
 	flags.Bool("skip_verify", false, "By default the Cells Client verifies the validity of TLS certificates for each communication. This option skips TLS certificate verification")
 	flags.Bool("skip_keyring", false, "Explicitly tell the tool to *NOT* try to use a keyring, even if present. Warning: sensitive information will be stored in clear text")
 	flags.Bool("no_cache", false, "Force token refresh at each call. This might slow down scripts with many calls")
-
-	// Unused for the time being
-	// flags.StringP("auth_type", "a", "", "Authorization mechanism used: Personnal Access Token (Default), OAuth2 flow or Client Credentials")
-	// flags.MarkHidden("auth_type")
 
 	bindViperFlags(flags, map[string]string{})
 }
@@ -214,7 +210,7 @@ func setUpEnvironment() error {
 
 // getCecConfigFromEnv first check if a valid connection has been configured with flags and/or ENV var
 // **before** it even tries to retrieve info for the local file configuration.
-// Also note that if both Token and User/Pwd are defined, we rather use PAT auth.
+// Also note that if both Token and User/Password are defined, we rather use the token for authentication.
 func getCecConfigFromEnv() rest.CecConfig {
 
 	// Flags and env variable have been managed by viper => we can rely on local variable
@@ -232,10 +228,6 @@ func getCecConfigFromEnv() rest.CecConfig {
 			c.User = login
 			validConfViaContext = true
 		}
-		// OAuth via ENV vars seems to be irrelevant for v2.1
-		// } else if len(idToken) > 0 && len(refreshToken) {
-		// 	authType = common.OAuthType
-		// 	validConfViaContext = true
 	}
 
 	if !validConfViaContext {

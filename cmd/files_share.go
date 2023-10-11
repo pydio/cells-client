@@ -6,8 +6,9 @@ import (
 	"os"
 	"path"
 
-	"github.com/pydio/cells-client/v4/rest"
 	"github.com/spf13/cobra"
+
+	"github.com/pydio/cells-client/v4/rest"
 )
 
 var shareNode = &cobra.Command{

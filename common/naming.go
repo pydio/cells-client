@@ -1,15 +1,12 @@
-// package common centralizes constants for the cells-client application.
 package common
 
 var (
 	// AppName stores the technical name of the Cells Client application.
 	AppName = "cells-client"
 
-	PackageType   string
-	PackageLabel  string
-	BuildStamp    string
-	BuildRevision string
-	Version       string
+	PackageType  string
+	PackageLabel string
+	Version      string
 )
 
 const (

@@ -20,7 +20,7 @@ func init() {
 
 var configAddCmd = &cobra.Command{
 	Use:   "add",
-	Short: "Configure a new connection to a running server and persist credentials locally for later use",
+	Short: "[Deprecated] Configure a new connection to a running server and persist credentials locally",
 	Long: `
 DESCRIPTION
 
@@ -79,7 +79,7 @@ DESCRIPTION
 WARNING
 
 This command has been deprecated in favor of '` + os.Args[0] + ` config add' command and will be removed in the future major version.
-Please update your scripts to be ready for v3.
+Please update your scripts to be ready.
 
 `,
 
@@ -113,7 +113,7 @@ Please update your scripts to be ready for v3.
 
 var legacyCheckKeyringCmd = &cobra.Command{
 	Use:    "check-keyring",
-	Short:  "[Deprecated] rather use '" + os.Args[0] + " config check-keyring'",
+	Short:  "[Deprecated] Rather use '" + os.Args[0] + " config check-keyring'",
 	Hidden: true,
 	Run: func(cmd *cobra.Command, args []string) {
 
