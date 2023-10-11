@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/pydio/cells-sdk-go/v4/client/user_service"
+	"github.com/pydio/cells-sdk-go/v4/models"
 
 	"github.com/pydio/cells-client/v4/rest"
 )
@@ -25,14 +26,13 @@ DESCRIPTION
 		if err != nil {
 			log.Fatal(err)
 		}
+		q := &models.IdmUserSingleQuery{Login: "*"}
+		r := &models.RestSearchUserRequest{Queries: []*models.IdmUserSingleQuery{q}}
 
-		// query := api.RestSearchUserRequest{}
-		params := &user_service.SearchUsersParams{
+		result, err := apiClient.UserService.SearchUsers(&user_service.SearchUsersParams{
+			Body:    r,
 			Context: ctx,
-		}
-
-		//assigns the users data retrieved above in the results variable
-		result, err := apiClient.UserService.SearchUsers(params)
+		})
 		if err != nil {
 			fmt.Printf("could not list users: %s\n", err.Error())
 			log.Fatal(err)
@@ -40,12 +40,17 @@ DESCRIPTION
 
 		//prints the login of the users retrieved previously
 		if len(result.Payload.Users) > 0 {
-			fmt.Printf("Found %d users\n", len(result.Payload.Users))
+			msg := fmt.Sprintf("Found %d users", len(result.Payload.Users))
+			if len(result.Payload.Users) == 1 {
+				msg = "Found 1 user"
+			}
+			fmt.Println(msg)
 			for _, u := range result.Payload.Users {
 				fmt.Println("  - " + u.Login)
 			}
+		} else {
+			fmt.Println("No user found")
 		}
-
 	},
 }
 
