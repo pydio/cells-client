@@ -241,9 +241,9 @@ EXAMPLES
 
 		// Add meta-info and table headers and render (if necessary)
 		rowNb := len(result.Payload.Nodes) - hiddenRowNb
-		legend := fmt.Sprintf("Listing: %d results for %s", rowNb, p)
+		legend := fmt.Sprintf("Found %d nodes at %s:", rowNb, p)
 		if p == "" { // root of the server
-			legend = fmt.Sprintf("Listing %d workspaces", rowNb)
+			legend = fmt.Sprintf("Listing %d workspaces:", rowNb)
 		}
 		switch dt {
 		case details:
@@ -258,9 +258,9 @@ EXAMPLES
 			break
 		default:
 			fmt.Println(legend)
-			fmt.Println("Get more info by adding the -d (details) flag")
 			table.SetHeader([]string{"Type", "Name"})
 			table.Render()
+			fmt.Println("Get more info by adding the -d (details) flag")
 		}
 	},
 }
