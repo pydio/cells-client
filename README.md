@@ -100,11 +100,11 @@ To verify that `cec` is correctly installed, simply run for instance:
 $ cec version
 # Should output something like below
 Cells Client
- Version:       4.0.0-dev
- Git commit:    ebf227c3519e16a91159c0e9a6304d3778827694
- Timestamp:     2023-10-11T10:08:30Z
- OS/Arch:       linux/amd64
- Go version:    go1.21.3
+ Version: 	    4.0.0
+ Git commit: 	f8ad2c9b23977e344da6fa241a297926b697d71c
+ Timestamp: 	2023-10-11T17:09:07Z
+ OS/Arch: 	    linux/amd64
+ Go version: 	go1.21.3
 ```
 
 ## Connecting To Cells

@@ -34,24 +34,24 @@ EXAMPLE
 
 # Given this listing in "test" workspace:
 
-$` + os.Args[0] + ` ls -d test
-Found 4 nodes at test:
-+--------+--------------------------------------+-----------+--------+-------------+
-|  TYPE  |                 UUID                 |   NAME    |  SIZE  |  MODIFIED   |
-+--------+--------------------------------------+-----------+--------+-------------+
-| Folder | 8ec79c1e-2464-40d0-a762-c36d8a9e5886 | .         | 2.6 MB | 2 years ago |
-| File   | 1c989848-5eff-49cf-8727-4db754e02c25 | buro4.jpg | 541 kB | 2 years ago |
-| File   | d796d7c5-dce9-4994-bca3-3cf03c27c39d | büro1.jpg | 1.0 MB | 2 years ago |
-| File   | 15f09f59-9171-4e25-809a-488e475dafa4 | büro2.jpg | 996 kB | 2 years ago |
-+--------+--------------------------------------+-----------+--------+-------------+
+$` + os.Args[0] + ` ls -d test  
+Found 4 nodes at test:  
++--------+--------------------------------------+-----------+--------+-------------+  
+|  TYPE  |                 UUID                 |   NAME    |  SIZE  |  MODIFIED   |  
++--------+--------------------------------------+-----------+--------+-------------+  
+| Folder | 8ec79c1e-2464-40d0-a762-c36d8a9e5886 | .         | 2.6 MB | 2 years ago |  
+| File   | 1c989848-5eff-49cf-8727-4db754e02c25 | buro4.jpg | 541 kB | 2 years ago |  
+| File   | d796d7c5-dce9-4994-bca3-3cf03c27c39d | büro1.jpg | 1.0 MB | 2 years ago |  
+| File   | 15f09f59-9171-4e25-809a-488e475dafa4 | büro2.jpg | 996 kB | 2 years ago |  
++--------+--------------------------------------+-----------+--------+-------------+  
 
-# List ACLs for file "buro4.txt":
+# List ACLs for file "buro4.txt":  
 ` + os.Args[0] + ` idm list-acls --uuid 1c989848-5eff-49cf-8727-4db754e02c25
 	
-# List ACLs for multiple files:
+# List ACLs for multiple files:  
 ` + os.Args[0] + ` idm list-acls -n 1c989848-5eff-49cf-8727-4db754e02c25 -n d796d7c5-dce9-4994-bca3-3cf03c27c39d
   
-# Delete all ACLs on a given node
+# Delete all ACLs on a given node  
 ` + os.Args[0] + ` idm list-acls -n 1c989848-5eff-49cf-8727-4db754e02c25 --delete
 
 `,
