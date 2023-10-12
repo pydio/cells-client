@@ -1,7 +1,13 @@
-# Changes between v2.2.0 and v4.0.0-beta1
+# Changes between v2.2.0 and v4.0.0
 
-[See Full Changelog](https://github.com/pydio/cells-client/compare/v2.2.0...v4.0.0-beta1)
+[See Full Changelog](https://github.com/pydio/cells-client/compare/v2.2.0...v4.0.0)
 
+- [#c0e66b4](https://github.com/pydio/cells-client/commit/c0e66b41c4fd84d35daa2ad6c6fef1b7a8ab7ba7): Add tip to install keyring on Ubuntu
+- [#94fb29c](https://github.com/pydio/cells-client/commit/94fb29cdca8c09f7d2f308e11b1bd5da1d5c9ed4): Limit ACL query, use table display
+- [#ebf227c](https://github.com/pydio/cells-client/commit/ebf227c3519e16a91159c0e9a6304d3778827694): Fix list users and groups commands
+- [#d92f664](https://github.com/pydio/cells-client/commit/d92f6648288262828a932b0560db7a6f730a5d02): Forgotten Go mod tidy
+- [#773ee00](https://github.com/pydio/cells-client/commit/773ee003f7fb6f77ac2f24e0460bb232cee74864): More cleaning before release
+- [#330655b](https://github.com/pydio/cells-client/commit/330655b73101ac1423120a13dd097beeb9211396): Release v4.0.0-beta1
 - [#921d698](https://github.com/pydio/cells-client/commit/921d6981b54e839d977005819a1c0a50021861f4): More clean before the release
 - [#d0d71b4](https://github.com/pydio/cells-client/commit/d0d71b4a99d54582cf9811fbc7891c6db6d8d3c2): Finally keep old commands for compatibility
 - [#4ac1bce](https://github.com/pydio/cells-client/commit/4ac1bce31a0b0818115a6ffb66513bc2a0c38d60): Fix quiet mode for version comparison
