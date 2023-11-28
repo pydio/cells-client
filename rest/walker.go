@@ -2,6 +2,7 @@ package rest
 
 import (
 	"fmt"
+	"github.com/pydio/cells-client/v4/common"
 	"io"
 	"os"
 	"path"
@@ -278,7 +279,6 @@ func (c *CrawlNode) upload(src *CrawlNode, bar *uiprogress.Bar) error {
 	if c.NewFileName != "" {
 		bname = c.NewFileName
 	}
-	var computeMD5 bool
 
 	fp := c.Join(c.FullPath, bname)
 	// Handle corner case when trying to upload a file and *folder* with same name already exists at target path
@@ -287,18 +287,12 @@ func (c *CrawlNode) upload(src *CrawlNode, bar *uiprogress.Bar) error {
 		return fmt.Errorf("cannot upload file to %s, a folder with same name already exists at target path", fp)
 	}
 	wrapper.double = false
-	if stats.Size() < (100 * 1024 * 1024) {
+	if stats.Size() <= common.UploadSwitchMultipart*(1024*1024) {
 		if _, err := PutFile(fp, wrapper, false, errChan); err != nil {
 			return err
 		}
-	} else {
-		// if the file is equal or bigger than 5GB we will compute the md5 and pass it as a custom metadata
-		if stats.Size() >= (5 * 1024 * 1024 * 1024) {
-			computeMD5 = true
-		}
-		if err := uploadManager(fp, wrapper, computeMD5, errChan); err != nil {
-			return err
-		}
+	} else if err := uploadManager(stats, fp, wrapper, errChan); err != nil {
+		return err
 	}
 	return nil
 }

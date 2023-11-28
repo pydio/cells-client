@@ -4,6 +4,8 @@ import (
 	"crypto/md5"
 	"fmt"
 	"io"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -214,7 +216,28 @@ func TreeCreateNodes(nodes []*models.TreeNode) error {
 	return nil
 }
 
-func uploadManager(path string, content io.ReadSeeker, computeMD5 bool, errChan ...chan error) error {
+func computePartSize(fileSize int64) (partSize int64, er error) {
+	partSize = common.UploadDefaultPartSize * (1024 * 1024)
+	maxNumberOfParts := common.UploadMaxPartsNumber
+	steps := common.UploadPartsSteps
+	if partSize%steps != 0 {
+		return 0, fmt.Errorf("PartSize must be a multiple of 10MB")
+	}
+
+	if mnp := os.Getenv("CELLS_MAX_PARTS_NUMBER"); mnp != "" {
+		if m, e := strconv.Atoi(mnp); e == nil {
+			maxNumberOfParts = int64(m)
+		}
+	}
+	if int64(float64(fileSize)/float64(partSize)) < maxNumberOfParts {
+		return
+	}
+	partSize = int64(float64(fileSize) / float64(maxNumberOfParts))
+	partSize = partSize + steps - partSize%steps
+	return
+}
+
+func uploadManager(stats os.FileInfo, path string, content io.ReadSeeker, errChan ...chan error) error {
 	s3Client, bucketName, err := GetS3Client()
 	if err != nil {
 		return err
@@ -225,10 +248,17 @@ func uploadManager(path string, content io.ReadSeeker, computeMD5 bool, errChan 
 		return err
 	}
 	sess.Config.S3DisableContentMD5Validation = aws.Bool(true)
+	ps, e := computePartSize(stats.Size())
+	if e != nil {
+		if errChan != nil {
+			errChan[0] <- e
+		}
+		return e
+	}
 
 	uploader := s3manager.NewUploader(sess, func(u *s3manager.Uploader) {
-		u.PartSize = 50 * 1024 * 1024
-		u.Concurrency = 3
+		u.PartSize = ps
+		u.Concurrency = common.UploadPartsConcurrency
 		u.RequestOptions = []request.Option{func(r *request.Request) {
 			// We call log.fatal inside the method if there is an error, no need to manage that here.
 			RefreshAndStoreIfRequired(DefaultConfig)
@@ -245,7 +275,7 @@ func uploadManager(path string, content io.ReadSeeker, computeMD5 bool, errChan 
 		Key:    aws.String(path),
 	}
 
-	if computeMD5 {
+	if !common.UploadSkipMD5 && stats.Size() > (5*1024*1024*1024) {
 		h := md5.New()
 		if _, err := io.Copy(h, content); err != nil {
 			return fmt.Errorf("could not copy md5: %v", err)

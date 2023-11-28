@@ -11,6 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/pydio/cells-client/v4/common"
 	"github.com/pydio/cells-client/v4/rest"
 )
 
@@ -204,5 +205,10 @@ func targetToFullPath(from, to string) (string, bool, bool, error) {
 func init() {
 	flags := scpFiles.PersistentFlags()
 	flags.BoolVarP(&scpQuiet, "quiet", "q", false, "Reduce the amount of logs")
+	flags.Int64Var(&common.UploadMaxPartsNumber, "max-parts-number", int64(5000), "Maximum number of parts, S3 supports 10000 but some storage require less parts.")
+	flags.Int64Var(&common.UploadDefaultPartSize, "part-size", int64(50), "Default part size (MB), must always be a multiple of 10MB. It will be recalculated based on the max-parts-number value.")
+	flags.IntVar(&common.UploadPartsConcurrency, "parts-concurrency", 3, "Number of concurrent part uploads.")
+	flags.BoolVar(&common.UploadSkipMD5, "skip-md5", false, "Do not compute md5 (for files bigger than 5GB, it is not computed by default for smaller files).")
+	flags.Int64Var(&common.UploadSwitchMultipart, "multipart-threshold", int64(100), "Files bigger than this size (in MB) will be uploaded using Multipart Upload.")
 	RootCmd.AddCommand(scpFiles)
 }

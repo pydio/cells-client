@@ -27,3 +27,12 @@ const (
 	// UpdateDevChannel enable updating before the official release for testing purposes.
 	UpdateDevChannel = "dev"
 )
+
+var (
+	UploadSwitchMultipart  = int64(100)
+	UploadDefaultPartSize  = int64(50)
+	UploadMaxPartsNumber   = int64(5000)
+	UploadPartsSteps       = int64(10 * 1024 * 1024)
+	UploadPartsConcurrency = 3
+	UploadSkipMD5          = false
+)
