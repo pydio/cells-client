@@ -20,7 +20,7 @@ func init() {
 
 var configAddCmd = &cobra.Command{
 	Use:   "add",
-	Short: "[Deprecated] Configure a new connection to a running server and persist credentials locally",
+	Short: "Configure a new connection to a running server and persist credentials locally",
 	Long: `
 DESCRIPTION
 
@@ -64,7 +64,7 @@ If no keyring is defined in the client machine, all information is stored in *cl
 var configureCmd = &cobra.Command{
 	Use:    "configure",
 	Hidden: true,
-	Short:  "Configure a connection to a running server and persist credentials locally for later use",
+	Short:  "[Deprecated] Configure a connection to a running server and persist credentials locally for later use",
 	Long: `
 DESCRIPTION
 

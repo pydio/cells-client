@@ -74,7 +74,7 @@ EXAMPLES
 					dirs = append(dirs, &models.TreeNode{Path: crt})
 					paths = append(paths, crt)
 				} else {
-					log.Fatalf("Could not find folder at %s, double check and correct your path or use the '-p' flags if you want to force the creation of missing ancestors.", crt)
+					log.Fatalf("Could not find folder at %s, double check and correct your path or use the '-p' flag if you want to force the creation of missing ancestors.", crt)
 				}
 			}
 		}
