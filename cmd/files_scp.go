@@ -40,7 +40,7 @@ DESCRIPTION
 SYNTAX
 
   Note that you can rename the file or base folder that you upload/download if:  
-   - last part of the target path is a new name that *does not exists*,  
+   - last part of the target path is a new name that *does not exist*,  
    - parent path exists and is a folder at target location.
 
 EXAMPLES
