@@ -1,42 +1,8 @@
-# Changes between v2.2.0 and v4.0.0
+# Changes between v4.0.0 and v4.0.1-alpha1
 
-[See Full Changelog](https://github.com/pydio/cells-client/compare/v2.2.0...v4.0.0)
+[See Full Changelog](https://github.com/pydio/cells-client/compare/v4.0.0...v4.0.1-alpha1)
 
-- [#c0e66b4](https://github.com/pydio/cells-client/commit/c0e66b41c4fd84d35daa2ad6c6fef1b7a8ab7ba7): Add tip to install keyring on Ubuntu
-- [#94fb29c](https://github.com/pydio/cells-client/commit/94fb29cdca8c09f7d2f308e11b1bd5da1d5c9ed4): Limit ACL query, use table display
-- [#ebf227c](https://github.com/pydio/cells-client/commit/ebf227c3519e16a91159c0e9a6304d3778827694): Fix list users and groups commands
-- [#d92f664](https://github.com/pydio/cells-client/commit/d92f6648288262828a932b0560db7a6f730a5d02): Forgotten Go mod tidy
-- [#773ee00](https://github.com/pydio/cells-client/commit/773ee003f7fb6f77ac2f24e0460bb232cee74864): More cleaning before release
-- [#330655b](https://github.com/pydio/cells-client/commit/330655b73101ac1423120a13dd097beeb9211396): Release v4.0.0-beta1
-- [#921d698](https://github.com/pydio/cells-client/commit/921d6981b54e839d977005819a1c0a50021861f4): More clean before the release
-- [#d0d71b4](https://github.com/pydio/cells-client/commit/d0d71b4a99d54582cf9811fbc7891c6db6d8d3c2): Finally keep old commands for compatibility
-- [#4ac1bce](https://github.com/pydio/cells-client/commit/4ac1bce31a0b0818115a6ffb66513bc2a0c38d60): Fix quiet mode for version comparison
-- [#097061d](https://github.com/pydio/cells-client/commit/097061d378cc36b0ca9c64f767b3713b81d2e563): Last TP update before beta
-- [#cffaab4](https://github.com/pydio/cells-client/commit/cffaab4492ea283c243a43287c2ba7cf4a61e8aa): Fix env definition, comment out go targets
-- [#1713e74](https://github.com/pydio/cells-client/commit/1713e741205da59bb69538c2b54fa445cb2ea947): Fix deprecation issue
-- [#9178871](https://github.com/pydio/cells-client/commit/91788711d05d83845261cf51528fd6a000cb6054): Add a warning for v4
-- [#74768e7](https://github.com/pydio/cells-client/commit/74768e7b68e5fcc868bd8cb704365f45aed41d32): Use a more standard target name
-- [#8dabb82](https://github.com/pydio/cells-client/commit/8dabb82e4516c91b6e5151796cf6621232ec4d39): Add cross compilation targets
-- [#1003f84](https://github.com/pydio/cells-client/commit/1003f84b2012440a7e693c9c6670f8a9df992757): Remove timestamp from build parameter, rework version command
-- [#89bcff2](https://github.com/pydio/cells-client/commit/89bcff2dd13da7a3db1b182200aabe960d6fc237): Prepare v4 release train
-- [#bfc77ff](https://github.com/pydio/cells-client/commit/bfc77ff68ec2356c701b47d896e3070cba626c5c): Update fork with latest version of the file from Cells repo
-- [#59657d9](https://github.com/pydio/cells-client/commit/59657d9a8949f708cc59a8a69820714ab3d66758): Use latest Cells Go SDK
-- [#cd8f21c](https://github.com/pydio/cells-client/commit/cd8f21c2332c129e4a72fedb74474cf726b83e2c): Update third party software
-- [#319db00](https://github.com/pydio/cells-client/commit/319db006be19a15f3df7751bfbadff3100259874): Update dependencies
-- [#6b4e4c4](https://github.com/pydio/cells-client/commit/6b4e4c456d5fd8fac25d286ca14f0b05480536f4): Move v2 back to root
-- [#b9eb0de](https://github.com/pydio/cells-client/commit/b9eb0de1639cd70d67e5f43cbb08fb8dadfd1fa4): Update dependencies
-- [#40d7d51](https://github.com/pydio/cells-client/commit/40d7d51186b4b10f0f45114c66e8c018c9e8214c): idm acl
-- [#58f7925](https://github.com/pydio/cells-client/commit/58f792538ec5e17a42c93768c4fa6a65a8b9c7f2): Add a quiet mode to version subcommands to avoid throwing an error when the test fails.
-- [#4990461](https://github.com/pydio/cells-client/commit/49904616fba040679852c1bc8a08260e4d750f44): Update TPs + clean
-- [#aff6d53](https://github.com/pydio/cells-client/commit/aff6d534fb914e10980c25b0119db42253731ffd): Fix typo in inline doc
-- [#cc7ca45](https://github.com/pydio/cells-client/commit/cc7ca4571abad10e71e92e4a957abdb24acd9830): Update TPs
-- [#52518a9](https://github.com/pydio/cells-client/commit/52518a9d46ba263f5dfb0c73e9c66a2bd6cb1e3d): Make git revision settable from outside the make script
-- [#3cc9e7d](https://github.com/pydio/cells-client/commit/3cc9e7d23d5112c233071d113a98e15957ec644b): Build with Go 19
-- [#790e09c](https://github.com/pydio/cells-client/commit/790e09c1c8af164a065c741d5e3ffad995edd41c): Update TPs, try go 18
-- [#bd33276](https://github.com/pydio/cells-client/commit/bd3327650197e000580ee559568556b5f998c173): Fix typo in comment
-- [#6c947b2](https://github.com/pydio/cells-client/commit/6c947b23d2bfeff61cd41432f538c262743256d2): Revert debug logs
-- [#e70c999](https://github.com/pydio/cells-client/commit/e70c999eee5c71e6f730c9f3eefcac558b115ea5): More logs to debug xgo build issue
-- [#7ffe3c8](https://github.com/pydio/cells-client/commit/7ffe3c8d4123b324aa6372366e69ec59d816d5d7): Update dependencies, adapt makefile to new conventions
-- [#789a136](https://github.com/pydio/cells-client/commit/789a1363b2dc5a20139aa2c89edd24e0710fe3f2): Add tips for multi-config support (v2.2+)
-- [#abbe64e](https://github.com/pydio/cells-client/commit/abbe64e98173b146a5fe50904fa0fc82c6c0f941): Update xgo image used for builds
-- [#581ac10](https://github.com/pydio/cells-client/commit/581ac10825d4140227e535ab61919343db25e2fe): Test XGo builds with go 16
+- [#c4312fc](https://github.com/pydio/cells-client/commit/c4312fcf6cc11812e40b42af83bbc5ce65bf8b59): Fix typos in in-line messages
+- [#3775e16](https://github.com/pydio/cells-client/commit/3775e16c40d747a34fd68e02e3c95b1be2225b0f): Add parameters to scp command to customize multipart uploads. Recompute size based on maximum number of parts.
+- [#cc30772](https://github.com/pydio/cells-client/commit/cc307723b56a74df71f146c56327d7bd5424cca0): Better example
+- [#6761230](https://github.com/pydio/cells-client/commit/6761230b3f9f5306d0d71fec94ad282b36ed1674): Next development cycle
