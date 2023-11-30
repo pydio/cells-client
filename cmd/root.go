@@ -15,6 +15,7 @@ import (
 
 	"github.com/pydio/cells-client/v4/common"
 	"github.com/pydio/cells-client/v4/rest"
+	cells_sdk "github.com/pydio/cells-sdk-go/v4"
 )
 
 const (
@@ -173,12 +174,12 @@ func setUpEnvironment() error {
 		rest.SetConfigFilePath(configFilePath)
 	}
 
-	// First Check if an environment is defined via the context (flags or ENV vars)
+	// Try first to establish context using flag or ENV vars
 	c := getCecConfigFromEnv()
 
-	if c.SdkConfig == nil || c.Url == "" {
+	// Fallback to registered account
+	if c.SdkConfig == nil {
 
-		// First check that we have a configuration file
 		_, err := os.ReadFile(configFilePath)
 		if err != nil {
 			return err
@@ -195,7 +196,7 @@ func setUpEnvironment() error {
 		}
 		c = activeConfig
 
-		// Refresh token if required
+		// Also refresh token if required
 		if refreshed, err := rest.RefreshIfRequired(c); refreshed {
 			if err != nil {
 				log.Fatal("SetUp env: could not refresh authentication token:", err)
@@ -204,7 +205,7 @@ func setUpEnvironment() error {
 		}
 	}
 
-	// Store current computed config in a public static singleton
+	// Expose active configuration (with credentials) as a static singleton
 	rest.DefaultConfig = c
 
 	return nil
@@ -216,34 +217,36 @@ func setUpEnvironment() error {
 func getCecConfigFromEnv() *rest.CecConfig {
 
 	// Flags and env variable have been managed by viper => we can rely on local variable
-	c := new(rest.CecConfig)
+	cecConfig := new(rest.CecConfig)
+	sdkConfig := new(cells_sdk.SdkConfig)
 	validConfViaContext := false
 
 	if len(serverURL) > 0 {
 		if len(token) > 0 { // PAT auth
 			authType = common.PatType
-			c.IdToken = token
+			sdkConfig.IdToken = token
 			validConfViaContext = true
 		} else if len(login) > 0 && len(password) > 0 { // client auth
 			authType = common.ClientAuthType
-			c.Password = password
-			c.User = login
+			sdkConfig.Password = password
+			sdkConfig.User = login
 			validConfViaContext = true
 		}
 	}
 
 	if !validConfViaContext {
-		return c
+		return cecConfig
 	}
 
-	c.Url = serverURL
-	c.AuthType = authType
+	sdkConfig.Url = serverURL
+	sdkConfig.SkipVerify = skipVerify
+	sdkConfig.UseTokenCache = !noCache
 
-	c.SkipVerify = skipVerify
-	c.SkipKeyring = skipKeyring
-	c.UseTokenCache = !noCache
+	cecConfig.SdkConfig = sdkConfig
+	cecConfig.AuthType = authType
+	cecConfig.SkipKeyring = skipKeyring
 
-	return c
+	return cecConfig
 }
 
 // handleLegagyParams manages backward compatibility for ENV variables and flags.
