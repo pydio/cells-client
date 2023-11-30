@@ -26,7 +26,7 @@ func GetS3Client() (*s3.S3, string, error) {
 	DefaultConfig.CustomHeaders = map[string]string{"User-Agent": common.AppName + "/" + common.Version}
 	s3Config := getS3ConfigFromSdkConfig(DefaultConfig)
 	bucketName := s3Config.Bucket
-	s3Client, e := s3transport.GetClient(&DefaultConfig.SdkConfig, &s3Config)
+	s3Client, e := s3transport.GetClient(DefaultConfig.SdkConfig, &s3Config)
 	if e != nil {
 		return nil, "", e
 	}
@@ -260,12 +260,15 @@ func uploadManager(stats os.FileInfo, path string, content io.ReadSeeker, errCha
 		u.PartSize = ps
 		u.Concurrency = common.UploadPartsConcurrency
 		u.RequestOptions = []request.Option{func(r *request.Request) {
-			// We call log.fatal inside the method if there is an error, no need to manage that here.
-			RefreshAndStoreIfRequired(DefaultConfig)
 
-			// s3Config := getS3ConfigFromSdkConfig(DefaultConfig)
-			// apiKey, _ := oidc.RetrieveToken(&DefaultConfig.SdkConfig)
-			// r.Config.WithCredentials(credentials.NewStaticCredentials(apiKey, s3Config.ApiSecret, ""))
+			if RefreshAndStoreIfRequired(DefaultConfig) {
+				// We must explicitely tell the uploader that the token has been refreshed
+				sess.Config.Credentials.Expire()
+				// s3Config := getS3ConfigFromSdkConfig(DefaultConfig)
+				// if testClient, e := s3transport.GetClient(DefaultConfig.SdkConfig, &s3Config); e == nil {
+				// 	r.Config.WithCredentials(testClient.Config.Credentials)
+				// }
+			}
 		}}
 	})
 

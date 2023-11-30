@@ -84,22 +84,24 @@ func OAuthExchangeCode(c *cells_sdk.SdkConfig, code, callbackUrl string) error {
 }
 
 // RefreshIfRequired refreshes the token inside the given conf if required.
-func RefreshIfRequired(conf *CecConfig) (bool, error) {
+func RefreshIfRequired(cecConfig *CecConfig) (bool, error) {
+	sdkConfig := cecConfig.SdkConfig
+
 	// No token to refresh
-	if conf.IdToken == "" || conf.RefreshToken == "" || conf.TokenExpiresAt == 0 {
+	if sdkConfig.IdToken == "" || sdkConfig.RefreshToken == "" || sdkConfig.TokenExpiresAt == 0 {
 		return false, nil
 	}
 	// Not yet expired, ignore
-	if time.Unix(int64(conf.TokenExpiresAt), 0).After(time.Now()) {
+	if time.Unix(int64(sdkConfig.TokenExpiresAt), 0).After(time.Now().Add(60 * time.Second)) {
 		return false, nil
 	}
 	data := url.Values{}
 	data.Add("grant_type", "refresh_token")
 	data.Add("client_id", common.AppName)
-	data.Add("refresh_token", conf.RefreshToken)
+	data.Add("refresh_token", sdkConfig.RefreshToken)
 	data.Add("scope", "openid email profile pydio offline")
 
-	httpReq, err := http.NewRequest("POST", conf.Url+"/oidc/oauth2/token", strings.NewReader(data.Encode()))
+	httpReq, err := http.NewRequest("POST", sdkConfig.Url+"/oidc/oauth2/token", strings.NewReader(data.Encode()))
 	if err != nil {
 		return true, err
 	}
@@ -107,7 +109,7 @@ func RefreshIfRequired(conf *CecConfig) (bool, error) {
 	httpReq.Header.Add("Cache-Control", "no-cache")
 
 	client := http.DefaultClient
-	if conf.SkipVerify {
+	if sdkConfig.SkipVerify {
 		client.Transport = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
 	}
 	res, err := client.Do(httpReq)
@@ -123,8 +125,8 @@ func RefreshIfRequired(conf *CecConfig) (bool, error) {
 	if err != nil {
 		return true, fmt.Errorf("could not unmarshall response with status %d: %s\nerror cause: %s", res.StatusCode, res.Status, err.Error())
 	}
-	conf.IdToken = respMap.AccessToken
-	conf.RefreshToken = respMap.RefreshToken
-	conf.TokenExpiresAt = int(time.Now().Unix()) + respMap.ExpiresIn
+	sdkConfig.IdToken = respMap.AccessToken
+	sdkConfig.RefreshToken = respMap.RefreshToken
+	sdkConfig.TokenExpiresAt = int(time.Now().Unix()) + respMap.ExpiresIn
 	return true, nil
 }

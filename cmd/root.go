@@ -26,7 +26,11 @@ const (
 
 var (
 	// These commands and respective children do not need an already configured environment.
-	infoCommands = []string{"help", "configure", "version", "completion", "oauth", "clear", "doc", "update", "token", "--help", "config"}
+	infoCommands = []string{
+		"help", "--help", "config", "version", "completion", "oauth", "clear", "doc", "update", "token",
+		// legacy
+		"configure",
+	}
 
 	configFilePath string
 
@@ -60,7 +64,7 @@ DESCRIPTION
 
 CONFIGURE
 
-  For the very first run, use '` + os.Args[0] + ` configure' to begin the command-line based configuration wizard. 
+  For the very first run, use '` + os.Args[0] + ` config add' to begin the command-line based configuration wizard. 
   This will guide you through a quick procedure to get you up and ready in no time.
 
   Non-sensitive information are stored by default in a ` + confFileName + ` file under ` + rest.DefaultConfigDirPath() + `
@@ -129,7 +133,7 @@ ENVIRONMENT
 					log.Fatalf("unexpected error during initialisation phase: %s", e.Error())
 				}
 				// TODO Directly launch necessary configure command
-				log.Fatalf("No configuration has been found, please make sure to run '%s configure' first.\n", os.Args[0])
+				log.Fatalf("No configuration has been found, please make sure to run '%s config add' first.\n", os.Args[0])
 			}
 		}
 	},
@@ -172,7 +176,7 @@ func setUpEnvironment() error {
 	// First Check if an environment is defined via the context (flags or ENV vars)
 	c := getCecConfigFromEnv()
 
-	if c.Url == "" {
+	if c.SdkConfig == nil || c.Url == "" {
 
 		// First check that we have a configuration file
 		_, err := os.ReadFile(configFilePath)
@@ -189,21 +193,19 @@ func setUpEnvironment() error {
 		if err != nil {
 			return err
 		}
-		c = *activeConfig
+		c = activeConfig
 
 		// Refresh token if required
-		if refreshed, err := rest.RefreshIfRequired(&c); refreshed {
+		if refreshed, err := rest.RefreshIfRequired(c); refreshed {
 			if err != nil {
-				log.Fatal("Could not refresh authentication token:", err)
+				log.Fatal("SetUp env: could not refresh authentication token:", err)
 			}
-			// Copy config as IdToken will be cleared
-			storeConfig := c
-			rest.UpdateConfig(&storeConfig)
+			rest.UpdateConfig(c)
 		}
 	}
 
 	// Store current computed config in a public static singleton
-	rest.DefaultConfig = &c
+	rest.DefaultConfig = c
 
 	return nil
 }
@@ -211,7 +213,7 @@ func setUpEnvironment() error {
 // getCecConfigFromEnv first check if a valid connection has been configured with flags and/or ENV var
 // **before** it even tries to retrieve info for the local file configuration.
 // Also note that if both Token and User/Password are defined, we rather use the token for authentication.
-func getCecConfigFromEnv() rest.CecConfig {
+func getCecConfigFromEnv() *rest.CecConfig {
 
 	// Flags and env variable have been managed by viper => we can rely on local variable
 	c := new(rest.CecConfig)
@@ -231,7 +233,7 @@ func getCecConfigFromEnv() rest.CecConfig {
 	}
 
 	if !validConfViaContext {
-		return *c
+		return c
 	}
 
 	c.Url = serverURL
@@ -241,7 +243,7 @@ func getCecConfigFromEnv() rest.CecConfig {
 	c.SkipKeyring = skipKeyring
 	c.UseTokenCache = !noCache
 
-	return *c
+	return c
 }
 
 // handleLegagyParams manages backward compatibility for ENV variables and flags.

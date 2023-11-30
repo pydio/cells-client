@@ -3,7 +3,7 @@ module github.com/pydio/cells-client/v4
 go 1.20
 
 require (
-	github.com/aws/aws-sdk-go v1.48.7
+	github.com/aws/aws-sdk-go v1.48.9
 	github.com/dustin/go-humanize v1.0.1
 	github.com/fatih/color v1.16.0
 	github.com/go-openapi/runtime v0.26.0
@@ -16,7 +16,7 @@ require (
 	github.com/manifoldco/promptui v0.9.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/ory/viper v1.7.5
-	github.com/pydio/cells-sdk-go/v4 v4.0.1
+	github.com/pydio/cells-sdk-go/v4 v4.0.2-alpha1
 	github.com/pydio/go v0.0.0-20191211170306-d00ac19450ef
 	github.com/shibukawa/configdir v0.0.0-20170330084843-e180dbdc8da0
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
@@ -76,3 +76,5 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+// replace github.com/pydio/cells-sdk-go/v4 => /home/bsinou/dev/git/github.com/pydio/cells-sdk-go

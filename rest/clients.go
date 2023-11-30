@@ -3,6 +3,7 @@ package rest
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -33,7 +34,7 @@ var (
 
 // CecConfig extends the default SdkConfig with custom parameters.
 type CecConfig struct {
-	cells_sdk.SdkConfig
+	*cells_sdk.SdkConfig
 	Label            string `json:"label"`
 	SkipKeyring      bool   `json:"skipKeyring"`
 	AuthType         string `json:"authType"`
@@ -50,11 +51,14 @@ func GetApiClient(anonymous ...bool) (context.Context, *client.PydioCellsRestAPI
 		anon = true
 	}
 	DefaultConfig.CustomHeaders = map[string]string{"User-Agent": common.AppName + "/" + common.Version}
+	b4Conf := DefaultConfig.SdkConfig
+	fmt.Println("GetApiClient, B4: ", b4Conf, "token:", b4Conf.IdToken)
 	var err error
 	once.Do(func() {
-		DefaultContext, DefaultTransport, err = sdk_rest.GetClientTransport(&DefaultConfig.SdkConfig, anon)
+		currConf := DefaultConfig.SdkConfig
+		fmt.Println("GetApiClient, in onceDo: ", currConf, "token:", b4Conf.IdToken)
+		DefaultContext, DefaultTransport, err = sdk_rest.GetClientTransport(currConf, anon)
 	})
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -72,7 +76,7 @@ func AuthenticatedGet(uri string) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	return AuthenticatedRequest(req, &DefaultConfig.SdkConfig)
+	return AuthenticatedRequest(req, DefaultConfig.SdkConfig)
 }
 
 // AuthenticatedRequest performs the passed request after adding an authorization Header.
@@ -136,9 +140,9 @@ func RefreshAndStoreIfRequired(c *CecConfig) bool {
 	}
 	if refreshed {
 		// Copy config as IdToken will be cleared
-		storeConfig := *c
+		storeConfig := CloneConfig(c)
 		if !c.SkipKeyring {
-			if err := ConfigToKeyring(&storeConfig); err != nil {
+			if err := ConfigToKeyring(storeConfig); err != nil {
 				return false
 			}
 		}
@@ -148,6 +152,13 @@ func RefreshAndStoreIfRequired(c *CecConfig) bool {
 	}
 
 	return refreshed
+}
+
+func CloneConfig(from *CecConfig) *CecConfig {
+	sdkClone := *from.SdkConfig
+	conClone := *from
+	conClone.SdkConfig = &sdkClone
+	return &conClone
 }
 
 func getS3ConfigFromSdkConfig(sConf *CecConfig) cells_sdk.S3Config {

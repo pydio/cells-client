@@ -16,6 +16,7 @@ import (
 
 	"github.com/pydio/cells-client/v4/common"
 	"github.com/pydio/cells-client/v4/rest"
+	cells_sdk "github.com/pydio/cells-sdk-go/v4"
 )
 
 var oauthIDToken string
@@ -58,6 +59,7 @@ USAGE
 		newConf := &rest.CecConfig{
 			SkipKeyring: skipKeyring,
 			AuthType:    common.OAuthType,
+			SdkConfig:   &cells_sdk.SdkConfig{},
 		}
 
 		var err error
@@ -192,7 +194,7 @@ func oAuthInteractive(newConf *rest.CecConfig) error {
 	}
 
 	fmt.Println(promptui.IconGood + " Now exchanging the code for a valid IdToken")
-	if err := rest.OAuthExchangeCode(&newConf.SdkConfig, returnCode, callbackUrl); err != nil {
+	if err := rest.OAuthExchangeCode(newConf.SdkConfig, returnCode, callbackUrl); err != nil {
 		log.Fatal(err)
 	}
 	fmt.Printf("%s Successfully Received Token. It will be refreshed at %v\n", promptui.IconGood, time.Unix(int64(newConf.TokenExpiresAt), 0))

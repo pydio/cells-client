@@ -66,25 +66,31 @@ func GetConfigList() (*ConfigList, error) {
 func UpdateConfig(newConf *CecConfig) error {
 
 	var err error
-	oldConfig := DefaultConfig
+	oldConfig := *DefaultConfig
 	defer func() {
 		if err != nil {
-			DefaultConfig = oldConfig
+			DefaultConfig = &oldConfig
 		}
 	}()
 
-	DefaultConfig = newConf
 	uname, e := RetrieveCurrentSessionLogin()
 	if e != nil {
 		return fmt.Errorf("could not connect to distant server with provided parameters. Discarding change")
 	}
-	newConf.User = uname
+	newConf.SdkConfig.User = uname
+	id := createID(newConf)
+	newConf.Label = createLabel(newConf)
+	newConf.CreatedAtVersion = common.Version
+	DefaultConfig = newConf
 
-	if err = ConfigToKeyring(newConf); err != nil {
-		// We still save info in clear text but warn the user
+	// We create a clone that will be persisted without sensitive info
+	persistedConf := CloneConfig(newConf)
+	if err = ConfigToKeyring(persistedConf); err != nil {
+		// Could not save credentials in the keyring: sensitive information are still in clear text.
+		// We warn the user but do not abort the process.
 		fmt.Println(promptui.IconWarn + " " + NoKeyringMsg)
-		// Force skip keyring flag in the config file to be explicit
-		newConf.SkipKeyring = true
+		// We also force the "Skip Keyring" flag in the config file to be explicit
+		persistedConf.SkipKeyring = true
 	}
 
 	cl, err := GetConfigList()
@@ -92,13 +98,8 @@ func UpdateConfig(newConf *CecConfig) error {
 		return err
 	}
 
-	id := createID(newConf)
-	newConf.Label = createLabel(newConf)
-	newConf.CreatedAtVersion = common.Version
-
-	cl.Configs[id] = newConf
+	cl.Configs[id] = persistedConf
 	cl.ActiveConfigID = id
-
 	return cl.SaveConfigFile()
 }
 
@@ -137,7 +138,7 @@ func (list *ConfigList) GetActiveConfig() (*CecConfig, error) {
 
 func createID(c *CecConfig) string {
 	var port string
-	u, _ := url.Parse(c.Url)
+	u, _ := url.Parse(c.SdkConfig.Url)
 	port = u.Port()
 	if port == "" {
 		switch u.Scheme {
@@ -152,8 +153,8 @@ func createID(c *CecConfig) string {
 }
 
 func createLabel(c *CecConfig) string {
-	u, _ := url.Parse(c.Url)
-	return fmt.Sprintf("%s@%s", c.User, u.Hostname())
+	u, _ := url.Parse(c.SdkConfig.Url)
+	return fmt.Sprintf("%s@%s", c.SdkConfig.User, u.Hostname())
 }
 
 // SaveConfigFile saves inside the config file.
