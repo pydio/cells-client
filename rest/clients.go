@@ -3,7 +3,6 @@ package rest
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -51,12 +50,9 @@ func GetApiClient(anonymous ...bool) (context.Context, *client.PydioCellsRestAPI
 		anon = true
 	}
 	DefaultConfig.CustomHeaders = map[string]string{"User-Agent": common.AppName + "/" + common.Version}
-	b4Conf := DefaultConfig.SdkConfig
-	fmt.Println("GetApiClient, B4: ", b4Conf, "token:", b4Conf.IdToken)
 	var err error
 	once.Do(func() {
 		currConf := DefaultConfig.SdkConfig
-		fmt.Println("GetApiClient, in onceDo: ", currConf, "token:", b4Conf.IdToken)
 		DefaultContext, DefaultTransport, err = sdk_rest.GetClientTransport(currConf, anon)
 	})
 	if err != nil {
