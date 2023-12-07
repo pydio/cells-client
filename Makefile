@@ -1,4 +1,4 @@
-DEV_VERSION=4.0.1-dev
+DEV_VERSION=4.0.2-dev
 ENV=env GOOS=linux
 TIMESTAMP:=$(shell date -u +%Y%m%d%H%M%S)
 CELLS_CLIENT_VERSION?=${DEV_VERSION}.${TIMESTAMP}
