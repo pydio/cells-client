@@ -8,6 +8,7 @@ import (
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 
+	"github.com/pydio/cells-client/v4/common"
 	"github.com/pydio/cells-client/v4/rest"
 )
 
@@ -19,7 +20,7 @@ DESCRIPTION
 
 	Clear all authentication data from your client machine.
 	
-	It deletes the ` + confFileName + ` from Cells Client working directory.
+	It deletes the ` + common.DefaultConfigFileName + ` from Cells Client working directory.
 	It also removes the sensitive data that has been stored in the keyring, if present.
 `,
 	Run: func(cmd *cobra.Command, args []string) {

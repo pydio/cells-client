@@ -26,6 +26,8 @@ const (
 	UpdateStableChannel = "stable"
 	// UpdateDevChannel enable updating before the official release for testing purposes.
 	UpdateDevChannel = "dev"
+
+	DefaultConfigFileName = "config.json"
 )
 
 var (

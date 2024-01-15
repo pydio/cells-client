@@ -8,6 +8,8 @@ import (
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 
+	cells_sdk "github.com/pydio/cells-sdk-go/v4"
+
 	"github.com/pydio/cells-client/v4/common"
 	"github.com/pydio/cells-client/v4/rest"
 )
@@ -33,8 +35,9 @@ USAGE
 	Run: func(cm *cobra.Command, args []string) {
 
 		newConf := &rest.CecConfig{
-			SkipKeyring: skipKeyring,
+			SdkConfig:   new(cells_sdk.SdkConfig),
 			AuthType:    common.ClientAuthType,
+			SkipKeyring: skipKeyring,
 		}
 
 		var err error

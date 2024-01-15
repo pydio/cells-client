@@ -17,12 +17,9 @@ type ConfigList struct {
 	Configs        map[string]*CecConfig
 }
 
-// GetConfigList retrieves the current configurations stored in the config.json file.
+// GetConfigList retrieves configuration stored in the config.json file.
 func GetConfigList() (*ConfigList, error) {
 
-	var configList ConfigList
-
-	// TODO this assumes config are located in the default folder
 	data, err := os.ReadFile(GetConfigFilePath())
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
@@ -32,6 +29,7 @@ func GetConfigList() (*ConfigList, error) {
 		}
 	}
 
+	var configList ConfigList
 	err = json.Unmarshal(data, &configList)
 	if err != nil {
 		return nil, fmt.Errorf("unknown config format: %s", err)
@@ -66,14 +64,14 @@ func GetConfigList() (*ConfigList, error) {
 func UpdateConfig(newConf *CecConfig) error {
 
 	var err error
-	oldConfig := *DefaultConfig
+	oldConfig := DefaultConfig
 	defer func() {
 		if err != nil {
-			DefaultConfig = &oldConfig
+			DefaultConfig = oldConfig
 		}
 	}()
 
-	uname, e := RetrieveCurrentSessionLogin()
+	uname, e := RetrieveSessionLogin(newConf)
 	if e != nil {
 		return fmt.Errorf("could not connect to distant server with provided parameters. Discarding change")
 	}

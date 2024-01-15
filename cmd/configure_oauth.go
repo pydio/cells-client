@@ -162,7 +162,6 @@ func oAuthInteractive(newConf *rest.CecConfig) error {
 		log.Fatal(err)
 	}
 	if openBrowser {
-		fmt.Println("Opening URL", directUrl)
 		go open.Run(directUrl)
 		h := &oAuthHandler{
 			done:  make(chan bool),

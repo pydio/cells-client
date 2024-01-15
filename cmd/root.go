@@ -5,24 +5,25 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/ory/viper"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
+	cells_sdk "github.com/pydio/cells-sdk-go/v4"
+
 	"github.com/pydio/cells-client/v4/common"
 	"github.com/pydio/cells-client/v4/rest"
-	cells_sdk "github.com/pydio/cells-sdk-go/v4"
 )
 
 const (
 	// EnvPrefix represents the prefix used to insure we have a reserved namespacce for cec specific ENV vars.
 	EnvPrefix = "CEC"
-
-	confFileName = "config.json"
 )
 
 var (
@@ -68,11 +69,11 @@ CONFIGURE
   For the very first run, use '` + os.Args[0] + ` config add' to begin the command-line based configuration wizard. 
   This will guide you through a quick procedure to get you up and ready in no time.
 
-  Non-sensitive information are stored by default in a ` + confFileName + ` file under ` + rest.DefaultConfigDirPath() + `
+  Non-sensitive information are stored by default in a ` + common.DefaultConfigFileName + ` file under ` + rest.DefaultConfigDirPath() + `
   You can change this location by using the --config flag.
   Entered (or retrieved, in the case of OAuth2 procedure) credentials will be stored in your keyring.
 
-  [Note]: if no keyring is found, all information are stored in clear text in the ` + confFileName + ` file, including sensitive bits.
+  [Note]: if no keyring is found, all information are stored in clear text in the ` + common.DefaultConfigFileName + ` file, including sensitive bits.
 
 ENVIRONMENT
 
@@ -87,8 +88,7 @@ ENVIRONMENT
     $ export CEC_URL=https://files.example.com; export CEC_TOKEN=<Your Personal Access Token>; 
     $ ` + os.Args[0] + ` ls
 
-`,
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+`, PersistentPreRun: func(cmd *cobra.Command, args []string) {
 
 		needSetup := true
 
@@ -108,7 +108,7 @@ ENVIRONMENT
 		if parPath == "" {
 			parPath = rest.DefaultConfigDirPath()
 		}
-		configFilePath = parPath + "/" + confFileName
+		configFilePath = filepath.Join(parPath, common.DefaultConfigFileName)
 
 		tmpURLStr := viper.GetString("url")
 		if tmpURLStr != "" {
@@ -151,7 +151,7 @@ func init() {
 
 	flags := RootCmd.PersistentFlags()
 
-	flags.String("config", "", "Location of Cells Client's config files, usually "+rest.DefaultConfigDirPath())
+	flags.String("config", "", fmt.Sprintf("Location of Cells Client's config files (default: %s)", rest.DefaultConfigFilePath()))
 	// flags.String("config", rest.DefaultConfigDirPath(), "Location of Cells Client's config files")
 	flags.StringP("url", "u", "", "The full URL of the target server")
 	flags.StringP("token", "t", "", "A valid Personal Access Token (PAT)")
@@ -170,7 +170,8 @@ func init() {
 // we check for a locally defined configuration file (that might also relies on local keyring to store sensitive info).
 func setUpEnvironment() error {
 
-	if configFilePath != "" { // override default location for the configuration file
+	if configFilePath != "" {
+		// override default location for the configuration file
 		rest.SetConfigFilePath(configFilePath)
 	}
 

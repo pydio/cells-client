@@ -23,8 +23,11 @@ import (
 )
 
 var (
-	// DefaultConfig  stores the current active config.
-	DefaultConfig    *CecConfig
+	// DefaultConfig  stores the current active config, we must initiliase it to avoid nil panic dereference
+	DefaultConfig *CecConfig = &CecConfig{
+		SkipKeyring: false,
+		SdkConfig:   &cells_sdk.SdkConfig{},
+	}
 	DefaultContext   context.Context
 	DefaultTransport openapiruntime.ClientTransport
 	configFilePath   string
@@ -64,6 +67,16 @@ func GetApiClient(anonymous ...bool) (context.Context, *client.PydioCellsRestAPI
 
 }
 
+// GetFrom performs an authenticated GET request for the passed URI (that must start with a '/').
+func GetFrom(config *CecConfig, uri string) (*http.Response, error) {
+	currURL := config.Url + uri
+	req, err := http.NewRequest("GET", currURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	return AuthenticatedRequest(req, config.SdkConfig)
+}
+
 // AuthenticatedGet performs an authenticated GET request for the passed URI (that must start with a '/').
 func AuthenticatedGet(uri string) (*http.Response, error) {
 
@@ -89,7 +102,12 @@ func AuthenticatedRequest(req *http.Request, sdkConfig *cells_sdk.SdkConfig) (*h
 		transport.WithBearer(tp),
 	)}
 
-	return httpClient.Do(req)
+	resp, e := httpClient.Do(req)
+	if e != nil {
+		log.Println("... Authenticated request failed, cause:", e)
+		return nil, e
+	}
+	return resp, nil
 }
 
 func GetConfigFilePath() string {
@@ -121,7 +139,7 @@ func DefaultConfigFilePath() string {
 	if err := os.MkdirAll(f, 0755); err != nil {
 		log.Fatal("Could not create local data dir - please check that you have the correct permissions for the folder -", f)
 	}
-	return filepath.Join(f, "config.json")
+	return filepath.Join(f, common.DefaultConfigFileName)
 }
 
 var refreshMux = &sync.Mutex{}
