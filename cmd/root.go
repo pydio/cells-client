@@ -21,11 +21,6 @@ import (
 	"github.com/pydio/cells-client/v4/rest"
 )
 
-const (
-	// EnvPrefix represents the prefix used to insure we have a reserved namespacce for cec specific ENV vars.
-	EnvPrefix = "CEC"
-)
-
 var (
 	// These commands and respective children do not need an already configured environment.
 	infoCommands = []string{
@@ -146,7 +141,7 @@ ENVIRONMENT
 
 func init() {
 	handleLegagyParams()
-	viper.SetEnvPrefix(EnvPrefix)
+	viper.SetEnvPrefix(common.EnvPrefix)
 	viper.AutomaticEnv()
 
 	flags := RootCmd.PersistentFlags()

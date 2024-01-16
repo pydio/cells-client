@@ -28,6 +28,9 @@ const (
 	UpdateDevChannel = "dev"
 
 	DefaultConfigFileName = "config.json"
+
+	// EnvPrefix insures we have a reserved namespace for Cells Client specific ENV vars.
+	EnvPrefix = "CEC"
 )
 
 var (
