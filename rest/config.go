@@ -6,11 +6,18 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"sync"
 
 	"github.com/manifoldco/promptui"
 
+	cells_sdk "github.com/pydio/cells-sdk-go/v4"
+	"github.com/pydio/cells-sdk-go/v4/transport"
+	sdk_rest "github.com/pydio/cells-sdk-go/v4/transport/rest"
+
 	"github.com/pydio/cells-client/v4/common"
 )
+
+var CellsStore = NewCellsConfigStore()
 
 type ConfigList struct {
 	ActiveConfigID string
@@ -61,50 +68,6 @@ func GetConfigList() (*ConfigList, error) {
 	return &configList, nil
 }
 
-func UpdateConfig(newConf *CecConfig) error {
-
-	var err error
-
-	// Failsafe if an error is thrown at save time
-	if DefaultConfig != nil && DefaultConfig.SdkConfig != nil {
-		oldConfig := CloneConfig(DefaultConfig)
-		defer func() {
-			if err != nil {
-				DefaultConfig = CloneConfig(oldConfig)
-			}
-		}()
-	}
-
-	uname, e := RetrieveSessionLogin(newConf)
-	if e != nil {
-		return fmt.Errorf("could not connect to distant server with provided parameters. Discarding change")
-	}
-	newConf.SdkConfig.User = uname
-	id := createID(newConf)
-	newConf.Label = createLabel(newConf)
-	newConf.CreatedAtVersion = common.Version
-	DefaultConfig = newConf
-
-	// We create a clone that will be persisted without sensitive info
-	persistedConf := CloneConfig(newConf)
-	if err = ConfigToKeyring(persistedConf); err != nil {
-		// Could not save credentials in the keyring: sensitive information are still in clear text.
-		// We warn the user but do not abort the process.
-		fmt.Println(promptui.IconWarn + " " + NoKeyringMsg)
-		// We also force the "Skip Keyring" flag in the config file to be explicit
-		persistedConf.SkipKeyring = true
-	}
-
-	cl, err := GetConfigList()
-	if err != nil {
-		return err
-	}
-
-	cl.Configs[id] = persistedConf
-	cl.ActiveConfigID = id
-	return cl.SaveConfigFile()
-}
-
 // Remove removes a config from the list of available configurations by its ID.
 func (list *ConfigList) Remove(id string) error {
 	if _, ok := list.Configs[id]; !ok {
@@ -138,25 +101,17 @@ func (list *ConfigList) GetActiveConfig() (*CecConfig, error) {
 	return c, nil
 }
 
-func createID(c *CecConfig) string {
-	var port string
-	u, _ := url.Parse(c.SdkConfig.Url)
-	port = u.Port()
-	if port == "" {
-		switch u.Scheme {
-		case "http":
-			port = "80"
-		case "https":
-			port = "443"
+func (list *ConfigList) GetStoredConfig(id string) (*CecConfig, error) {
+	c := list.Configs[id]
+	if c == nil {
+		return nil, fmt.Errorf("no config found for %s", id)
+	}
+	if !c.SkipKeyring {
+		if err := ConfigFromKeyring(c); err != nil {
+			return nil, err
 		}
 	}
-
-	return fmt.Sprintf("%s@%s:%s", c.User, u.Hostname(), port)
-}
-
-func createLabel(c *CecConfig) string {
-	u, _ := url.Parse(c.SdkConfig.Url)
-	return fmt.Sprintf("%s@%s", c.SdkConfig.User, u.Hostname())
+	return c, nil
 }
 
 // SaveConfigFile saves inside the config file.
@@ -166,4 +121,138 @@ func (list *ConfigList) SaveConfigFile() error {
 		return fmt.Errorf("could not save the config file, cause: %s", err)
 	}
 	return nil
+}
+
+// CellsConfigStore implements a Cells Client specific store for credentials.
+// It wraps a keyring if such a tool is correctly configured and can be reached by the client.
+type CellsConfigStore struct {
+	refreshLock sync.Mutex
+}
+
+func (store *CellsConfigStore) RefreshIfRequired(sdkConfig *cells_sdk.SdkConfig) (bool, error) {
+
+	// No token to refresh
+	if sdkConfig.IdToken == "" || sdkConfig.RefreshToken == "" || sdkConfig.TokenExpiresAt == 0 {
+		return false, nil
+	}
+
+	configId := id(sdkConfig)
+
+	// We can only launch *one* refresh token procedure at a time (and consume the refresh only once)
+	store.refreshLock.Lock()
+	defer store.refreshLock.Unlock()
+
+	list, err := GetConfigList()
+	if err != nil {
+		return false, fmt.Errorf("could not refresh retrieve stored config list to update, cause: %s", err.Error())
+	}
+	storedConf, err := list.GetStoredConfig(configId)
+	if err != nil {
+		return false, err
+	}
+	updated, err := sdk_rest.RefreshJwtToken(common.AppName, storedConf.SdkConfig)
+	if err != nil {
+		return false, fmt.Errorf("could not refresh JWT token for %s, cause: %s", configId, err.Error())
+	}
+	if !updated {
+		return true, nil
+	}
+
+	// Update values in the passed struct (we have a pointer)
+	sdkConfig.IdToken = storedConf.IdToken
+	sdkConfig.User = storedConf.User
+	sdkConfig.TokenExpiresAt = storedConf.TokenExpiresAt
+
+	// Store the updated config
+
+	//  Finally, if user name has changed.
+	newId := id(sdkConfig)
+	if newId != configId {
+		// // Set new active config
+		// list.SetActiveConfig(newId)
+		// Delete old config
+		list.Remove(configId)
+	}
+
+	err = UpdateConfig(storedConf)
+	if err != nil {
+		return true, fmt.Errorf("could not store updated conf for %s, cause: %s", newId, err.Error())
+	}
+	return true, nil
+}
+
+func NewCellsConfigStore() transport.ConfigStore {
+	return &CellsConfigStore{}
+}
+
+func UpdateConfig(newConf *CecConfig) error {
+
+	var err error
+
+	// Failsafe if an error is thrown at save time
+	if DefaultConfig != nil && DefaultConfig.SdkConfig != nil {
+		oldConfig := CloneConfig(DefaultConfig)
+		defer func() {
+			if err != nil {
+				DefaultConfig = CloneConfig(oldConfig)
+			}
+		}()
+	}
+
+	uname, e := RetrieveSessionLogin(newConf)
+	if e != nil {
+		return fmt.Errorf("could not connect to distant server with provided parameters. Discarding change")
+	}
+	newConf.SdkConfig.User = uname
+	id := createID(newConf)
+	newConf.Label = createLabel(newConf)
+	newConf.CreatedAtVersion = common.Version
+	DefaultConfig = newConf
+
+	cells_sdk.Log("... Got a new conf for %s", newConf.GetId())
+
+	// We create a clone that will be persisted without sensitive info
+	persistedConf := CloneConfig(newConf)
+	if err = ConfigToKeyring(persistedConf); err != nil {
+		// Could not save credentials in the keyring: sensitive information are still in clear text.
+		// We warn the user but do not abort the process.
+		fmt.Println(promptui.IconWarn + " " + NoKeyringMsg)
+		// We also force the "Skip Keyring" flag in the config file to be explicit
+		persistedConf.SkipKeyring = true
+	}
+
+	cl, err := GetConfigList()
+	if err != nil {
+		return err
+	}
+
+	cl.Configs[id] = persistedConf
+	cl.ActiveConfigID = id
+	return cl.SaveConfigFile()
+}
+
+// Helpers
+
+func createID(c *CecConfig) string {
+	return id(c.SdkConfig)
+}
+
+func id(conf *cells_sdk.SdkConfig) string {
+	var port string
+	u, _ := url.Parse(conf.Url)
+	port = u.Port()
+	if port == "" {
+		switch u.Scheme {
+		case "http":
+			port = "80"
+		case "https":
+			port = "443"
+		}
+	}
+	return fmt.Sprintf("%s@%s:%s", conf.User, u.Hostname(), port)
+}
+
+func createLabel(c *CecConfig) string {
+	u, _ := url.Parse(c.SdkConfig.Url)
+	return fmt.Sprintf("%s@%s", c.SdkConfig.User, u.Hostname())
 }

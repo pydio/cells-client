@@ -1,113 +1,27 @@
 package rest
 
 import (
-	"crypto/md5"
+	"context"
 	"fmt"
 	"io"
 	"os"
 	"strconv"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/request"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	smithy "github.com/aws/smithy-go"
 
 	"github.com/pydio/cells-sdk-go/v4/client/tree_service"
 	"github.com/pydio/cells-sdk-go/v4/models"
-	s3transport "github.com/pydio/cells-sdk-go/v4/transport/s3"
+	"github.com/pydio/cells-sdk-go/v4/transport"
+	sdk_s3 "github.com/pydio/cells-sdk-go/v4/transport/s3"
 
 	"github.com/pydio/cells-client/v4/common"
 )
 
-func GetS3Client() (*s3.S3, string, error) {
-	DefaultConfig.CustomHeaders = map[string]string{"User-Agent": common.AppName + "/" + common.Version}
-	s3Config := getS3ConfigFromSdkConfig(DefaultConfig)
-	bucketName := s3Config.Bucket
-	s3Client, e := s3transport.GetClient(DefaultConfig.SdkConfig, &s3Config)
-	if e != nil {
-		return nil, "", e
-	}
-	s3Client.Config.S3DisableContentMD5Validation = aws.Bool(true)
-	return s3Client, bucketName, e
-}
-
-func GetFile(pathToFile string) (io.Reader, int, error) {
-
-	s3Client, bucketName, e := GetS3Client()
-	if e != nil {
-		return nil, 0, e
-	}
-	hO, err := s3Client.HeadObject((&s3.HeadObjectInput{}).
-		SetBucket(bucketName).
-		SetKey(pathToFile),
-	)
-	if err != nil {
-		return nil, 0, err
-	}
-	size := int(*hO.ContentLength)
-
-	obj, err := s3Client.GetObject((&s3.GetObjectInput{}).
-		SetBucket(bucketName).
-		SetKey(pathToFile),
-	)
-	if err != nil {
-		return nil, 0, err
-	}
-	return obj.Body, size, nil
-}
-
-func PutFile(pathToFile string, content io.ReadSeeker, checkExists bool, errChan ...chan error) (*s3.PutObjectOutput, error) {
-	s3Client, bucketName, e := GetS3Client()
-	if e != nil {
-		return nil, e
-	}
-
-	key := pathToFile
-	var obj *s3.PutObjectOutput
-	e = RetryCallback(func() error {
-		var err error
-		obj, err = s3Client.PutObject((&s3.PutObjectInput{}).
-			SetBucket(bucketName).
-			SetKey(key).
-			SetBody(content),
-		)
-		if err != nil {
-			if len(errChan) > 0 {
-				errChan[0] <- err
-			} else {
-				fmt.Println(" ## Trying to Put file:", key, "Error:", err.Error())
-			}
-		}
-		return err
-	}, 3, 2*time.Second)
-	if e != nil {
-		return nil, fmt.Errorf("could not put object in bucket %s with key %s, \ncause: %s", bucketName, key, e.Error())
-	}
-
-	if checkExists {
-		fmt.Println(" ## Waiting for file to be indexed...")
-		// Now stat Node to make sure it is indexed
-		e = RetryCallback(func() error {
-			_, ok := StatNode(pathToFile)
-			if !ok {
-				return fmt.Errorf("cannot stat node just after PutFile operation")
-			}
-			return nil
-
-		}, 3, 3*time.Second)
-		if e != nil {
-			return nil, e
-		}
-		fmt.Println(" ## File correctly indexed")
-	}
-	return obj, nil
-}
-
 func StatNode(pathToFile string) (*models.TreeNode, bool) {
-
 	ctx, client, e := GetApiClient()
 	if e != nil {
 		return nil, false
@@ -121,7 +35,6 @@ func StatNode(pathToFile string) (*models.TreeNode, bool) {
 	} else {
 		return nil, false
 	}
-
 }
 
 func ListNodesPath(path string) ([]string, error) {
@@ -216,6 +129,208 @@ func TreeCreateNodes(nodes []*models.TreeNode) error {
 	return nil
 }
 
+func GetFile(pathToFile string) (io.Reader, int, error) {
+
+	s3Client, bucketName, e := getS3Client()
+	if e != nil {
+		return nil, 0, e
+	}
+	hO, err := s3Client.HeadObject(
+		context.TODO(),
+		&s3.HeadObjectInput{
+			Bucket: aws.String(bucketName),
+			Key:    aws.String(pathToFile),
+		},
+	)
+	if err != nil {
+		return nil, 0, err
+	}
+	size := int(*hO.ContentLength)
+
+	obj, err := s3Client.GetObject(
+		context.TODO(),
+		&s3.GetObjectInput{
+			Bucket: aws.String(bucketName),
+			Key:    aws.String(pathToFile),
+		},
+	)
+	if err != nil {
+		return nil, 0, err
+	}
+	return obj.Body, size, nil
+}
+
+func PutFile(pathToFile string, content io.ReadSeeker, checkExists bool, errChan ...chan error) (*s3.PutObjectOutput, error) {
+
+	s3Client, bucketName, e := getS3Client()
+	if e != nil {
+		return nil, e
+	}
+
+	key := pathToFile
+	var obj *s3.PutObjectOutput
+	e = RetryCallback(func() error {
+		var err error
+		obj, err = s3Client.PutObject(
+			context.TODO(),
+			&s3.PutObjectInput{
+				Bucket: aws.String(bucketName),
+				Key:    aws.String(pathToFile),
+				Body:   content,
+			},
+		)
+		if err != nil {
+			if len(errChan) > 0 {
+				errChan[0] <- err
+			} else {
+				fmt.Println(" ## Trying to Put file:", key, "Error:", err.Error())
+			}
+		}
+		return err
+	}, 3, 2*time.Second)
+	if e != nil {
+		return nil, fmt.Errorf("could not put object in bucket %s with key %s, \ncause: %s", bucketName, key, e.Error())
+	}
+
+	if checkExists {
+		fmt.Println(" ## Waiting for file to be indexed...")
+		// Now stat Node to make sure it is indexed
+		e = RetryCallback(func() error {
+			_, ok := StatNode(pathToFile)
+			if !ok {
+				return fmt.Errorf("cannot stat node just after PutFile operation")
+			}
+			return nil
+
+		}, 3, 3*time.Second)
+		if e != nil {
+			return nil, e
+		}
+		fmt.Println(" ## File correctly indexed")
+	}
+	return obj, nil
+}
+
+func getS3Client() (*s3.Client, string, error) {
+
+	// FIXME enrich User-Agent, use a constant for the key
+	DefaultConfig.CustomHeaders = map[string]string{
+		transport.UserAgentKey: common.AppName + "/" + common.Version,
+	}
+
+	// TODO this must be done before
+	s3Config := getS3ConfigFromSdkConfig(DefaultConfig)
+	bucketName := s3Config.Bucket
+
+	// options := make(func(*s3.Options), 0)
+	// options = append(
+	// 	func(o *s3.Options) { o.S3DisableContentMD5Validation = aws.Bool(true) },
+	// )
+	// 	s3Client, e := s3transport.GetClient(DefaultConfig.SdkConfig, &s3Config, options)
+	// s3Client.Config.S3DisableContentMD5Validation = aws.Bool(true)
+
+	s3Client, e := sdk_s3.GetClient(CellsStore, DefaultConfig.SdkConfig, &s3Config)
+	if e != nil {
+		return nil, "", e
+	}
+	return s3Client, bucketName, e
+}
+
+func uploadManager(stats os.FileInfo, path string, content io.ReadSeeker, errChan ...chan error) error {
+
+	s3Client, bucketName, err := getS3Client()
+	if err != nil {
+		return err
+	}
+
+	ps, err := computePartSize(stats.Size())
+	if err != nil {
+		if errChan != nil {
+			errChan[0] <- err
+		}
+		return err
+	}
+
+	uploader := manager.NewUploader(s3Client,
+		func(u *manager.Uploader) {
+			u.Concurrency = common.UploadPartsConcurrency
+			u.PartSize = ps
+		},
+	)
+
+	_, err = uploader.Upload(context.TODO(), &s3.PutObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(path),
+		Body:   content,
+	})
+
+	if err != nil {
+		if aerr, ok := err.(smithy.APIError); ok {
+			// TODO better error handling
+			errChan[0] <- aerr
+			return aerr
+		}
+		errChan[0] <- err
+		return err
+	}
+
+	return nil
+
+	// sess.Config.S3DisableContentMD5Validation = aws.Bool(true)
+	// ps, e := computePartSize(stats.Size())
+	// if e != nil {
+	// 	if errChan != nil {
+	// 		errChan[0] <- e
+	// 	}
+	// 	return e
+	// }
+
+	// uploader := s3manager.NewUploader(sess, func(u *s3manager.Uploader) {
+	// 	u.PartSize = ps
+	// 	u.Concurrency = common.UploadPartsConcurrency
+	// 	u.RequestOptions = []request.Option{func(r *request.Request) {
+
+	// 		if RefreshAndStoreIfRequired(DefaultConfig) {
+	// 			// We must explicitely tell the uploader that the token has been refreshed
+	// 			sess.Config.Credentials.Expire()
+	// 			// s3Config := getS3ConfigFromSdkConfig(DefaultConfig)
+	// 			// if testClient, e := s3transport.GetClient(DefaultConfig.SdkConfig, &s3Config); e == nil {
+	// 			// 	r.Config.WithCredentials(testClient.Config.Credentials)
+	// 			// }
+	// 		}
+	// 	}}
+	// })
+
+	// input := &s3manager.UploadInput{
+	// 	Body:   aws.ReadSeekCloser(content),
+	// 	Bucket: aws.String(bucketName),
+	// 	Key:    aws.String(path),
+	// }
+
+	// if !common.UploadSkipMD5 && stats.Size() > (5*1024*1024*1024) {
+	// 	h := md5.New()
+	// 	if _, err := io.Copy(h, content); err != nil {
+	// 		return fmt.Errorf("could not copy md5: %v", err)
+	// 	}
+	// 	input.Metadata = map[string]*string{"content-md5": aws.String(fmt.Sprintf("%x", h.Sum(nil)))}
+	// }
+
+	// _, _ = content.Seek(0, io.SeekStart)
+
+	// _, err = uploader.Upload(input)
+	// if err != nil {
+
+	// 	// FIXME
+	// 	// if aerr, ok := err.(awserr.Error); ok {
+	// 	// 	errChan[0] <- aerr
+	// 	// 	return aerr
+	// 	// }
+	// 	errChan[0] <- err
+	// 	return err
+	// }
+	// return nil
+}
+
 func computePartSize(fileSize int64) (partSize int64, er error) {
 	partSize = common.UploadDefaultPartSize * (1024 * 1024)
 	maxNumberOfParts := common.UploadMaxPartsNumber
@@ -235,67 +350,4 @@ func computePartSize(fileSize int64) (partSize int64, er error) {
 	partSize = int64(float64(fileSize) / float64(maxNumberOfParts))
 	partSize = partSize + steps - partSize%steps
 	return
-}
-
-func uploadManager(stats os.FileInfo, path string, content io.ReadSeeker, errChan ...chan error) error {
-	s3Client, bucketName, err := GetS3Client()
-	if err != nil {
-		return err
-	}
-
-	sess, err := session.NewSession(&s3Client.Config)
-	if err != nil {
-		return err
-	}
-	sess.Config.S3DisableContentMD5Validation = aws.Bool(true)
-	ps, e := computePartSize(stats.Size())
-	if e != nil {
-		if errChan != nil {
-			errChan[0] <- e
-		}
-		return e
-	}
-
-	uploader := s3manager.NewUploader(sess, func(u *s3manager.Uploader) {
-		u.PartSize = ps
-		u.Concurrency = common.UploadPartsConcurrency
-		u.RequestOptions = []request.Option{func(r *request.Request) {
-
-			if RefreshAndStoreIfRequired(DefaultConfig) {
-				// We must explicitely tell the uploader that the token has been refreshed
-				sess.Config.Credentials.Expire()
-				// s3Config := getS3ConfigFromSdkConfig(DefaultConfig)
-				// if testClient, e := s3transport.GetClient(DefaultConfig.SdkConfig, &s3Config); e == nil {
-				// 	r.Config.WithCredentials(testClient.Config.Credentials)
-				// }
-			}
-		}}
-	})
-
-	input := &s3manager.UploadInput{
-		Body:   aws.ReadSeekCloser(content),
-		Bucket: aws.String(bucketName),
-		Key:    aws.String(path),
-	}
-
-	if !common.UploadSkipMD5 && stats.Size() > (5*1024*1024*1024) {
-		h := md5.New()
-		if _, err := io.Copy(h, content); err != nil {
-			return fmt.Errorf("could not copy md5: %v", err)
-		}
-		input.Metadata = map[string]*string{"content-md5": aws.String(fmt.Sprintf("%x", h.Sum(nil)))}
-	}
-
-	_, _ = content.Seek(0, io.SeekStart)
-
-	_, err = uploader.Upload(input)
-	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			errChan[0] <- aerr
-			return aerr
-		}
-		errChan[0] <- err
-		return err
-	}
-	return nil
 }

@@ -146,7 +146,7 @@ func retrieveLegacyKey(conf *CecConfig) error {
 			conf.IdToken = parts[0]
 			conf.RefreshToken = parts[1]
 			conf.AuthType = common.OAuthType
-			RefreshIfRequired(conf)
+			CellsStore.RefreshIfRequired(conf.SdkConfig)
 			_ = keyring.Delete(getKeyringServiceName(), key(conf.Url, "IdToken"))
 		} else {
 			return e

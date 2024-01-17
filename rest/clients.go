@@ -2,7 +2,6 @@ package rest
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"net/http"
 	"os"
@@ -24,10 +23,7 @@ import (
 
 var (
 	// DefaultConfig  stores the current active config, we must initiliase it to avoid nil panic dereference
-	DefaultConfig *CecConfig = &CecConfig{
-		SkipKeyring: false,
-		SdkConfig:   &cells_sdk.SdkConfig{},
-	}
+	DefaultConfig    *CecConfig
 	DefaultContext   context.Context
 	DefaultTransport openapiruntime.ClientTransport
 	configFilePath   string
@@ -41,6 +37,16 @@ type CecConfig struct {
 	SkipKeyring      bool   `json:"skipKeyring"`
 	AuthType         string `json:"authType"`
 	CreatedAtVersion string `json:"createdAtVersion"`
+}
+
+func DefaultCecConfig() *CecConfig {
+	return &CecConfig{
+		SdkConfig: &cells_sdk.SdkConfig{
+			UseTokenCache: true,
+		},
+		AuthType:    common.OAuthType,
+		SkipKeyring: false,
+	}
 }
 
 // GetApiClient connects to the Pydio Cells server defined by this config, by sending an authentication
@@ -142,31 +148,30 @@ func DefaultConfigFilePath() string {
 	return filepath.Join(f, common.DefaultConfigFileName)
 }
 
-var refreshMux = &sync.Mutex{}
+// var refreshMux = &sync.Mutex{}
 
-func RefreshAndStoreIfRequired(c *CecConfig) bool {
-	refreshMux.Lock()
-	defer refreshMux.Unlock()
+// func RefreshAndStoreIfRequired(c *CecConfig) bool {
+// 	refreshMux.Lock()
+// 	defer refreshMux.Unlock()
 
-	refreshed, err := RefreshIfRequired(c)
-	if err != nil {
-		log.Fatal("Could not refresh authentication token:", err)
-	}
-	if refreshed {
-		// Copy config as IdToken will be cleared
-		storeConfig := CloneConfig(c)
-		if !c.SkipKeyring {
-			if err := ConfigToKeyring(storeConfig); err != nil {
-				return false
-			}
-		}
-		// Save config to renew TokenExpireAt
-		confData, _ := json.MarshalIndent(&storeConfig, "", "\t")
-		os.WriteFile(GetConfigFilePath(), confData, 0600)
-	}
-
-	return refreshed
-}
+// 	refreshed, err := rest.RefreshIfRequired(common.AppName, c.SdkConfig)
+// 	if err != nil {
+// 		log.Fatal("Could not refresh authentication token:", err)
+// 	}
+// 	if refreshed {
+// 		// Copy config as IdToken will be cleared
+// 		storeConfig := CloneConfig(c)
+// 		if !c.SkipKeyring {
+// 			if err := ConfigToKeyring(storeConfig); err != nil {
+// 				return false
+// 			}
+// 		}
+// 		// Save config to renew TokenExpireAt
+// 		confData, _ := json.MarshalIndent(&storeConfig, "", "\t")
+// 		os.WriteFile(GetConfigFilePath(), confData, 0600)
+// 	}
+// 	return refreshed
+// }
 
 func CloneConfig(from *CecConfig) *CecConfig {
 	sdkClone := *from.SdkConfig

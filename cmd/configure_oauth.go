@@ -197,6 +197,8 @@ func oAuthInteractive(newConf *rest.CecConfig) error {
 	}
 	fmt.Printf("%s Successfully Received Token. It will be refreshed at %v\n", promptui.IconGood, time.Unix(int64(newConf.TokenExpiresAt), 0))
 
+	// cells_sdk.Log("... Configured OAuth for [%s]", newConf.GetId())
+
 	return nil
 }
 

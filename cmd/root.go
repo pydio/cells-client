@@ -193,11 +193,8 @@ func setUpEnvironment() error {
 		c = activeConfig
 
 		// Also refresh token if required
-		if refreshed, err := rest.RefreshIfRequired(c); refreshed {
-			if err != nil {
-				log.Fatal("SetUp env: could not refresh authentication token:", err)
-			}
-			rest.UpdateConfig(c)
+		if _, err := rest.CellsStore.RefreshIfRequired(c.SdkConfig); err != nil {
+			log.Fatal("SetUp env: could not refresh authentication token:", err)
 		}
 	}
 
