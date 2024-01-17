@@ -40,4 +40,5 @@ var (
 	UploadPartsSteps       = int64(10 * 1024 * 1024)
 	UploadPartsConcurrency = 3
 	UploadSkipMD5          = false
+	S3RequestTimeout       = int64(-1)
 )

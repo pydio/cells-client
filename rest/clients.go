@@ -189,5 +189,6 @@ func getS3ConfigFromSdkConfig(sConf *CecConfig) cells_sdk.S3Config {
 	c.IsDebug = false
 	c.Region = "us-east-1"
 	c.Endpoint = sConf.Url
+	c.RequestTimout = int(common.S3RequestTimeout)
 	return c
 }

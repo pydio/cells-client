@@ -210,5 +210,6 @@ func init() {
 	flags.IntVar(&common.UploadPartsConcurrency, "parts-concurrency", 3, "Number of concurrent part uploads.")
 	flags.BoolVar(&common.UploadSkipMD5, "skip-md5", false, "Do not compute md5 (for files bigger than 5GB, it is not computed by default for smaller files).")
 	flags.Int64Var(&common.UploadSwitchMultipart, "multipart-threshold", int64(100), "Files bigger than this size (in MB) will be uploaded using Multipart Upload.")
+	flags.Int64Var(&common.S3RequestTimeout, "timeout", int64(-1), "Set an arbitrary timeout for each upload request (in sec.), default is no timeout.")
 	RootCmd.AddCommand(scpFiles)
 }
