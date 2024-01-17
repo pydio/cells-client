@@ -154,18 +154,17 @@ func (store *CellsConfigStore) RefreshIfRequired(sdkConfig *cells_sdk.SdkConfig)
 	if err != nil {
 		return false, fmt.Errorf("could not refresh JWT token for %s, cause: %s", configId, err.Error())
 	}
-	if !updated {
-		return true, nil
-	}
-
 	// Update values in the passed struct (we have a pointer)
 	sdkConfig.IdToken = storedConf.IdToken
 	sdkConfig.User = storedConf.User
 	sdkConfig.TokenExpiresAt = storedConf.TokenExpiresAt
+	if !updated { // we yet have reloaded the token from the central store, in case it has been changed in another thread in the meantime.
+		return false, nil
+	}
 
 	// Store the updated config
 
-	//  Finally, if user name has changed.
+	//  Finally, if user name has changed. Not sure it is really relevant here.
 	newId := id(sdkConfig)
 	if newId != configId {
 		// // Set new active config
@@ -209,7 +208,7 @@ func UpdateConfig(newConf *CecConfig) error {
 	newConf.CreatedAtVersion = common.Version
 	DefaultConfig = newConf
 
-	cells_sdk.Log("... Got a new conf for %s", newConf.GetId())
+	// cells_sdk.Log("... Got a new conf for %s", newConf.GetId())
 
 	// We create a clone that will be persisted without sensitive info
 	persistedConf := CloneConfig(newConf)

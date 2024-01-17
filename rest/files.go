@@ -222,17 +222,11 @@ func getS3Client() (*s3.Client, string, error) {
 	s3Config := getS3ConfigFromSdkConfig(DefaultConfig)
 	bucketName := s3Config.Bucket
 
-	// options := make(func(*s3.Options), 0)
-	// options = append(
-	// 	func(o *s3.Options) { o.S3DisableContentMD5Validation = aws.Bool(true) },
-	// )
-	// 	s3Client, e := s3transport.GetClient(DefaultConfig.SdkConfig, &s3Config, options)
-	// s3Client.Config.S3DisableContentMD5Validation = aws.Bool(true)
-
 	s3Client, e := sdk_s3.GetClient(CellsStore, DefaultConfig.SdkConfig, &s3Config)
 	if e != nil {
 		return nil, "", e
 	}
+	// s3Client.Config.S3DisableContentMD5Validation = aws.Bool(true)
 	return s3Client, bucketName, e
 }
 
