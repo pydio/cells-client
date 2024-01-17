@@ -2,7 +2,6 @@ package rest
 
 import (
 	"fmt"
-	"github.com/pydio/cells-client/v4/common"
 	"io"
 	"os"
 	"path"
@@ -11,6 +10,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/pydio/cells-client/v4/common"
 
 	"github.com/gosuri/uiprogress"
 
@@ -280,18 +281,18 @@ func (c *CrawlNode) upload(src *CrawlNode, bar *uiprogress.Bar) error {
 		bname = c.NewFileName
 	}
 
-	fp := c.Join(c.FullPath, bname)
+	fullpath := c.Join(c.FullPath, bname)
 	// Handle corner case when trying to upload a file and *folder* with same name already exists at target path
-	if tn, b := StatNode(fp); b && *tn.Type == models.TreeNodeTypeCOLLECTION {
+	if tn, b := StatNode(fullpath); b && *tn.Type == models.TreeNodeTypeCOLLECTION {
 		// target root is not a folder, fail fast.
-		return fmt.Errorf("cannot upload file to %s, a folder with same name already exists at target path", fp)
+		return fmt.Errorf("cannot upload file to %s, a folder with same name already exists at target path", fullpath)
 	}
 	wrapper.double = false
 	if stats.Size() <= common.UploadSwitchMultipart*(1024*1024) {
-		if _, err := PutFile(fp, wrapper, false, errChan); err != nil {
+		if _, err := PutFile(fullpath, wrapper, false, errChan); err != nil {
 			return err
 		}
-	} else if err := uploadManager(stats, fp, wrapper, errChan); err != nil {
+	} else if err := uploadManager(stats, fullpath, wrapper, errChan); err != nil {
 		return err
 	}
 	return nil

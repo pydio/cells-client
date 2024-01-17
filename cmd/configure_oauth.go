@@ -14,9 +14,10 @@ import (
 	"github.com/skratchdot/open-golang/open"
 	"github.com/spf13/cobra"
 
+	sdk_rest "github.com/pydio/cells-sdk-go/v4/transport/rest"
+
 	"github.com/pydio/cells-client/v4/common"
 	"github.com/pydio/cells-client/v4/rest"
-	cells_sdk "github.com/pydio/cells-sdk-go/v4"
 )
 
 var oauthIDToken string
@@ -56,11 +57,9 @@ USAGE
 `,
 	Run: func(cm *cobra.Command, args []string) {
 
-		newConf := &rest.CecConfig{
-			SkipKeyring: skipKeyring,
-			AuthType:    common.OAuthType,
-			SdkConfig:   &cells_sdk.SdkConfig{},
-		}
+		newConf := rest.DefaultCecConfig()
+		newConf.AuthType = common.OAuthType
+		newConf.SkipKeyring = skipKeyring
 
 		var err error
 		if serverURL != "" && oauthIDToken != "" {
@@ -157,7 +156,7 @@ func oAuthInteractive(newConf *rest.CecConfig) error {
 	// Starting authentication process
 	var returnCode string
 	state := rest.RandString(16)
-	directUrl, callbackUrl, err := rest.OAuthPrepareUrl(newConf.Url, state, openBrowser)
+	directUrl, callbackUrl, err := sdk_rest.OAuthPrepareUrl(common.AppName, newConf.Url, state, openBrowser)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -193,7 +192,7 @@ func oAuthInteractive(newConf *rest.CecConfig) error {
 	}
 
 	fmt.Println(promptui.IconGood + " Now exchanging the code for a valid IdToken")
-	if err := rest.OAuthExchangeCode(newConf.SdkConfig, returnCode, callbackUrl); err != nil {
+	if err := sdk_rest.OAuthExchangeCode(common.AppName, newConf.SdkConfig, returnCode, callbackUrl); err != nil {
 		log.Fatal(err)
 	}
 	fmt.Printf("%s Successfully Received Token. It will be refreshed at %v\n", promptui.IconGood, time.Unix(int64(newConf.TokenExpiresAt), 0))

@@ -64,12 +64,16 @@ func GetConfigList() (*ConfigList, error) {
 func UpdateConfig(newConf *CecConfig) error {
 
 	var err error
-	oldConfig := DefaultConfig
-	defer func() {
-		if err != nil {
-			DefaultConfig = oldConfig
-		}
-	}()
+
+	// Failsafe if an error is thrown at save time
+	if DefaultConfig != nil && DefaultConfig.SdkConfig != nil {
+		oldConfig := CloneConfig(DefaultConfig)
+		defer func() {
+			if err != nil {
+				DefaultConfig = CloneConfig(oldConfig)
+			}
+		}()
+	}
 
 	uname, e := RetrieveSessionLogin(newConf)
 	if e != nil {
