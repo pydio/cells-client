@@ -39,16 +39,16 @@ DESCRIPION
 		}
 
 		if len(result.Payload.Groups) > 0 {
-			msg := fmt.Sprintf("Found %d groups", len(result.Payload.Groups))
+			msg := fmt.Sprintf("Found %d groups:", len(result.Payload.Groups))
 			if len(result.Payload.Groups) == 1 {
-				msg = "Found 1 group"
+				msg = "Found 1 group:"
 			}
 			fmt.Println(msg)
 			for _, u := range result.Payload.Groups {
 				fmt.Println("  - " + u.GroupLabel)
 			}
 		} else {
-			fmt.Println("No group found")
+			fmt.Println("No group found.")
 		}
 	},
 }

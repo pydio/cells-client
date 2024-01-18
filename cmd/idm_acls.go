@@ -83,7 +83,7 @@ Found 4 nodes at test:
 
 		if len(result.Payload.ACLs) > 0 {
 
-			fmt.Printf("... Found %d ACLs\n", len(result.Payload.ACLs))
+			fmt.Printf("Found %d ACLs:\n", len(result.Payload.ACLs))
 
 			for _, u := range result.Payload.ACLs {
 				fmt.Println("  - " + u.NodeID + " | " + u.RoleID + " | " + u.Action.Name + " | " + u.WorkspaceID)
@@ -104,7 +104,7 @@ Found 4 nodes at test:
 		if listAclsDeleteResult {
 			pr := promptui.Prompt{Label: "Do you want to delete all these ACLs ?", IsConfirm: true}
 			if _, e := pr.Run(); e != nil {
-				fmt.Println("Aborting operation")
+				fmt.Println("Aborting operation...")
 				return
 			}
 			for _, u := range result.Payload.ACLs {

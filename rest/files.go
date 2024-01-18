@@ -213,7 +213,7 @@ func PutFile(pathToFile string, content io.ReadSeeker, checkExists bool, errChan
 
 func getS3Client() (*s3.Client, string, error) {
 
-	// FIXME enrich User-Agent, use a constant for the key
+	// FIXME enrich User-Agent
 	DefaultConfig.CustomHeaders = map[string]string{
 		transport.UserAgentKey: common.AppName + "/" + common.Version,
 	}
@@ -222,7 +222,7 @@ func getS3Client() (*s3.Client, string, error) {
 	s3Config := getS3ConfigFromSdkConfig(DefaultConfig)
 	bucketName := s3Config.Bucket
 
-	s3Client, e := sdk_s3.GetClient(CellsStore, DefaultConfig.SdkConfig, &s3Config)
+	s3Client, e := sdk_s3.GetClient(CellsStore, DefaultConfig.SdkConfig, s3Config)
 	if e != nil {
 		return nil, "", e
 	}

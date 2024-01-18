@@ -39,6 +39,7 @@ type CecConfig struct {
 	CreatedAtVersion string `json:"createdAtVersion"`
 }
 
+// DefaultCecConfig simply creates a new configuration struct.
 func DefaultCecConfig() *CecConfig {
 	return &CecConfig{
 		SdkConfig: &cells_sdk.SdkConfig{
@@ -148,31 +149,6 @@ func DefaultConfigFilePath() string {
 	return filepath.Join(f, common.DefaultConfigFileName)
 }
 
-// var refreshMux = &sync.Mutex{}
-
-// func RefreshAndStoreIfRequired(c *CecConfig) bool {
-// 	refreshMux.Lock()
-// 	defer refreshMux.Unlock()
-
-// 	refreshed, err := rest.RefreshIfRequired(common.AppName, c.SdkConfig)
-// 	if err != nil {
-// 		log.Fatal("Could not refresh authentication token:", err)
-// 	}
-// 	if refreshed {
-// 		// Copy config as IdToken will be cleared
-// 		storeConfig := CloneConfig(c)
-// 		if !c.SkipKeyring {
-// 			if err := ConfigToKeyring(storeConfig); err != nil {
-// 				return false
-// 			}
-// 		}
-// 		// Save config to renew TokenExpireAt
-// 		confData, _ := json.MarshalIndent(&storeConfig, "", "\t")
-// 		os.WriteFile(GetConfigFilePath(), confData, 0600)
-// 	}
-// 	return refreshed
-// }
-
 func CloneConfig(from *CecConfig) *CecConfig {
 	sdkClone := *from.SdkConfig
 	conClone := *from
@@ -180,15 +156,9 @@ func CloneConfig(from *CecConfig) *CecConfig {
 	return &conClone
 }
 
-func getS3ConfigFromSdkConfig(sConf *CecConfig) cells_sdk.S3Config {
-	var c cells_sdk.S3Config
-	c.Bucket = "io"
-	c.ApiKey = "gateway"
-	c.ApiSecret = "gatewaysecret"
-	c.UsePydioSpecificHeader = false
-	c.IsDebug = false
-	c.Region = "us-east-1"
-	c.Endpoint = sConf.Url
-	c.RequestTimout = int(common.S3RequestTimeout)
-	return c
+func getS3ConfigFromSdkConfig(sConf *CecConfig) *cells_sdk.S3Config {
+	conf := cells_sdk.NewS3Config()
+	conf.Endpoint = sConf.Url
+	conf.RequestTimout = int(common.S3RequestTimeout)
+	return conf
 }

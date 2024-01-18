@@ -38,18 +38,17 @@ DESCRIPTION
 			log.Fatal(err)
 		}
 
-		//prints the login of the users retrieved previously
 		if len(result.Payload.Users) > 0 {
-			msg := fmt.Sprintf("Found %d users", len(result.Payload.Users))
+			msg := fmt.Sprintf("Found %d users:", len(result.Payload.Users))
 			if len(result.Payload.Users) == 1 {
-				msg = "Found 1 user"
+				msg = "Found 1 user:"
 			}
 			fmt.Println(msg)
 			for _, u := range result.Payload.Users {
 				fmt.Println("  - " + u.Login)
 			}
 		} else {
-			fmt.Println("No user found")
+			fmt.Println("No user found.")
 		}
 	},
 }
