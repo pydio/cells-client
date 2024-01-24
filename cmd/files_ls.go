@@ -13,8 +13,8 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-sdk-go/v4/client/meta_service"
-	"github.com/pydio/cells-sdk-go/v4/models"
+	"github.com/pydio/cells-sdk-go/v5/client/meta_service"
+	"github.com/pydio/cells-sdk-go/v5/models"
 
 	"github.com/pydio/cells-client/v4/rest"
 )

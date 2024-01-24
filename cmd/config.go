@@ -9,6 +9,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 
+	"github.com/pydio/cells-client/v4/common"
 	"github.com/pydio/cells-client/v4/rest"
 )
 
@@ -43,16 +44,38 @@ var configListCmd = &cobra.Command{
 		sort.Strings(keys)
 
 		for _, val := range keys {
+			checked := ""
 			if val == list.ActiveConfigID {
-				table.Append([]string{"\u2713", list.Configs[val].Label, list.Configs[val].User, list.Configs[val].Url, list.Configs[val].AuthType})
-			} else {
-				table.Append([]string{"", list.Configs[val].Label, list.Configs[val].User, list.Configs[val].Url, list.Configs[val].AuthType})
+				checked = "\u2713"
 			}
+			table.Append([]string{
+				checked,
+				list.Configs[val].Label,
+				list.Configs[val].User,
+				list.Configs[val].Url,
+				getAuthTypeLabel(list.Configs[val].AuthType),
+			})
 		}
 		table.Render()
-
 		return nil
 	},
+}
+
+func getAuthTypeLabel(authType string) string {
+	var label string
+	switch authType {
+	case common.OAuthType:
+		label = common.OAuthType
+	case common.PatType:
+		label = common.LegacyCecConfigAuthTypePat
+	case common.ClientAuthType:
+		label = common.LegacyCecConfigAuthTypeBasic
+	case common.LegacyCecConfigAuthTypePat, common.LegacyCecConfigAuthTypeBasic:
+		label = "Unmigrated - " + authType
+	default:
+		label = "unknown"
+	}
+	return label
 }
 
 var configUseCmd = &cobra.Command{

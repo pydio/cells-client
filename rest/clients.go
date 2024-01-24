@@ -13,10 +13,10 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/shibukawa/configdir"
 
-	cells_sdk "github.com/pydio/cells-sdk-go/v4"
-	"github.com/pydio/cells-sdk-go/v4/client"
-	"github.com/pydio/cells-sdk-go/v4/transport"
-	sdk_rest "github.com/pydio/cells-sdk-go/v4/transport/rest"
+	cells_sdk "github.com/pydio/cells-sdk-go/v5"
+	"github.com/pydio/cells-sdk-go/v5/client"
+	"github.com/pydio/cells-sdk-go/v5/transport"
+	sdk_rest "github.com/pydio/cells-sdk-go/v5/transport/rest"
 
 	"github.com/pydio/cells-client/v4/common"
 )
@@ -35,7 +35,6 @@ type CecConfig struct {
 	*cells_sdk.SdkConfig
 	Label            string `json:"label"`
 	SkipKeyring      bool   `json:"skipKeyring"`
-	AuthType         string `json:"authType"`
 	CreatedAtVersion string `json:"createdAtVersion"`
 }
 
@@ -44,8 +43,8 @@ func DefaultCecConfig() *CecConfig {
 	return &CecConfig{
 		SdkConfig: &cells_sdk.SdkConfig{
 			UseTokenCache: true,
+			AuthType:      common.OAuthType,
 		},
-		AuthType:    common.OAuthType,
 		SkipKeyring: false,
 	}
 }

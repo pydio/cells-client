@@ -14,7 +14,7 @@ import (
 	"github.com/skratchdot/open-golang/open"
 	"github.com/spf13/cobra"
 
-	sdk_rest "github.com/pydio/cells-sdk-go/v4/transport/rest"
+	sdk_rest "github.com/pydio/cells-sdk-go/v5/transport/rest"
 
 	"github.com/pydio/cells-client/v4/common"
 	"github.com/pydio/cells-client/v4/rest"

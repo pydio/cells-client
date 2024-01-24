@@ -10,9 +10,9 @@ import (
 
 	"github.com/manifoldco/promptui"
 
-	cells_sdk "github.com/pydio/cells-sdk-go/v4"
-	"github.com/pydio/cells-sdk-go/v4/transport"
-	sdk_rest "github.com/pydio/cells-sdk-go/v4/transport/rest"
+	cells_sdk "github.com/pydio/cells-sdk-go/v5"
+	"github.com/pydio/cells-sdk-go/v5/transport"
+	sdk_rest "github.com/pydio/cells-sdk-go/v5/transport/rest"
 
 	"github.com/pydio/cells-client/v4/common"
 )
@@ -36,36 +36,84 @@ func GetConfigList() (*ConfigList, error) {
 		}
 	}
 
-	var configList ConfigList
-	err = json.Unmarshal(data, &configList)
+	var tmp ConfigList
+	err = json.Unmarshal(data, &tmp)
 	if err != nil {
-		return nil, fmt.Errorf("unknown config format: %s", err)
+		return nil, fmt.Errorf("cannot unmarshal conf from %s, cause: %s", GetConfigFilePath(), err)
 	}
+	configList := &tmp
 
 	// Double-check to detect and migrate legacy configs
 	if configList.Configs == nil || len(configList.Configs) == 0 {
-		var oldConf *CecConfig
-		if err = json.Unmarshal(data, &oldConf); err != nil {
-			return nil, fmt.Errorf("unknown config format: %s", err)
+
+		configList, err = tryToGetLegacyConfig(data)
+		if err != nil {
+			return nil, err
 		}
 
-		id := createID(oldConf)
-		oldConf.Label = createLabel(oldConf)
-		oldConf.CreatedAtVersion = common.Version
-		configs := make(map[string]*CecConfig)
-		configs[id] = oldConf
-
-		configList = ConfigList{
-			Configs:        configs,
-			ActiveConfigID: id,
-		}
 		err = configList.SaveConfigFile()
 		if err != nil {
 			return nil, fmt.Errorf("could not save after config migration: %s", err.Error())
 		}
+	} else {
+		hasChanged, err := migrateAuthTypes(configList)
+		if err != nil {
+			return nil, err
+		}
+		if hasChanged {
+			err := configList.SaveConfigFile()
+			if err != nil {
+				return nil, fmt.Errorf("could not save after config migration: %s", err.Error())
+			}
+		}
 	}
 
-	return &configList, nil
+	return configList, nil
+}
+
+// tryToGetLegacyConfig is best effort to retrieve and migrate cec v2 configuration to the latest format at first use.
+func tryToGetLegacyConfig(data []byte) (*ConfigList, error) {
+
+	var oldConf *CecConfig
+	if err := json.Unmarshal(data, &oldConf); err != nil {
+		return nil, fmt.Errorf("unknown config format: %s", err)
+	}
+	id := createID(oldConf)
+	oldConf.Label = createLabel(oldConf)
+	oldConf.CreatedAtVersion = common.Version
+	configs := make(map[string]*CecConfig)
+	configs[id] = oldConf
+
+	configList := &ConfigList{
+		Configs:        configs,
+		ActiveConfigID: id,
+	}
+	_, err := migrateAuthTypes(configList)
+	if err != nil {
+		return nil, err
+	}
+	err = configList.SaveConfigFile()
+	if err != nil {
+		return nil, fmt.Errorf("could not save after config migration: %s", err.Error())
+	}
+	return configList, nil
+}
+
+// migrateAuthTypes simply replaces AuthType values in the passed structure to use SDK v5 standard values.
+// The resulting config is **not** saved to disk / keyring
+func migrateAuthTypes(configList *ConfigList) (bool, error) {
+
+	hasChanged := false
+	for _, v := range configList.Configs {
+		if v.AuthType == common.LegacyCecConfigAuthTypeBasic {
+			v.AuthType = common.ClientAuthType
+			hasChanged = true
+		} else if v.AuthType == common.LegacyCecConfigAuthTypePat {
+			v.AuthType = common.PatType
+			hasChanged = true
+		}
+	}
+	return hasChanged, nil
 }
 
 // Remove removes a config from the list of available configurations by its ID.

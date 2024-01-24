@@ -10,12 +10,19 @@ var (
 )
 
 const (
+	// Supported Auth types for v5+.
+	// we support: PAT (Personal Access Token), OAuth2 (based on a JWT retrieved interreactively via OAuth credential flow) and Basic (login/password, less secured)
 	// OAuthType uses OAuth2 credential retrieval flow.
 	OAuthType = "OAuth2"
 	// PatType relies on a Personal Access Token generated on the server for a given user.
-	PatType = "Personal Access Token"
+	PatType = "PAT"
+	// ClientAuthType is the legacy authentication method, based on user password: this is less secured.
+	ClientAuthType = "Basic"
+
+	// Legacy values before we moved this in the Cells SDK (for v5+)
+	LegacyCecConfigAuthTypePat = "Personal Access Token"
 	// ClientAuthType is the legacy authentication method, based on user password.
-	ClientAuthType = "Client Credentials"
+	LegacyCecConfigAuthTypeBasic = "Client Credentials"
 
 	// UpdateServerURL gives access to Pydio's update server.
 	UpdateServerURL = "https://updatecells.pydio.com/"

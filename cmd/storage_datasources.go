@@ -7,8 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-sdk-go/v4/client/config_service"
-	"github.com/pydio/cells-sdk-go/v4/client/jobs_service"
+	"github.com/pydio/cells-sdk-go/v5/client/config_service"
+	"github.com/pydio/cells-sdk-go/v5/client/jobs_service"
 
 	"github.com/pydio/cells-client/v4/rest"
 )

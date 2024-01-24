@@ -62,9 +62,9 @@ func ConfigFromKeyring(conf *CecConfig) error {
 		parts := splitValue(value)
 		conf.IdToken = parts[0]
 		conf.RefreshToken = parts[1]
-	case common.ClientAuthType:
+	case common.ClientAuthType, common.LegacyCecConfigAuthTypeBasic:
 		conf.Password = value
-	case common.PatType:
+	case common.PatType, common.LegacyCecConfigAuthTypePat:
 		conf.IdToken = value
 	}
 	return nil

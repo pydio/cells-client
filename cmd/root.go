@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	cells_sdk "github.com/pydio/cells-sdk-go/v4"
+	cells_sdk "github.com/pydio/cells-sdk-go/v5"
 
 	"github.com/pydio/cells-client/v4/common"
 	"github.com/pydio/cells-client/v4/rest"
@@ -234,9 +234,9 @@ func getCecConfigFromEnv() *rest.CecConfig {
 	sdkConfig.Url = serverURL
 	sdkConfig.SkipVerify = skipVerify
 	sdkConfig.UseTokenCache = !noCache
+	sdkConfig.AuthType = authType
 
 	cecConfig.SdkConfig = sdkConfig
-	cecConfig.AuthType = authType
 	cecConfig.SkipKeyring = skipKeyring
 
 	return cecConfig
