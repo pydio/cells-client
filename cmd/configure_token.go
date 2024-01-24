@@ -10,8 +10,8 @@ import (
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-client/v4/common"
 	"github.com/pydio/cells-client/v4/rest"
+	cells_sdk "github.com/pydio/cells-sdk-go/v5"
 )
 
 var configurePersonalAccessTokenCmd = &cobra.Command{
@@ -31,7 +31,7 @@ DESCRIPTION
 	Run: func(cmd *cobra.Command, args []string) {
 
 		newConf := rest.DefaultCecConfig()
-		newConf.AuthType = common.PatType
+		newConf.AuthType = cells_sdk.AuthTypePat
 		newConf.SkipKeyring = skipKeyring
 
 		var err error

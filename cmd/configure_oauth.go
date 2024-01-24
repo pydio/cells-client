@@ -14,6 +14,7 @@ import (
 	"github.com/skratchdot/open-golang/open"
 	"github.com/spf13/cobra"
 
+	cells_sdk "github.com/pydio/cells-sdk-go/v5"
 	sdk_rest "github.com/pydio/cells-sdk-go/v5/transport/rest"
 
 	"github.com/pydio/cells-client/v4/common"
@@ -58,7 +59,7 @@ USAGE
 	Run: func(cm *cobra.Command, args []string) {
 
 		newConf := rest.DefaultCecConfig()
-		newConf.AuthType = common.OAuthType
+		newConf.AuthType = cells_sdk.AuthTypeOAuth
 		newConf.SkipKeyring = skipKeyring
 
 		var err error
@@ -192,7 +193,7 @@ func oAuthInteractive(newConf *rest.CecConfig) error {
 	}
 
 	fmt.Println(promptui.IconGood + " Now exchanging the code for a valid IdToken")
-	if err := sdk_rest.OAuthExchangeCode(common.AppName, newConf.SdkConfig, returnCode, callbackUrl); err != nil {
+	if err := sdk_rest.OAuthExchangeCode(newConf.SdkConfig, common.AppName, returnCode, callbackUrl); err != nil {
 		log.Fatal(err)
 	}
 	fmt.Printf("%s Successfully Received Token. It will be refreshed at %v\n", promptui.IconGood, time.Unix(int64(newConf.TokenExpiresAt), 0))

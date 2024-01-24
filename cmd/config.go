@@ -9,6 +9,8 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 
+	cells_sdk "github.com/pydio/cells-sdk-go/v5"
+
 	"github.com/pydio/cells-client/v4/common"
 	"github.com/pydio/cells-client/v4/rest"
 )
@@ -64,16 +66,17 @@ var configListCmd = &cobra.Command{
 func getAuthTypeLabel(authType string) string {
 	var label string
 	switch authType {
-	case common.OAuthType:
-		label = common.OAuthType
-	case common.PatType:
+	case cells_sdk.AuthTypeOAuth:
+		label = authType
+	case cells_sdk.AuthTypePat:
 		label = common.LegacyCecConfigAuthTypePat
-	case common.ClientAuthType:
+	case cells_sdk.AuthTypeClientAuth:
 		label = common.LegacyCecConfigAuthTypeBasic
+	// TODO this should never be used, remove once we are confiant the migration has been correctly implemented
 	case common.LegacyCecConfigAuthTypePat, common.LegacyCecConfigAuthTypeBasic:
 		label = "Unmigrated - " + authType
 	default:
-		label = "unknown"
+		label = "Unknown"
 	}
 	return label
 }

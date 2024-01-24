@@ -106,10 +106,12 @@ func migrateAuthTypes(configList *ConfigList) (bool, error) {
 	hasChanged := false
 	for _, v := range configList.Configs {
 		if v.AuthType == common.LegacyCecConfigAuthTypeBasic {
-			v.AuthType = common.ClientAuthType
+			v.AuthType = cells_sdk.AuthTypeClientAuth
+			v.CreatedAtVersion = common.Version
 			hasChanged = true
 		} else if v.AuthType == common.LegacyCecConfigAuthTypePat {
-			v.AuthType = common.PatType
+			v.AuthType = cells_sdk.AuthTypePat
+			v.CreatedAtVersion = common.Version
 			hasChanged = true
 		}
 	}

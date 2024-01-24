@@ -7,6 +7,7 @@ import (
 	"github.com/zalando/go-keyring"
 
 	"github.com/pydio/cells-client/v4/common"
+	cells_sdk "github.com/pydio/cells-sdk-go/v5"
 )
 
 // NoKeyringMsg warns end user when no keyring is found
@@ -21,19 +22,19 @@ func ConfigToKeyring(conf *CecConfig) error {
 
 	currKey := key(conf.Url, conf.User)
 	switch conf.AuthType {
-	case common.PatType:
+	case cells_sdk.AuthTypePat:
 		if e := keyring.Set(getKeyringServiceName(), currKey, conf.IdToken); e != nil {
 			return e
 		}
 		conf.IdToken = ""
-	case common.OAuthType:
+	case cells_sdk.AuthTypeOAuth:
 		value := value(conf.IdToken, conf.RefreshToken)
 		if e := keyring.Set(getKeyringServiceName(), currKey, value); e != nil {
 			return e
 		}
 		conf.IdToken = ""
 		conf.RefreshToken = ""
-	case common.ClientAuthType:
+	case cells_sdk.AuthTypeClientAuth:
 		if e := keyring.Set(getKeyringServiceName(), currKey, conf.Password); e != nil {
 			return e
 		}
@@ -58,13 +59,13 @@ func ConfigFromKeyring(conf *CecConfig) error {
 	}
 
 	switch conf.AuthType {
-	case common.OAuthType:
+	case cells_sdk.AuthTypeOAuth:
 		parts := splitValue(value)
 		conf.IdToken = parts[0]
 		conf.RefreshToken = parts[1]
-	case common.ClientAuthType, common.LegacyCecConfigAuthTypeBasic:
+	case cells_sdk.AuthTypeClientAuth, common.LegacyCecConfigAuthTypeBasic:
 		conf.Password = value
-	case common.PatType, common.LegacyCecConfigAuthTypePat:
+	case cells_sdk.AuthTypePat, common.LegacyCecConfigAuthTypePat:
 		conf.IdToken = value
 	}
 	return nil
@@ -134,7 +135,7 @@ func retrieveLegacyKey(conf *CecConfig) error {
 			parts := splitValue(value)
 			//conf.ClientSecret = parts[0]
 			conf.Password = parts[1]
-			conf.AuthType = common.ClientAuthType
+			conf.AuthType = cells_sdk.AuthTypeClientAuth
 			// Leave the keyring in a clean state
 			_ = keyring.Delete(getKeyringServiceName(), key(conf.Url, "ClientCredentials"))
 		} else {
@@ -145,7 +146,7 @@ func retrieveLegacyKey(conf *CecConfig) error {
 			parts := splitValue(value)
 			conf.IdToken = parts[0]
 			conf.RefreshToken = parts[1]
-			conf.AuthType = common.OAuthType
+			conf.AuthType = cells_sdk.AuthTypeOAuth
 			CellsStore.RefreshIfRequired(conf.SdkConfig)
 			_ = keyring.Delete(getKeyringServiceName(), key(conf.Url, "IdToken"))
 		} else {

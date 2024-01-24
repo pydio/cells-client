@@ -43,7 +43,7 @@ func DefaultCecConfig() *CecConfig {
 	return &CecConfig{
 		SdkConfig: &cells_sdk.SdkConfig{
 			UseTokenCache: true,
-			AuthType:      common.OAuthType,
+			AuthType:      cells_sdk.AuthTypePat,
 		},
 		SkipKeyring: false,
 	}

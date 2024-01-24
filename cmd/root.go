@@ -216,11 +216,11 @@ func getCecConfigFromEnv() *rest.CecConfig {
 
 	if len(serverURL) > 0 {
 		if len(token) > 0 { // PAT auth
-			authType = common.PatType
+			authType = cells_sdk.AuthTypePat
 			sdkConfig.IdToken = token
 			validConfViaContext = true
 		} else if len(login) > 0 && len(password) > 0 { // client auth
-			authType = common.ClientAuthType
+			authType = cells_sdk.AuthTypeClientAuth
 			sdkConfig.Password = password
 			sdkConfig.User = login
 			validConfViaContext = true
