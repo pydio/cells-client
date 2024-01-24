@@ -19,11 +19,6 @@ const (
 	// // ClientAuthType is the legacy authentication method, based on user password: this is less secured.
 	// ClientAuthType = "Basic"
 
-	// Legacy values before we moved this in the Cells SDK (for v5+)
-	LegacyCecConfigAuthTypePat = "Personal Access Token"
-	// ClientAuthType is the legacy authentication method, based on user password.
-	LegacyCecConfigAuthTypeBasic = "Client Credentials"
-
 	// UpdateServerURL gives access to Pydio's update server.
 	UpdateServerURL = "https://updatecells.pydio.com/"
 	// UpdatePublicKey enables verification of dowloaded binaries.
@@ -38,6 +33,13 @@ const (
 
 	// EnvPrefix insures we have a reserved namespace for Cells Client specific ENV vars.
 	EnvPrefix = "CEC"
+)
+
+const (
+	// Legacy values before we moved this in the Cells SDK (for v5+)
+	LegacyCecConfigAuthTypePat   = "Personal Access Token"
+	LegacyCecConfigAuthTypeBasic = "Client Credentials"
+	LegacyCecConfigAuthTypeOAuth = "OAuth2"
 )
 
 var (
