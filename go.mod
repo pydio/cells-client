@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.24.1
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.15.11
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.15.14
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.48.0
 	github.com/aws/smithy-go v1.19.0
 	github.com/dustin/go-humanize v1.0.1
@@ -19,7 +19,7 @@ require (
 	github.com/manifoldco/promptui v0.9.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/ory/viper v1.7.5
-	github.com/pydio/cells-sdk-go/v5 v5.0.0
+	github.com/pydio/cells-sdk-go/v5 v5.0.0-20240124124625-7569e7f2b61a
 	github.com/pydio/go v0.0.0-20191211170306-d00ac19450ef
 	github.com/shibukawa/configdir v0.0.0-20170330084843-e180dbdc8da0
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
@@ -97,4 +97,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/pydio/cells-sdk-go/v5 => ../cells-sdk-go
+// replace github.com/pydio/cells-sdk-go/v5 => ../cells-sdk-go
