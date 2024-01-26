@@ -4,6 +4,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 
+	"github.com/pydio/cells-client/v4/common"
 	"github.com/pydio/cells-client/v4/rest"
 )
 
@@ -15,9 +16,9 @@ var infoCmd = &cobra.Command{
 		dc := rest.DefaultConfig
 
 		t := tablewriter.NewWriter(cmd.OutOrStdout())
-		t.SetHeader([]string{"Username", "URL", "Type"})
+		t.SetHeader([]string{"Username", "Server URL", "Auth Type"})
 		t.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-		t.Append([]string{dc.User, dc.Url, dc.AuthType})
+		t.Append([]string{dc.User, dc.Url, common.GetAuthTypeLabel(dc.AuthType)})
 		t.Render()
 	},
 }

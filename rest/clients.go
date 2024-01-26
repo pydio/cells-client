@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"sync"
 
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	openapiruntime "github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
 	"github.com/shibukawa/configdir"
@@ -17,6 +18,7 @@ import (
 	"github.com/pydio/cells-sdk-go/v5/client"
 	"github.com/pydio/cells-sdk-go/v5/transport"
 	sdk_rest "github.com/pydio/cells-sdk-go/v5/transport/rest"
+	sdk_s3 "github.com/pydio/cells-sdk-go/v5/transport/s3"
 
 	"github.com/pydio/cells-client/v4/common"
 )
@@ -53,9 +55,9 @@ func userAgent() string {
 	return common.AppName + "/" + common.Version
 }
 
-// GetApiClient connects to the Pydio Cells server defined by this config, by sending an authentication
-// request to the OIDC service to get a valid JWT (or taking the JWT from cache).
-// It also returns a context to be used in subsequent requests.
+// GetApiClient returns a client to directly communicate with the Pydio Cells REST API.
+// Requests are anonymous when corresponding flag is set. Otherwise, the authentication is managed
+// by the client, using the current active SDKConfig to provide valid credentials.
 func GetApiClient(anonymous ...bool) (*client.PydioCellsRestAPI, error) {
 
 	anon := false
@@ -75,29 +77,23 @@ func GetApiClient(anonymous ...bool) (*client.PydioCellsRestAPI, error) {
 	return client.New(DefaultTransport, strfmt.Default), nil
 }
 
-// // GetApiClient connects to the Pydio Cells server defined by this config, by sending an authentication
-// // request to the OIDC service to get a valid JWT (or taking the JWT from cache).
-// // It also returns a context to be used in subsequent requests.
-// func GetApiClient(anonymous ...bool) (context.Context, *client.PydioCellsRestAPI, error) {
+func GetS3Client() (*s3.Client, string, error) {
 
-// 	anon := false
-// 	if len(anonymous) > 0 && anonymous[0] {
-// 		anon = true
-// 	}
-// 	DefaultConfig.CustomHeaders = map[string]string{"User-Agent": common.AppName + "/" + common.Version}
-// 	var err error
-// 	once.Do(func() {
-// 		currConf := DefaultConfig.SdkConfig
-// 		DefaultContext, DefaultTransport, err = sdk_rest.GetClientTransport(currConf, anon)
-// 	})
-// 	if err != nil {
-// 		return nil, nil, err
-// 	}
+	DefaultConfig.CustomHeaders = map[string]string{
+		transport.UserAgentKey: userAgent(),
+	}
 
-// 	cl := client.New(DefaultTransport, strfmt.Default)
-// 	return DefaultContext, cl, nil
+	// TODO this must be done before
+	s3Config := getS3ConfigFromSdkConfig(DefaultConfig)
+	bucketName := s3Config.Bucket
 
-// }
+	s3Client, e := sdk_s3.GetClient(CellsStore, DefaultConfig.SdkConfig, s3Config)
+	if e != nil {
+		return nil, "", e
+	}
+	// s3Client.Config.S3DisableContentMD5Validation = aws.Bool(true)
+	return s3Client, bucketName, e
+}
 
 // GetFrom performs an authenticated GET request for the passed URI (that must start with a '/').
 func GetFrom(config *CecConfig, uri string) (*http.Response, error) {

@@ -15,8 +15,6 @@ import (
 
 	"github.com/pydio/cells-sdk-go/v5/client/tree_service"
 	"github.com/pydio/cells-sdk-go/v5/models"
-	"github.com/pydio/cells-sdk-go/v5/transport"
-	sdk_s3 "github.com/pydio/cells-sdk-go/v5/transport/s3"
 
 	"github.com/pydio/cells-client/v4/common"
 )
@@ -175,7 +173,7 @@ func TreeCreateNodes(nodes []*models.TreeNode) error {
 
 func GetFile(ctx context.Context, pathToFile string) (io.Reader, int, error) {
 
-	s3Client, bucketName, e := getS3Client()
+	s3Client, bucketName, e := GetS3Client()
 	if e != nil {
 		return nil, 0, e
 	}
@@ -206,7 +204,7 @@ func GetFile(ctx context.Context, pathToFile string) (io.Reader, int, error) {
 
 func PutFile(ctx context.Context, pathToFile string, content io.ReadSeeker, checkExists bool, errChan ...chan error) (*s3.PutObjectOutput, error) {
 
-	s3Client, bucketName, e := getS3Client()
+	s3Client, bucketName, e := GetS3Client()
 	if e != nil {
 		return nil, e
 	}
@@ -255,28 +253,9 @@ func PutFile(ctx context.Context, pathToFile string, content io.ReadSeeker, chec
 	return obj, nil
 }
 
-func getS3Client() (*s3.Client, string, error) {
-
-	// FIXME enrich User-Agent
-	DefaultConfig.CustomHeaders = map[string]string{
-		transport.UserAgentKey: common.AppName + "/" + common.Version,
-	}
-
-	// TODO this must be done before
-	s3Config := getS3ConfigFromSdkConfig(DefaultConfig)
-	bucketName := s3Config.Bucket
-
-	s3Client, e := sdk_s3.GetClient(CellsStore, DefaultConfig.SdkConfig, s3Config)
-	if e != nil {
-		return nil, "", e
-	}
-	// s3Client.Config.S3DisableContentMD5Validation = aws.Bool(true)
-	return s3Client, bucketName, e
-}
-
 func uploadManager(ctx context.Context, stats os.FileInfo, path string, content io.ReadSeeker, errChan ...chan error) error {
 
-	s3Client, bucketName, err := getS3Client()
+	s3Client, bucketName, err := GetS3Client()
 	if err != nil {
 		return err
 	}

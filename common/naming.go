@@ -1,5 +1,9 @@
 package common
 
+import (
+	cells_sdk "github.com/pydio/cells-sdk-go/v5"
+)
+
 var (
 	// AppName stores the technical name of the Cells Client application.
 	AppName = "cells-client"
@@ -41,6 +45,26 @@ const (
 	AuthTypeBasicLabel = "Login/Password"
 	AuthTypeOAuthLabel = "OAuth2"
 )
+
+func GetAuthTypeLabel(authType string) string {
+	var label string
+	switch authType {
+	case cells_sdk.AuthTypeOAuth:
+		label = AuthTypeOAuthLabel
+	case cells_sdk.AuthTypePat:
+		label = AuthTypePatLabel
+	case cells_sdk.AuthTypeClientAuth:
+		label = AuthTypeBasicLabel
+		// TODO this should never be used, remove once we are confiant the migration has been correctly implemented
+	case LegacyCecConfigAuthTypePat,
+		LegacyCecConfigAuthTypeBasic,
+		LegacyCecConfigAuthTypeOAuth:
+		label = "Unmigrated - " + authType
+	default:
+		label = "Unknown"
+	}
+	return label
+}
 
 const (
 	// Legacy values before we moved this in the Cells SDK (for v5+)
