@@ -21,8 +21,8 @@ import (
 	"github.com/pydio/cells-client/v4/common"
 )
 
-func StatNode(pathToFile string) (*models.TreeNode, bool) {
-	ctx, client, e := GetApiClient()
+func StatNode(ctx context.Context, pathToFile string) (*models.TreeNode, bool) {
+	client, e := GetApiClient()
 	if e != nil {
 		return nil, false
 	}
@@ -37,12 +37,12 @@ func StatNode(pathToFile string) (*models.TreeNode, bool) {
 	}
 }
 
-func ListNodesPath(path string) ([]string, error) {
-	_, client, err := GetApiClient()
+func ListNodesPath(ctx context.Context, path string) ([]string, error) {
+	client, err := GetApiClient()
 	if err != nil {
 		return nil, err
 	}
-	params := tree_service.NewBulkStatNodesParams()
+	params := tree_service.NewBulkStatNodesParamsWithContext(ctx)
 	params.Body = &models.RestGetBulkMetaRequest{
 		Limit:     100,
 		NodePaths: []string{path},
@@ -61,12 +61,12 @@ func ListNodesPath(path string) ([]string, error) {
 	return nodes, nil
 }
 
-func DeleteNode(paths []string) (jobUUIDs []string, e error) {
+func DeleteNode(ctx context.Context, paths []string) (jobUUIDs []string, e error) {
 	if len(paths) == 0 {
 		e = fmt.Errorf("no paths found to delete")
 		return
 	}
-	_, client, err := GetApiClient()
+	client, err := GetApiClient()
 	if err != nil {
 		e = err
 		return
@@ -76,7 +76,7 @@ func DeleteNode(paths []string) (jobUUIDs []string, e error) {
 		nn = append(nn, &models.TreeNode{Path: p})
 	}
 
-	params := tree_service.NewDeleteNodesParams()
+	params := tree_service.NewDeleteNodesParamsWithContext(ctx)
 	params.Body = &models.RestDeleteNodesRequest{
 		Nodes: nn,
 	}
@@ -92,25 +92,69 @@ func DeleteNode(paths []string) (jobUUIDs []string, e error) {
 	return
 }
 
-func GetBulkMetaNode(path string) ([]*models.TreeNode, error) {
-	_, client, err := GetApiClient()
+// func GetBulkMetaNode(path string) ([]*models.TreeNode, error) {
+// 	client, err := GetApiClient()
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	params := tree_service.NewBulkStatNodesParams()
+// 	params.Body = &models.RestGetBulkMetaRequest{
+// 		Limit:     100,
+// 		NodePaths: []string{path},
+// 	}
+// 	res, e := client.TreeService.BulkStatNodes(params)
+// 	if e != nil {
+// 		return nil, e
+// 	}
+// 	return res.Payload.Nodes, nil
+// }
+
+const pageSize = 100
+
+func GetAllBulkMeta(ctx context.Context, path string) (nodes []*models.TreeNode, err error) {
+	client, err := GetApiClient()
 	if err != nil {
 		return nil, err
 	}
-	params := tree_service.NewBulkStatNodesParams()
+	params := tree_service.NewBulkStatNodesParamsWithContext(ctx)
 	params.Body = &models.RestGetBulkMetaRequest{
-		Limit:     100,
+		Limit:     pageSize,
 		NodePaths: []string{path},
 	}
 	res, e := client.TreeService.BulkStatNodes(params)
 	if e != nil {
 		return nil, e
 	}
-	return res.Payload.Nodes, nil
+
+	nodes = append(nodes, res.Payload.Nodes...)
+
+	if len(nodes) >= pageSize {
+		pg := res.Payload.Pagination
+		for i := pageSize; i <= int(pg.Total); i += pageSize {
+			// params = tree_service.NewBulkStatNodesParams()
+			// params.Body = &models.RestGetBulkMetaRequest{
+			// 	Limit:     pageSize,
+			// 	NodePaths: []string{path},
+			// 	Offset:    int32(i),
+			// }
+			params.Body.Offset = int32(i)
+			res, err = client.TreeService.BulkStatNodes(params)
+			if err != nil {
+				return
+			}
+			nodes = append(nodes, res.Payload.Nodes...)
+			pg = res.Payload.Pagination
+			fmt.Println("#", i, "Current page:", pg.CurrentPage, "CurrentOffset:", pg.CurrentOffset, "TotalPages: ", pg.TotalPages)
+			fmt.Println(" Found:", len(res.Payload.Nodes), "nodes in page ", pg.CurrentOffset, "- TotalPages:", pg.TotalPages)
+			fmt.Println(" Length after append:", len(nodes))
+		}
+
+	}
+	return nodes, nil
 }
 
 func TreeCreateNodes(nodes []*models.TreeNode) error {
-	_, client, err := GetApiClient()
+	client, err := GetApiClient()
 	if err != nil {
 		return err
 
@@ -129,14 +173,14 @@ func TreeCreateNodes(nodes []*models.TreeNode) error {
 	return nil
 }
 
-func GetFile(pathToFile string) (io.Reader, int, error) {
+func GetFile(ctx context.Context, pathToFile string) (io.Reader, int, error) {
 
 	s3Client, bucketName, e := getS3Client()
 	if e != nil {
 		return nil, 0, e
 	}
 	hO, err := s3Client.HeadObject(
-		context.TODO(),
+		ctx,
 		&s3.HeadObjectInput{
 			Bucket: aws.String(bucketName),
 			Key:    aws.String(pathToFile),
@@ -148,7 +192,7 @@ func GetFile(pathToFile string) (io.Reader, int, error) {
 	size := int(*hO.ContentLength)
 
 	obj, err := s3Client.GetObject(
-		context.TODO(),
+		ctx,
 		&s3.GetObjectInput{
 			Bucket: aws.String(bucketName),
 			Key:    aws.String(pathToFile),
@@ -160,7 +204,7 @@ func GetFile(pathToFile string) (io.Reader, int, error) {
 	return obj.Body, size, nil
 }
 
-func PutFile(pathToFile string, content io.ReadSeeker, checkExists bool, errChan ...chan error) (*s3.PutObjectOutput, error) {
+func PutFile(ctx context.Context, pathToFile string, content io.ReadSeeker, checkExists bool, errChan ...chan error) (*s3.PutObjectOutput, error) {
 
 	s3Client, bucketName, e := getS3Client()
 	if e != nil {
@@ -172,7 +216,7 @@ func PutFile(pathToFile string, content io.ReadSeeker, checkExists bool, errChan
 	e = RetryCallback(func() error {
 		var err error
 		obj, err = s3Client.PutObject(
-			context.TODO(),
+			ctx,
 			&s3.PutObjectInput{
 				Bucket: aws.String(bucketName),
 				Key:    aws.String(pathToFile),
@@ -196,7 +240,7 @@ func PutFile(pathToFile string, content io.ReadSeeker, checkExists bool, errChan
 		fmt.Println(" ## Waiting for file to be indexed...")
 		// Now stat Node to make sure it is indexed
 		e = RetryCallback(func() error {
-			_, ok := StatNode(pathToFile)
+			_, ok := StatNode(ctx, pathToFile)
 			if !ok {
 				return fmt.Errorf("cannot stat node just after PutFile operation")
 			}
@@ -230,7 +274,7 @@ func getS3Client() (*s3.Client, string, error) {
 	return s3Client, bucketName, e
 }
 
-func uploadManager(stats os.FileInfo, path string, content io.ReadSeeker, errChan ...chan error) error {
+func uploadManager(ctx context.Context, stats os.FileInfo, path string, content io.ReadSeeker, errChan ...chan error) error {
 
 	s3Client, bucketName, err := getS3Client()
 	if err != nil {
@@ -252,7 +296,7 @@ func uploadManager(stats os.FileInfo, path string, content io.ReadSeeker, errCha
 		},
 	)
 
-	_, err = uploader.Upload(context.TODO(), &s3.PutObjectInput{
+	_, err = uploader.Upload(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(path),
 		Body:   content,

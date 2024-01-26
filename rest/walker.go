@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -38,7 +39,7 @@ type CrawlNode struct {
 	models.TreeNode
 }
 
-func NewCrawler(target string, isSrcLocal bool) (*CrawlNode, error) {
+func NewCrawler(ctx context.Context, target string, isSrcLocal bool) (*CrawlNode, error) {
 	if isSrcLocal {
 		target, _ = filepath.Abs(target)
 		i, e := os.Stat(target)
@@ -47,7 +48,7 @@ func NewCrawler(target string, isSrcLocal bool) (*CrawlNode, error) {
 		}
 		return NewLocalNode(target, i), nil
 	} else {
-		n, b := StatNode(target)
+		n, b := StatNode(ctx, target)
 		if !b {
 			return nil, fmt.Errorf("no node found at %s", target)
 		}
@@ -107,7 +108,7 @@ func NewTarget(target string, source *CrawlNode, rename bool) *CrawlNode {
 }
 
 // Walk prepares the list of single upload/download nodes that we process in a second time.
-func (c *CrawlNode) Walk(current ...string) (children []*CrawlNode, e error) {
+func (c *CrawlNode) Walk(ctx context.Context, current ...string) (children []*CrawlNode, e error) {
 	crt := ""
 	if len(current) > 0 {
 		crt = current[0]
@@ -134,7 +135,7 @@ func (c *CrawlNode) Walk(current ...string) (children []*CrawlNode, e error) {
 			return nil
 		})
 	} else {
-		nn, er := GetBulkMetaNode(path.Join(c.FullPath, crt, "*"))
+		nn, er := GetAllBulkMeta(ctx, path.Join(c.FullPath, crt, "*"))
 		if er != nil {
 			e = er
 			return
@@ -144,7 +145,7 @@ func (c *CrawlNode) Walk(current ...string) (children []*CrawlNode, e error) {
 			remote.RelPath = strings.TrimPrefix(remote.FullPath, c.FullPath)
 			children = append(children, remote)
 			if *n.Type == models.TreeNodeTypeCOLLECTION {
-				cc, er := c.Walk(remote.RelPath)
+				cc, er := c.Walk(ctx, remote.RelPath)
 				if er != nil {
 					e = er
 					return
@@ -157,13 +158,13 @@ func (c *CrawlNode) Walk(current ...string) (children []*CrawlNode, e error) {
 }
 
 // MkdirAll prepares a recursive scp by first creating all necessary folders under the target root folder.
-func (c *CrawlNode) MkdirAll(dd []*CrawlNode, pool *BarsPool) error {
+func (c *CrawlNode) MkdirAll(ctx context.Context, dd []*CrawlNode, pool *BarsPool) error {
 
 	var createRoot bool
 	var mm []*models.TreeNode
 	if !c.IsLocal {
 		// Remote : append root if required
-		if tn, b := StatNode(c.FullPath); !b {
+		if tn, b := StatNode(ctx, c.FullPath); !b {
 			mm = append(mm, &models.TreeNode{Path: c.FullPath, Type: models.NewTreeNodeType(models.TreeNodeTypeCOLLECTION)})
 			createRoot = true
 		} else if *tn.Type != models.TreeNodeTypeCOLLECTION {
@@ -215,7 +216,7 @@ func (c *CrawlNode) MkdirAll(dd []*CrawlNode, pool *BarsPool) error {
 }
 
 // CopyAll parallely performs the real upload/download of files that have been prepared during the Walk step.
-func (c *CrawlNode) CopyAll(dd []*CrawlNode, pool *BarsPool) (errs []error) {
+func (c *CrawlNode) CopyAll(ctx context.Context, dd []*CrawlNode, pool *BarsPool) (errs []error) {
 	idx := -1
 	buf := make(chan struct{}, QueueSize)
 	wg := &sync.WaitGroup{}
@@ -240,14 +241,14 @@ func (c *CrawlNode) CopyAll(dd []*CrawlNode, pool *BarsPool) (errs []error) {
 				<-buf
 			}()
 			if !c.IsLocal {
-				if e := c.upload(src, bar); e != nil {
+				if e := c.upload(ctx, src, bar); e != nil {
 					errs = append(errs, e)
 				}
 				if emptyFile {
 					bar.Set(1)
 				}
 			} else {
-				if e := c.download(src, bar); e != nil {
+				if e := c.download(ctx, src, bar); e != nil {
 					errs = append(errs, e)
 				}
 				if emptyFile {
@@ -261,7 +262,7 @@ func (c *CrawlNode) CopyAll(dd []*CrawlNode, pool *BarsPool) (errs []error) {
 	return
 }
 
-func (c *CrawlNode) upload(src *CrawlNode, bar *uiprogress.Bar) error {
+func (c *CrawlNode) upload(ctx context.Context, src *CrawlNode, bar *uiprogress.Bar) error {
 	file, e := os.Open(src.FullPath)
 	if e != nil {
 		return e
@@ -283,23 +284,23 @@ func (c *CrawlNode) upload(src *CrawlNode, bar *uiprogress.Bar) error {
 
 	fullpath := c.Join(c.FullPath, bname)
 	// Handle corner case when trying to upload a file and *folder* with same name already exists at target path
-	if tn, b := StatNode(fullpath); b && *tn.Type == models.TreeNodeTypeCOLLECTION {
+	if tn, b := StatNode(ctx, fullpath); b && *tn.Type == models.TreeNodeTypeCOLLECTION {
 		// target root is not a folder, fail fast.
 		return fmt.Errorf("cannot upload file to %s, a folder with same name already exists at target path", fullpath)
 	}
 	wrapper.double = false
 	if stats.Size() <= common.UploadSwitchMultipart*(1024*1024) {
-		if _, err := PutFile(fullpath, wrapper, false, errChan); err != nil {
+		if _, err := PutFile(ctx, fullpath, wrapper, false, errChan); err != nil {
 			return err
 		}
-	} else if err := uploadManager(stats, fullpath, wrapper, errChan); err != nil {
+	} else if err := uploadManager(ctx, stats, fullpath, wrapper, errChan); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (c *CrawlNode) download(src *CrawlNode, bar *uiprogress.Bar) error {
-	reader, length, e := GetFile(src.FullPath)
+func (c *CrawlNode) download(ctx context.Context, src *CrawlNode, bar *uiprogress.Bar) error {
+	reader, length, e := GetFile(ctx, src.FullPath)
 	if e != nil {
 		return e
 	}
