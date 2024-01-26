@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -64,6 +65,7 @@ EXAMPLES
 
 		from := args[0]
 		to := args[1]
+		ctx := cmd.Context()
 
 		if strings.HasPrefix(from, prefixA) || strings.HasPrefix(to, prefixA) {
 			scpCurrentPrefix = prefixA
@@ -85,7 +87,7 @@ EXAMPLES
 			isSrcLocal = false
 			var isRemote bool
 			crawlerPath = strings.TrimPrefix(from, scpCurrentPrefix)
-			targetPath, isRemote, rename, err = targetToFullPath(from, to)
+			targetPath, isRemote, rename, err = targetToFullPath(ctx, from, to)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -97,21 +99,23 @@ EXAMPLES
 			// Upload
 			targetPath = strings.TrimPrefix(to, scpCurrentPrefix)
 			// Check target path existence and handle rename corner cases
-			if _, _, rename, err = targetToFullPath(from, to); err != nil {
+			if _, _, rename, err = targetToFullPath(ctx, from, to); err != nil {
 				log.Fatal(err)
 			}
 			crawlerPath = from
 			fmt.Printf("Uploading %s to %s\n", from, to)
 		}
 
-		crawler, e := rest.NewCrawler(crawlerPath, isSrcLocal)
+		crawler, e := rest.NewCrawler(ctx, crawlerPath, isSrcLocal)
 		if e != nil {
 			log.Fatal(e)
 		}
-		nn, e := crawler.Walk()
+		nn, e := crawler.Walk(cmd.Context())
 		if e != nil {
 			log.Fatal(e)
 		}
+
+		fmt.Printf("After walk, found %d nodes to copy\n", len(nn))
 
 		targetNode := rest.NewTarget(targetPath, crawler, rename)
 
@@ -123,7 +127,7 @@ EXAMPLES
 		pool.Start()
 
 		// CREATE FOLDERS
-		e = targetNode.MkdirAll(nn, pool)
+		e = targetNode.MkdirAll(ctx, nn, pool)
 		if e != nil {
 			// Force stop of the pool that stays blocked otherwise:
 			// It is launched *before* the MkdirAll but only managed during the CopyAll phase.
@@ -132,7 +136,7 @@ EXAMPLES
 		}
 
 		// UPLOAD / DOWNLOAD FILES
-		errs := targetNode.CopyAll(nn, pool)
+		errs := targetNode.CopyAll(ctx, nn, pool)
 		//pool.Stop()
 		if len(errs) > 0 {
 			log.Fatal(errs)
@@ -141,7 +145,7 @@ EXAMPLES
 	},
 }
 
-func targetToFullPath(from, to string) (string, bool, bool, error) {
+func targetToFullPath(ctx context.Context, from, to string) (string, bool, bool, error) {
 	var toPath string
 	//var isDir bool
 	var isRemote bool
@@ -150,7 +154,7 @@ func targetToFullPath(from, to string) (string, bool, bool, error) {
 		// This is remote: UPLOAD
 		isRemote = true
 		toPath = strings.TrimPrefix(to, scpCurrentPrefix)
-		_, ok := rest.StatNode(toPath)
+		_, ok := rest.StatNode(ctx, toPath)
 		if !ok {
 
 			parPath, _ := path.Split(toPath)
@@ -161,7 +165,7 @@ func targetToFullPath(from, to string) (string, bool, bool, error) {
 
 			// Check if parent exists. In such case, we rename the file or root folder that has been passed as local source
 			// Typically, `cec scp README.txt cells//common-files/readMe.md` or `cec scp local-folder cells//common-files/remote-folder`
-			if _, ok2 := rest.StatNode(parPath); !ok2 {
+			if _, ok2 := rest.StatNode(ctx, parPath); !ok2 {
 				// Target parent folder does not exist, we do not create it
 				return toPath, true, false, fmt.Errorf("target parent folder %s does not exist on remote server. ", parPath)
 			}

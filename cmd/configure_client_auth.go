@@ -116,7 +116,7 @@ func nonInteractive(conf *rest.CecConfig) error {
 
 	// Test a simple ping with this config before saving
 	rest.DefaultConfig = conf
-	if _, _, e := rest.GetApiClient(); e != nil {
+	if _, e := rest.GetApiClient(); e != nil {
 		return fmt.Errorf("could not connect to newly configured server: %s", e.Error())
 	}
 

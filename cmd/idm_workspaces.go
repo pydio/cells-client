@@ -23,10 +23,11 @@ DESCRIPTION
 `,
 	Run: func(cm *cobra.Command, args []string) {
 
-		ctx, apiClient, err := rest.GetApiClient()
+		apiClient, err := rest.GetApiClient()
 		if err != nil {
 			log.Fatal(err)
 		}
+		ctx := cm.Context()
 
 		//retrieves the users using the searchWorkspacesParams function
 		params := &workspace_service.SearchWorkspacesParams{

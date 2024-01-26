@@ -49,29 +49,55 @@ func DefaultCecConfig() *CecConfig {
 	}
 }
 
+func userAgent() string {
+	return common.AppName + "/" + common.Version
+}
+
 // GetApiClient connects to the Pydio Cells server defined by this config, by sending an authentication
 // request to the OIDC service to get a valid JWT (or taking the JWT from cache).
 // It also returns a context to be used in subsequent requests.
-func GetApiClient(anonymous ...bool) (context.Context, *client.PydioCellsRestAPI, error) {
+func GetApiClient(anonymous ...bool) (*client.PydioCellsRestAPI, error) {
 
 	anon := false
 	if len(anonymous) > 0 && anonymous[0] {
 		anon = true
 	}
-	DefaultConfig.CustomHeaders = map[string]string{"User-Agent": common.AppName + "/" + common.Version}
+	DefaultConfig.CustomHeaders = map[string]string{transport.UserAgentKey: userAgent()}
 	var err error
 	once.Do(func() {
 		currConf := DefaultConfig.SdkConfig
-		DefaultContext, DefaultTransport, err = sdk_rest.GetClientTransport(currConf, anon)
+		DefaultTransport, err = sdk_rest.GetApiTransport(currConf, anon)
 	})
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	cl := client.New(DefaultTransport, strfmt.Default)
-	return DefaultContext, cl, nil
-
+	return client.New(DefaultTransport, strfmt.Default), nil
 }
+
+// // GetApiClient connects to the Pydio Cells server defined by this config, by sending an authentication
+// // request to the OIDC service to get a valid JWT (or taking the JWT from cache).
+// // It also returns a context to be used in subsequent requests.
+// func GetApiClient(anonymous ...bool) (context.Context, *client.PydioCellsRestAPI, error) {
+
+// 	anon := false
+// 	if len(anonymous) > 0 && anonymous[0] {
+// 		anon = true
+// 	}
+// 	DefaultConfig.CustomHeaders = map[string]string{"User-Agent": common.AppName + "/" + common.Version}
+// 	var err error
+// 	once.Do(func() {
+// 		currConf := DefaultConfig.SdkConfig
+// 		DefaultContext, DefaultTransport, err = sdk_rest.GetClientTransport(currConf, anon)
+// 	})
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
+
+// 	cl := client.New(DefaultTransport, strfmt.Default)
+// 	return DefaultContext, cl, nil
+
+// }
 
 // GetFrom performs an authenticated GET request for the passed URI (that must start with a '/').
 func GetFrom(config *CecConfig, uri string) (*http.Response, error) {

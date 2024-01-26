@@ -55,12 +55,13 @@ Found 4 nodes at test:
 ` + os.Args[0] + ` idm list-acls -n 1c989848-5eff-49cf-8727-4db754e02c25 --delete
 
 `,
-	Run: func(cm *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, args []string) {
 
-		ctx, apiClient, err := rest.GetApiClient()
+		apiClient, err := rest.GetApiClient()
 		if err != nil {
 			log.Fatal(err)
 		}
+		ctx := cmd.Context()
 
 		if len(listAclsByNodeIds) == 0 {
 			log.Fatal("Cannot list ACLS. Please precise *at least* one node UUID")

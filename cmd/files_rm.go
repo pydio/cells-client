@@ -64,16 +64,18 @@ EXAMPLES
 			}
 		}
 
+		ctx := cmd.Context()
+
 		targetNodes := make([]string, 0)
 		for _, arg := range args {
-			_, exists := rest.StatNode(strings.TrimRight(arg, wildcardChar))
+			_, exists := rest.StatNode(ctx, strings.TrimRight(arg, wildcardChar))
 			if !exists {
 				log.Printf("Node not found %v, could not delete\n", arg)
 			}
 			if path.Base(arg) == wildcardChar {
 				dir, _ := path.Split(arg)
 				newArg := path.Join(dir, "*")
-				nodes, err := rest.ListNodesPath(newArg)
+				nodes, err := rest.ListNodesPath(ctx, newArg)
 
 				// Remove recycle_bin from targetedNodes
 				for i, c := range nodes {
@@ -96,7 +98,7 @@ EXAMPLES
 			return
 		}
 
-		jobUUID, err := rest.DeleteNode(targetNodes)
+		jobUUID, err := rest.DeleteNode(ctx, targetNodes)
 		if err != nil {
 			log.Fatalf("could not delete nodes, cause: %s\n", err)
 		}
@@ -105,7 +107,7 @@ EXAMPLES
 		for _, id := range jobUUID {
 			wg.Add(1)
 			go func(id string) {
-				err := rest.MonitorJob(id)
+				err := rest.MonitorJob(ctx, id)
 				defer wg.Done()
 				if err != nil {
 					log.Printf("could not monitor job, %s\n", id)

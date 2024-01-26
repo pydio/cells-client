@@ -38,15 +38,17 @@ EXAMPLES
 		source := args[0]
 		target := args[1]
 
+		ctx := cmd.Context()
+
 		var sourceNodes []string
 		if path.Base(source) == "*" {
-			nodes, err := rest.ListNodesPath(source)
+			nodes, err := rest.ListNodesPath(ctx, source)
 			if err != nil {
 				log.Println("could not list the nodes path", err)
 			}
 			sourceNodes = nodes
 		} else {
-			_, exists := rest.StatNode(source)
+			_, exists := rest.StatNode(ctx, source)
 			if !exists {
 				log.Fatalf("This node does not exist: [%v]\n", source)
 			}
@@ -54,12 +56,12 @@ EXAMPLES
 		}
 
 		params := rest.MoveParams(sourceNodes, target)
-		jobID, err := rest.MoveJob(params)
+		jobID, err := rest.MoveJob(ctx, params)
 		if err != nil {
 			log.Fatalln("Could not run job:", err.Error())
 		}
 
-		err = rest.MonitorJob(jobID)
+		err = rest.MonitorJob(ctx, jobID)
 		if err != nil {
 			log.Fatalln("Could not monitor job:", err.Error())
 		}

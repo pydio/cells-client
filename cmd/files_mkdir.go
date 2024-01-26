@@ -53,13 +53,14 @@ EXAMPLES
 		}
 
 		// Connect to the Pydio API via the sdkConfig
-		ctx, apiClient, err := rest.GetApiClient()
+		apiClient, err := rest.GetApiClient()
 		if err != nil {
 			log.Fatal(err)
 		}
 		var dirs []*models.TreeNode
 		var paths []string
 		var crt = parts[0]
+		ctx := cmd.Context()
 
 		// Checking existence of parent workspace
 		if _, e := apiClient.TreeService.HeadNode(&tree_service.HeadNodeParams{Node: crt, Context: ctx}); e != nil {

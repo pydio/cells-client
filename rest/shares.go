@@ -1,15 +1,16 @@
 package rest
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/pydio/cells-sdk-go/v5/client/share_service"
 	"github.com/pydio/cells-sdk-go/v5/models"
 )
 
-func CreateSimpleFolderLink(targetNodeUuid, label string) (*models.RestShareLink, error) {
+func CreateSimpleFolderLink(ctx context.Context, targetNodeUuid, label string) (*models.RestShareLink, error) {
 
-	ctx, client, e := GetApiClient()
+	client, e := GetApiClient()
 	if e != nil {
 		return nil, e
 	}

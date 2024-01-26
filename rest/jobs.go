@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -40,22 +41,22 @@ func BuildParams(source []string, targetFolder string, targetParent bool) string
 	return string(data)
 }
 
-func CopyJob(jsonParams string) (string, error) {
-	return RunJob("copy", jsonParams)
+func CopyJob(ctx context.Context, jsonParams string) (string, error) {
+	return RunJob(ctx, "copy", jsonParams)
 }
 
-func MoveJob(jsonParams string) (string, error) {
-	return RunJob("move", jsonParams)
+func MoveJob(ctx context.Context, jsonParams string) (string, error) {
+	return RunJob(ctx, "move", jsonParams)
 }
 
 // RunJob runs a job.
-func RunJob(jobName string, jsonParams string) (string, error) {
+func RunJob(ctx context.Context, jobName string, jsonParams string) (string, error) {
 
-	_, client, err := GetApiClient()
+	client, err := GetApiClient()
 	if err != nil {
 		return "", err
 	}
-	param := jobs_service.NewUserCreateJobParams()
+	param := jobs_service.NewUserCreateJobParamsWithContext(ctx)
 	param.Body = jobs_service.UserCreateJobBody{JSONParameters: jsonParams}
 	param.JobName = jobName
 
@@ -67,8 +68,8 @@ func RunJob(jobName string, jsonParams string) (string, error) {
 }
 
 // GetTaskStatusForJob retrieves the task status, progress and message.
-func GetTaskStatusForJob(jobID string) (status models.JobsTaskStatus, msg string, pg float32, e error) {
-	_, client, err := GetApiClient()
+func GetTaskStatusForJob(ctx context.Context, jobID string) (status models.JobsTaskStatus, msg string, pg float32, e error) {
+	client, err := GetApiClient()
 	if err != nil {
 		e = err
 		return
@@ -77,7 +78,7 @@ func GetTaskStatusForJob(jobID string) (status models.JobsTaskStatus, msg string
 		JobIDs:    []string{jobID},
 		LoadTasks: models.NewJobsTaskStatus(models.JobsTaskStatusAny),
 	}
-	params := jobs_service.NewUserListJobsParams()
+	params := jobs_service.NewUserListJobsParamsWithContext(ctx)
 	params.Body = body
 	jobs, err := client.JobsService.UserListJobs(params)
 	if err != nil {
@@ -101,9 +102,9 @@ func GetTaskStatusForJob(jobID string) (status models.JobsTaskStatus, msg string
 }
 
 // MonitorJob monitors a job status every second.
-func MonitorJob(JobID string) (err error) {
+func MonitorJob(ctx context.Context, JobID string) (err error) {
 	for {
-		status, _, _, e := GetTaskStatusForJob(JobID)
+		status, _, _, e := GetTaskStatusForJob(ctx, JobID)
 		if err != nil {
 			err = e
 			return

@@ -231,7 +231,7 @@ func oAuthNonInteractive(conf *rest.CecConfig) error {
 
 	// Test a simple PING with this config before saving!
 	rest.DefaultConfig = conf
-	if _, _, e := rest.GetApiClient(); e != nil {
+	if _, e := rest.GetApiClient(); e != nil {
 		return fmt.Errorf("test connection to newly configured server failed")
 	}
 

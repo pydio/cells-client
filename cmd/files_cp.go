@@ -53,7 +53,7 @@ EXAMPLE
 		// Pre-process source path
 		var sourceNodes []string
 		if path.Base(fromPath) == "*" {
-			nodes, err := rest.ListNodesPath(fromPath)
+			nodes, err := rest.ListNodesPath(cmd.Context(), fromPath)
 			if err != nil {
 				log.Fatalf("Preparing grouped copy, could not list all nodes under %s, cause: %s", path.Dir(fromPath), err.Error())
 			}
@@ -66,7 +66,7 @@ EXAMPLE
 		}
 
 		// Pre-process target path
-		targetNode, targetExists := rest.StatNode(toPath)
+		targetNode, targetExists := rest.StatNode(cmd.Context(), toPath)
 		if targetExists {
 			if *targetNode.Type == models.TreeNodeTypeCOLLECTION {
 				// target is a folder as expected nothing to do
@@ -79,7 +79,7 @@ EXAMPLE
 			if parPath == "" {
 				log.Fatalf("Target location %s does not exist on server, double check your parameters.", toPath)
 			}
-			targetNode, targetExists := rest.StatNode(parPath)
+			targetNode, targetExists := rest.StatNode(cmd.Context(), parPath)
 			if !targetExists {
 				log.Fatalf("Parent target location %s does not exist on server, double check your parameters.", parPath)
 			} else if *targetNode.Type != models.TreeNodeTypeCOLLECTION {
@@ -91,12 +91,12 @@ EXAMPLE
 
 		// Prepare and launch effective copy
 		params := rest.BuildParams(sourceNodes, toPath, targetParent)
-		jobID, err := rest.CopyJob(params)
+		jobID, err := rest.CopyJob(cmd.Context(), params)
 		if err != nil {
 			log.Fatalln("could not run job:", err.Error())
 		}
 
-		err = rest.MonitorJob(jobID)
+		err = rest.MonitorJob(cmd.Context(), jobID)
 		if err != nil {
 			log.Fatalln("could not monitor job", err.Error())
 		}

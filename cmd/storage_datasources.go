@@ -28,11 +28,11 @@ DESCRIPTION
 `,
 	Run: func(cm *cobra.Command, args []string) {
 
-		//connects to the pydio api via the sdkConfig
-		ctx, apiClient, err := rest.GetApiClient()
+		apiClient, err := rest.GetApiClient()
 		if err != nil {
 			log.Fatal(err.Error())
 		}
+		ctx := cm.Context()
 
 		/*ListDataSourcesParams contains all the parameters to send to the API endpoint
 		for the list data sources operation typically these are written to a http.Request */
@@ -78,14 +78,14 @@ var resyncDs = &cobra.Command{
 		}
 		dsName := args[0]
 
-		ctx, client, err := rest.GetApiClient()
+		client, err := rest.GetApiClient()
 		if err != nil {
 			log.Fatal(err.Error())
 		}
 
 		jsonParam := fmt.Sprintf("{\"dsName\":\"%s\"}", dsName)
 		body := jobs_service.UserCreateJobBody{JSONParameters: jsonParam}
-		params := &jobs_service.UserCreateJobParams{JobName: "datasource-resync", Body: body, Context: ctx}
+		params := &jobs_service.UserCreateJobParams{JobName: "datasource-resync", Body: body, Context: cm.Context()}
 
 		_, err = client.JobsService.UserCreateJob(params)
 		if err != nil {

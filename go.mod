@@ -2,6 +2,8 @@ module github.com/pydio/cells-client/v4
 
 go 1.20
 
+replace github.com/pydio/cells-sdk-go/v5 => ../cells-sdk-go
+
 require (
 	github.com/aws/aws-sdk-go-v2 v1.24.1
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.15.14
@@ -96,5 +98,3 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-// replace github.com/pydio/cells-sdk-go/v5 => ../cells-sdk-go

@@ -122,14 +122,15 @@ EXAMPLES
 		p := strings.Trim(lsPath, "/")
 
 		// Connect to the Cells API
-		ctx, apiClient, err := rest.GetApiClient()
+		apiClient, err := rest.GetApiClient()
 		if err != nil {
 			log.Fatal(err)
 		}
 
+		ctx := cmd.Context()
 		var exists bool
 		if p != "" {
-			_, exists = rest.StatNode(p)
+			_, exists = rest.StatNode(ctx, p)
 		}
 
 		if lsExists {

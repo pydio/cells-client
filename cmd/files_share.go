@@ -30,7 +30,8 @@ EXAMPLES
 	Run: func(cmd *cobra.Command, args []string) {
 
 		p := args[0]
-		node, exists := rest.StatNode(p)
+		ctx := cmd.Context()
+		node, exists := rest.StatNode(ctx, p)
 
 		if !exists {
 			// Avoid 404 errors
@@ -38,7 +39,7 @@ EXAMPLES
 			return
 		}
 
-		l, err := rest.CreateSimpleFolderLink(node.UUID, path.Base(p))
+		l, err := rest.CreateSimpleFolderLink(ctx, node.UUID, path.Base(p))
 		if err != nil {
 			log.Fatal(err)
 		}
