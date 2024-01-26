@@ -67,13 +67,15 @@ func getAuthTypeLabel(authType string) string {
 	var label string
 	switch authType {
 	case cells_sdk.AuthTypeOAuth:
-		label = authType
+		label = common.AuthTypeOAuthLabel
 	case cells_sdk.AuthTypePat:
-		label = common.LegacyCecConfigAuthTypePat
+		label = common.AuthTypePatLabel
 	case cells_sdk.AuthTypeClientAuth:
-		label = common.LegacyCecConfigAuthTypeBasic
-	// TODO this should never be used, remove once we are confiant the migration has been correctly implemented
-	case common.LegacyCecConfigAuthTypePat, common.LegacyCecConfigAuthTypeBasic:
+		label = common.AuthTypeBasicLabel
+		// TODO this should never be used, remove once we are confiant the migration has been correctly implemented
+	case common.LegacyCecConfigAuthTypePat,
+		common.LegacyCecConfigAuthTypeBasic,
+		common.LegacyCecConfigAuthTypeOAuth:
 		label = "Unmigrated - " + authType
 	default:
 		label = "Unknown"

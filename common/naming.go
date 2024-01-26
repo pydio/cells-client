@@ -36,6 +36,13 @@ const (
 )
 
 const (
+	// Labels for well-known supported auth types
+	AuthTypePatLabel   = "PAT"
+	AuthTypeBasicLabel = "Login/Password"
+	AuthTypeOAuthLabel = "OAuth2"
+)
+
+const (
 	// Legacy values before we moved this in the Cells SDK (for v5+)
 	LegacyCecConfigAuthTypePat   = "Personal Access Token"
 	LegacyCecConfigAuthTypeBasic = "Client Credentials"
