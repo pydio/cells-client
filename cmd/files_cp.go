@@ -59,7 +59,7 @@ EXAMPLE
 			}
 			sourceNodes = nodes
 		} else if strings.HasSuffix(path.Base(fromPath), "*") {
-			fmt.Println(promptui.IconWarn + " We currently only support the '*' wild char without prefix, see help for further details")
+			fmt.Println(promptui.IconWarn + " We currently only support the '*' wild char without suffix, see help for further details")
 			sourceNodes = []string{fromPath}
 		} else {
 			sourceNodes = []string{fromPath}
