@@ -20,8 +20,8 @@ import (
 )
 
 var (
-	DryRun    bool
-	QueueSize = 3
+	DryRun   bool
+	PoolSize = 3
 )
 
 // CrawlNode enables processing the scp command step by step.
@@ -195,7 +195,7 @@ func (c *CrawlNode) MkdirAll(ctx context.Context, dd []*CrawlNode, pool *BarsPoo
 		if c.IsLocal {
 			if e := os.MkdirAll(newFolder, 0755); e != nil {
 				return e
-			} else {
+			} else if pool != nil {
 				pool.Done()
 			}
 		} else {
@@ -207,8 +207,10 @@ func (c *CrawlNode) MkdirAll(ctx context.Context, dd []*CrawlNode, pool *BarsPoo
 		if e != nil {
 			return e
 		}
-		for range mm {
-			pool.Done()
+		if pool != nil {
+			for range mm {
+				pool.Done()
+			}
 		}
 		// TODO:  Stat all folders to make sure they are indexed ?
 	}
@@ -218,7 +220,7 @@ func (c *CrawlNode) MkdirAll(ctx context.Context, dd []*CrawlNode, pool *BarsPoo
 // CopyAll parallely performs the real upload/download of files that have been prepared during the Walk step.
 func (c *CrawlNode) CopyAll(ctx context.Context, dd []*CrawlNode, pool *BarsPool) (errs []error) {
 	idx := -1
-	buf := make(chan struct{}, QueueSize)
+	buf := make(chan struct{}, PoolSize)
 	wg := &sync.WaitGroup{}
 	for _, d := range dd {
 		if d.IsDir {
@@ -275,7 +277,7 @@ func (c *CrawlNode) upload(ctx context.Context, src *CrawlNode, bar *uiprogress.
 		total:  int(stats.Size()),
 		double: true,
 	}
-	errChan, done := wrapper.CreateErrorChan()
+	_, done := wrapper.CreateErrorChan()
 	defer close(done)
 	bname := src.RelPath
 	if c.NewFileName != "" {
@@ -290,10 +292,10 @@ func (c *CrawlNode) upload(ctx context.Context, src *CrawlNode, bar *uiprogress.
 	}
 	wrapper.double = false
 	if stats.Size() <= common.UploadSwitchMultipart*(1024*1024) {
-		if _, err := PutFile(ctx, fullpath, wrapper, false, errChan); err != nil {
+		if _, err := PutFile(ctx, fullpath, wrapper, false, wrapper.errChan); err != nil {
 			return err
 		}
-	} else if err := uploadManager(ctx, stats, fullpath, wrapper, errChan); err != nil {
+	} else if err := uploadManager(ctx, stats, fullpath, wrapper, wrapper.errChan); err != nil {
 		return err
 	}
 	return nil
@@ -320,6 +322,88 @@ func (c *CrawlNode) download(ctx context.Context, src *CrawlNode, bar *uiprogres
 	}
 	defer writer.Close()
 	_, e = io.Copy(writer, wrapper)
+	return e
+}
+
+// CopyAllVerbose parallely performs the real upload/download of files that have been prepared
+// during the Walk step with no progress bar and rather more logs.
+func (c *CrawlNode) CopyAllVerbose(ctx context.Context, dd []*CrawlNode) (errs []error) {
+	idx := -1
+	buf := make(chan struct{}, PoolSize)
+	wg := &sync.WaitGroup{}
+	for _, d := range dd {
+		if d.IsDir {
+			continue
+		}
+		buf <- struct{}{}
+		idx++
+		wg.Add(1)
+		go func(src *CrawlNode) {
+			defer func() {
+				wg.Done()
+				<-buf
+			}()
+			if !c.IsLocal {
+				if e := c.uploadVerbose(ctx, src); e != nil {
+					errs = append(errs, e)
+				}
+			} else {
+				if e := c.downloadVerbose(ctx, src); e != nil {
+					errs = append(errs, e)
+				}
+			}
+		}(d)
+	}
+	wg.Wait()
+	return
+}
+
+func (c *CrawlNode) uploadVerbose(ctx context.Context, src *CrawlNode) error {
+	file, e := os.Open(src.FullPath)
+	if e != nil {
+		return e
+	}
+	stats, _ := file.Stat()
+	bname := src.RelPath
+	if c.NewFileName != "" {
+		bname = c.NewFileName
+	}
+
+	fullpath := c.Join(c.FullPath, bname)
+	// Handle corner case when trying to upload a file and *folder* with same name already exists at target path
+	if tn, b := StatNode(ctx, fullpath); b && *tn.Type == models.TreeNodeTypeCOLLECTION {
+		// target root is not a folder, fail fast.
+		return fmt.Errorf("cannot upload file to %s, a folder with same name already exists at target path", fullpath)
+	}
+	if stats.Size() <= common.UploadSwitchMultipart*(1024*1024) {
+		if _, err := PutFile(ctx, fullpath, file, false); err != nil {
+			return err
+		}
+	} else if err := uploadManager(ctx, stats, fullpath, file); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *CrawlNode) downloadVerbose(ctx context.Context, src *CrawlNode) error {
+	reader, length, e := GetFile(ctx, src.FullPath)
+	if e != nil {
+		return e
+	}
+	bname := src.RelPath
+	if c.NewFileName != "" {
+		bname = c.NewFileName
+	}
+	downloadToLocation := c.Join(c.FullPath, bname)
+	writer, e := os.OpenFile(downloadToLocation, os.O_CREATE|os.O_WRONLY, 0644)
+	if e != nil {
+		return e
+	}
+	defer writer.Close()
+	written, e := io.Copy(writer, reader)
+	if length != int(written) {
+		fmt.Printf("[Warning] written size (%d) differs from expected length (%d) for %s\n", written, length, downloadToLocation)
+	}
 	return e
 }
 
@@ -393,7 +477,7 @@ func (b *BarsPool) Done() {
 }
 
 func (b *BarsPool) Get(i int, total int, name string) *uiprogress.Bar {
-	idx := i % QueueSize
+	idx := i % PoolSize
 	var nBars []*uiprogress.Bar
 	if b.showGlobal {
 		idx++

@@ -24,6 +24,8 @@ const (
 var (
 	scpCurrentPrefix string
 	scpQuiet         bool
+	scpVerbose       bool
+	scpVeryVerbose   bool
 )
 
 var scpFiles = &cobra.Command{
@@ -66,6 +68,14 @@ EXAMPLES
 		from := args[0]
 		to := args[1]
 		ctx := cmd.Context()
+
+		if scpVeryVerbose {
+			common.CurrentLogLevel = common.Trace
+		} else if scpVerbose {
+			common.CurrentLogLevel = common.Debug
+		} else {
+			common.CurrentLogLevel = common.Info
+		}
 
 		if strings.HasPrefix(from, prefixA) || strings.HasPrefix(to, prefixA) {
 			scpCurrentPrefix = prefixA
@@ -115,31 +125,43 @@ EXAMPLES
 			log.Fatal(e)
 		}
 
-		fmt.Printf("After walk, found %d nodes to copy\n", len(nn))
-
 		targetNode := rest.NewTarget(targetPath, crawler, rename)
 
-		refreshInterval := time.Millisecond * 10 // this is the default
-		if scpQuiet {
-			refreshInterval = time.Millisecond * 3000
-		}
-		pool := rest.NewBarsPool(len(nn) > 1, len(nn), refreshInterval)
-		pool.Start()
+		if common.CurrentLogLevel == common.Info {
+			refreshInterval := time.Millisecond * 10 // this is the default
+			if scpQuiet {
+				refreshInterval = time.Millisecond * 3000
+			}
+			pool := rest.NewBarsPool(len(nn) > 1, len(nn), refreshInterval)
+			pool.Start()
 
-		// CREATE FOLDERS
-		e = targetNode.MkdirAll(ctx, nn, pool)
-		if e != nil {
-			// Force stop of the pool that stays blocked otherwise:
-			// It is launched *before* the MkdirAll but only managed during the CopyAll phase.
-			pool.Stop()
-			log.Fatal(e)
-		}
+			// CREATE FOLDERS
+			e = targetNode.MkdirAll(ctx, nn, pool)
+			if e != nil {
+				// Force stop of the pool that stays blocked otherwise:
+				// It is launched *before* the MkdirAll but only managed during the CopyAll phase.
+				pool.Stop()
+				log.Fatal(e)
+			}
 
-		// UPLOAD / DOWNLOAD FILES
-		errs := targetNode.CopyAll(ctx, nn, pool)
-		//pool.Stop()
-		if len(errs) > 0 {
-			log.Fatal(errs)
+			// UPLOAD / DOWNLOAD FILES
+			errs := targetNode.CopyAll(ctx, nn, pool)
+			if len(errs) > 0 {
+				log.Fatal(errs)
+			}
+		} else { // Rather display logs than the progress bar
+			fmt.Printf("... After walking the tree, found %d nodes to copy\n", len(nn))
+
+			e = targetNode.MkdirAll(ctx, nn, nil)
+			if e != nil {
+				log.Fatal(e)
+			}
+
+			errs := targetNode.CopyAllVerbose(ctx, nn)
+			if len(errs) > 0 {
+				log.Fatal(errs)
+			}
+
 		}
 		fmt.Println("") // Add a line to reduce glitches in the terminal
 	},
@@ -208,7 +230,9 @@ func targetToFullPath(ctx context.Context, from, to string) (string, bool, bool,
 
 func init() {
 	flags := scpFiles.PersistentFlags()
-	flags.BoolVarP(&scpQuiet, "quiet", "q", false, "Reduce the amount of logs")
+	flags.BoolVarP(&scpVerbose, "verbose", "v", false, "Hide progress bar and rather display more log info during the transfers")
+	flags.BoolVarP(&scpVeryVerbose, "very-verbose", "w", false, "Hide progress bar and rather print out a maximum of log info")
+	flags.BoolVarP(&scpQuiet, "quiet", "q", false, "Reduce refresh frequency of the progress bars, e.g when runing cec in a bash script")
 	flags.Int64Var(&common.UploadMaxPartsNumber, "max-parts-number", int64(5000), "Maximum number of parts, S3 supports 10000 but some storage require less parts.")
 	flags.Int64Var(&common.UploadDefaultPartSize, "part-size", int64(50), "Default part size (MB), must always be a multiple of 10MB. It will be recalculated based on the max-parts-number value.")
 	flags.IntVar(&common.UploadPartsConcurrency, "parts-concurrency", 3, "Number of concurrent part uploads.")

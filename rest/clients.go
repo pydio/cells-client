@@ -2,6 +2,7 @@ package rest
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"runtime"
 	"sync"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	openapiruntime "github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
@@ -77,7 +79,9 @@ func GetApiClient(anonymous ...bool) (*client.PydioCellsRestAPI, error) {
 	return client.New(DefaultTransport, strfmt.Default), nil
 }
 
-func GetS3Client() (*s3.Client, string, error) {
+// GetS3Client creates a new default S3 client based on current active config
+// to transfer files to/from a distant Cells server.
+func GetS3Client(ctx context.Context) (*s3.Client, string, error) {
 
 	DefaultConfig.CustomHeaders = map[string]string{
 		transport.UserAgentKey: userAgent(),
@@ -87,10 +91,15 @@ func GetS3Client() (*s3.Client, string, error) {
 	s3Config := getS3ConfigFromSdkConfig(DefaultConfig)
 	bucketName := s3Config.Bucket
 
-	s3Client, e := sdk_s3.GetClient(CellsStore, DefaultConfig.SdkConfig, s3Config)
+	s3Conf := getS3ConfigFromSdkConfig(DefaultConfig)
+	cfg, e := sdk_s3.LoadAwsConfig(ctx, CellsStore, DefaultConfig.SdkConfig, s3Config)
 	if e != nil {
 		return nil, "", e
 	}
+	cfg = configureLogMode(cfg)
+	s3Client := sdk_s3.NewClientFromConfig(cfg, s3Conf.Endpoint)
+
+	// s3Client, e := sdk_s3.GetClient(CellsStore, DefaultConfig.SdkConfig, s3Config)
 	// s3Client.Config.S3DisableContentMD5Validation = aws.Bool(true)
 	return s3Client, bucketName, e
 }
@@ -182,4 +191,33 @@ func getS3ConfigFromSdkConfig(sConf *CecConfig) *cells_sdk.S3Config {
 	conf.Endpoint = sConf.Url
 	conf.RequestTimout = int(common.S3RequestTimeout)
 	return conf
+}
+
+// TODO WiP: finalize and clean
+
+func configureLogMode(cfg aws.Config) aws.Config {
+	switch common.CurrentLogLevel {
+	case common.Info:
+		return cfg
+	case common.Debug:
+		logMode := aws.LogSigning | aws.LogRetries
+		return sdk_s3.WithLogger(cfg, printLnWriter{}, logMode)
+	case common.Trace:
+		logMode := aws.LogSigning | aws.LogRetries | aws.LogRequest | aws.LogResponse | aws.LogDeprecatedUsage | aws.LogRequestEventMessage | aws.LogResponseEventMessage
+		return sdk_s3.WithLogger(cfg, printLnWriter{}, logMode)
+	default:
+		log.Fatal("unsupported log level:", common.CurrentLogLevel)
+	}
+	return cfg
+}
+
+type printLnWriter struct{}
+
+func (p printLnWriter) Write(data []byte) (n int, err error) {
+	fmt.Println(string(data))
+	return len(data), nil
+}
+
+func (p printLnWriter) Println(msg string) {
+	fmt.Println(msg)
 }

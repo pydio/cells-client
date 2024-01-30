@@ -14,15 +14,6 @@ var (
 )
 
 const (
-	// // Supported Auth types for v5+.
-	// // we support: PAT (Personal Access Token), OAuth2 (based on a JWT retrieved interreactively via OAuth credential flow) and Basic (login/password, less secured)
-	// // OAuthType uses OAuth2 credential retrieval flow.
-	// OAuthType = "OAuth2"
-	// // PatType relies on a Personal Access Token generated on the server for a given user.
-	// PatType = "PAT"
-	// // ClientAuthType is the legacy authentication method, based on user password: this is less secured.
-	// ClientAuthType = "Basic"
-
 	// UpdateServerURL gives access to Pydio's update server.
 	UpdateServerURL = "https://updatecells.pydio.com/"
 	// UpdatePublicKey enables verification of dowloaded binaries.
@@ -73,6 +64,17 @@ const (
 	LegacyCecConfigAuthTypeOAuth = "OAuth2"
 )
 
+type LogLevel int
+
+const (
+	Trace LogLevel = iota
+	Debug
+	Info
+	Warn
+	Error
+	Fatal
+)
+
 var (
 	UploadSwitchMultipart  = int64(100)
 	UploadDefaultPartSize  = int64(50)
@@ -81,4 +83,6 @@ var (
 	UploadPartsConcurrency = 3
 	UploadSkipMD5          = false
 	S3RequestTimeout       = int64(-1)
+
+	CurrentLogLevel LogLevel = Info
 )

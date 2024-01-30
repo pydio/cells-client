@@ -15,6 +15,7 @@ import (
 
 	"github.com/pydio/cells-sdk-go/v5/client/tree_service"
 	"github.com/pydio/cells-sdk-go/v5/models"
+	sdk_s3 "github.com/pydio/cells-sdk-go/v5/transport/s3"
 
 	"github.com/pydio/cells-client/v4/common"
 )
@@ -90,23 +91,6 @@ func DeleteNode(ctx context.Context, paths []string) (jobUUIDs []string, e error
 	return
 }
 
-// func GetBulkMetaNode(path string) ([]*models.TreeNode, error) {
-// 	client, err := GetApiClient()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	params := tree_service.NewBulkStatNodesParams()
-// 	params.Body = &models.RestGetBulkMetaRequest{
-// 		Limit:     100,
-// 		NodePaths: []string{path},
-// 	}
-// 	res, e := client.TreeService.BulkStatNodes(params)
-// 	if e != nil {
-// 		return nil, e
-// 	}
-// 	return res.Payload.Nodes, nil
-// }
-
 const pageSize = 100
 
 func GetAllBulkMeta(ctx context.Context, path string) (nodes []*models.TreeNode, err error) {
@@ -173,7 +157,7 @@ func TreeCreateNodes(nodes []*models.TreeNode) error {
 
 func GetFile(ctx context.Context, pathToFile string) (io.Reader, int, error) {
 
-	s3Client, bucketName, e := GetS3Client()
+	s3Client, bucketName, e := GetS3Client(ctx)
 	if e != nil {
 		return nil, 0, e
 	}
@@ -187,7 +171,6 @@ func GetFile(ctx context.Context, pathToFile string) (io.Reader, int, error) {
 	if err != nil {
 		return nil, 0, err
 	}
-	size := int(*hO.ContentLength)
 
 	obj, err := s3Client.GetObject(
 		ctx,
@@ -199,12 +182,12 @@ func GetFile(ctx context.Context, pathToFile string) (io.Reader, int, error) {
 	if err != nil {
 		return nil, 0, err
 	}
-	return obj.Body, size, nil
+	return obj.Body, int(*hO.ContentLength), nil
 }
 
 func PutFile(ctx context.Context, pathToFile string, content io.ReadSeeker, checkExists bool, errChan ...chan error) (*s3.PutObjectOutput, error) {
 
-	s3Client, bucketName, e := GetS3Client()
+	s3Client, bucketName, e := GetS3Client(ctx)
 	if e != nil {
 		return nil, e
 	}
@@ -225,7 +208,7 @@ func PutFile(ctx context.Context, pathToFile string, content io.ReadSeeker, chec
 			if len(errChan) > 0 {
 				errChan[0] <- err
 			} else {
-				fmt.Println(" ## Trying to Put file:", key, "Error:", err.Error())
+				fmt.Printf(" ## Could not upload file %s, cause: %s\n", key, err.Error())
 			}
 		}
 		return err
@@ -255,12 +238,13 @@ func PutFile(ctx context.Context, pathToFile string, content io.ReadSeeker, chec
 
 func uploadManager(ctx context.Context, stats os.FileInfo, path string, content io.ReadSeeker, errChan ...chan error) error {
 
-	s3Client, bucketName, err := GetS3Client()
+	s3Client, bucketName, err := GetS3Client(ctx)
 	if err != nil {
 		return err
 	}
 
-	ps, err := computePartSize(stats.Size())
+	fSize := stats.Size()
+	ps, err := computePartSize(fSize)
 	if err != nil {
 		if errChan != nil {
 			errChan[0] <- err
@@ -275,6 +259,9 @@ func uploadManager(ctx context.Context, stats os.FileInfo, path string, content 
 		},
 	)
 
+	// Adds a callback entry point so that we can follow the effective part upload.
+	uploader.BufferProvider = sdk_s3.NewCallbackTransferProvider(path, fSize, ps)
+
 	_, err = uploader.Upload(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(path),
@@ -284,68 +271,18 @@ func uploadManager(ctx context.Context, stats os.FileInfo, path string, content 
 	if err != nil {
 		if aerr, ok := err.(smithy.APIError); ok {
 			// TODO better error handling
-			errChan[0] <- aerr
+			if errChan != nil {
+				errChan[0] <- aerr
+			}
 			return aerr
 		}
-		errChan[0] <- err
+		if errChan != nil {
+			errChan[0] <- err
+		}
 		return err
 	}
 
 	return nil
-
-	// sess.Config.S3DisableContentMD5Validation = aws.Bool(true)
-	// ps, e := computePartSize(stats.Size())
-	// if e != nil {
-	// 	if errChan != nil {
-	// 		errChan[0] <- e
-	// 	}
-	// 	return e
-	// }
-
-	// uploader := s3manager.NewUploader(sess, func(u *s3manager.Uploader) {
-	// 	u.PartSize = ps
-	// 	u.Concurrency = common.UploadPartsConcurrency
-	// 	u.RequestOptions = []request.Option{func(r *request.Request) {
-
-	// 		if RefreshAndStoreIfRequired(DefaultConfig) {
-	// 			// We must explicitely tell the uploader that the token has been refreshed
-	// 			sess.Config.Credentials.Expire()
-	// 			// s3Config := getS3ConfigFromSdkConfig(DefaultConfig)
-	// 			// if testClient, e := s3transport.GetClient(DefaultConfig.SdkConfig, &s3Config); e == nil {
-	// 			// 	r.Config.WithCredentials(testClient.Config.Credentials)
-	// 			// }
-	// 		}
-	// 	}}
-	// })
-
-	// input := &s3manager.UploadInput{
-	// 	Body:   aws.ReadSeekCloser(content),
-	// 	Bucket: aws.String(bucketName),
-	// 	Key:    aws.String(path),
-	// }
-
-	// if !common.UploadSkipMD5 && stats.Size() > (5*1024*1024*1024) {
-	// 	h := md5.New()
-	// 	if _, err := io.Copy(h, content); err != nil {
-	// 		return fmt.Errorf("could not copy md5: %v", err)
-	// 	}
-	// 	input.Metadata = map[string]*string{"content-md5": aws.String(fmt.Sprintf("%x", h.Sum(nil)))}
-	// }
-
-	// _, _ = content.Seek(0, io.SeekStart)
-
-	// _, err = uploader.Upload(input)
-	// if err != nil {
-
-	// 	// FIXME
-	// 	// if aerr, ok := err.(awserr.Error); ok {
-	// 	// 	errChan[0] <- aerr
-	// 	// 	return aerr
-	// 	// }
-	// 	errChan[0] <- err
-	// 	return err
-	// }
-	// return nil
 }
 
 func computePartSize(fileSize int64) (partSize int64, er error) {

@@ -63,9 +63,7 @@ EXAMPLES
 				return
 			}
 		}
-
 		ctx := cmd.Context()
-
 		targetNodes := make([]string, 0)
 		for _, arg := range args {
 			_, exists := rest.StatNode(ctx, strings.TrimRight(arg, wildcardChar))
