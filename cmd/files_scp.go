@@ -161,7 +161,6 @@ EXAMPLES
 			if len(errs) > 0 {
 				log.Fatal(errs)
 			}
-
 		}
 		fmt.Println("") // Add a line to reduce glitches in the terminal
 	},

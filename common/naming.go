@@ -30,8 +30,8 @@ const (
 	EnvPrefix = "CEC"
 )
 
+// Labels for well-known supported auth types
 const (
-	// Labels for well-known supported auth types
 	AuthTypePatLabel   = "PAT"
 	AuthTypeBasicLabel = "Login/Password"
 	AuthTypeOAuthLabel = "OAuth2"
