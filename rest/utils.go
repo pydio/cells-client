@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"math"
 	"math/rand"
@@ -17,10 +18,9 @@ import (
 	"github.com/pydio/cells-client/v4/common"
 )
 
-// RetryCallback implements boiler plate code to easily call the same function until it suceeds
+// RetryCallback implements boilerplate code to easily call the same function until it succeeds
 // or a time-out is reached.
 func RetryCallback(callback func() error, number int, interval time.Duration) error {
-
 	var e error
 	for i := 0; i < number; i++ {
 		if e = callback(); e == nil {
@@ -30,16 +30,14 @@ func RetryCallback(callback func() error, number int, interval time.Duration) er
 			<-time.After(interval)
 		}
 	}
-
 	return e
 }
 
-// RetrieveSessionLogin try to get the registry of the server defined by the passed configuration
+// RetrieveSessionLogin tries to get the registry of the server defined by the passed configuration
 // and parse the result to get current user login. Typically useful when using PAT auth.
 func RetrieveSessionLogin(newConf *CecConfig) (string, error) {
-
 	uri := "/a/frontend/state"
-	resp, err := GetFrom(newConf, uri)
+	resp, err := getFrom(newConf, uri)
 	if err != nil {
 		return "", err
 	}
@@ -67,7 +65,7 @@ func RetrieveSessionLogin(newConf *CecConfig) (string, error) {
 func RetrieveCurrentSessionLogin() (string, error) {
 
 	uri := "/a/frontend/state"
-	resp, err := AuthenticatedGet(uri)
+	resp, err := authenticatedGet(uri)
 	if err != nil {
 		return "", err
 	}
@@ -95,7 +93,7 @@ func RetrieveCurrentSessionLogin() (string, error) {
 func RetrieveRemoteServerVersion() (*common.ServerVersion, error) {
 
 	uri := "/a/frontend/bootconf"
-	resp, err := AuthenticatedGet(uri)
+	resp, err := authenticatedGet(uri)
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve bootconf: %s", err.Error())
 	}
@@ -128,8 +126,9 @@ func CleanURL(input string) (string, error) {
 }
 
 func IsForbiddenError(err error) bool {
-	switch e := err.(type) {
-	case *runtime.APIError:
+	var e *runtime.APIError
+	switch {
+	case errors.As(err, &e):
 		return e.Code == 401
 	}
 	return false

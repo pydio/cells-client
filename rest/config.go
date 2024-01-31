@@ -11,7 +11,6 @@ import (
 	"github.com/manifoldco/promptui"
 
 	cells_sdk "github.com/pydio/cells-sdk-go/v5"
-	"github.com/pydio/cells-sdk-go/v5/transport"
 	sdk_rest "github.com/pydio/cells-sdk-go/v5/transport/rest"
 
 	"github.com/pydio/cells-client/v4/common"
@@ -123,7 +122,7 @@ func migrateAuthTypes(configList *ConfigList) (bool, error) {
 	return hasChanged, nil
 }
 
-// Remove removes a config from the list of available configurations by its ID.
+// Remove unregisters a config from the list of available configurations by its ID.
 func (list *ConfigList) Remove(id string) error {
 	if _, ok := list.Configs[id]; !ok {
 		return fmt.Errorf("config not found, ID is not valid [%s]", id)
@@ -235,7 +234,7 @@ func (store *CellsConfigStore) RefreshIfRequired(sdkConfig *cells_sdk.SdkConfig)
 	return true, nil
 }
 
-func NewCellsConfigStore() transport.ConfigStore {
+func NewCellsConfigStore() cells_sdk.ConfigStore {
 	return &CellsConfigStore{}
 }
 

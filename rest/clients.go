@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"sync"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -19,6 +20,7 @@ import (
 	cells_sdk "github.com/pydio/cells-sdk-go/v5"
 	"github.com/pydio/cells-sdk-go/v5/client"
 	"github.com/pydio/cells-sdk-go/v5/transport"
+	sdk_http "github.com/pydio/cells-sdk-go/v5/transport/http"
 	sdk_rest "github.com/pydio/cells-sdk-go/v5/transport/rest"
 	sdk_s3 "github.com/pydio/cells-sdk-go/v5/transport/s3"
 
@@ -26,9 +28,8 @@ import (
 )
 
 var (
-	// DefaultConfig  stores the current active config, we must initiliase it to avoid nil panic dereference
+	// DefaultConfig  stores the current active config, we must initialise it to avoid nil panic dereference
 	DefaultConfig    *CecConfig
-	DefaultContext   context.Context
 	DefaultTransport openapiruntime.ClientTransport
 	configFilePath   string
 	once             = &sync.Once{}
@@ -51,10 +52,6 @@ func DefaultCecConfig() *CecConfig {
 		},
 		SkipKeyring: false,
 	}
-}
-
-func userAgent() string {
-	return common.AppName + "/" + common.Version
 }
 
 // GetApiClient returns a client to directly communicate with the Pydio Cells REST API.
@@ -87,64 +84,34 @@ func GetS3Client(ctx context.Context) (*s3.Client, string, error) {
 		transport.UserAgentKey: userAgent(),
 	}
 
-	// TODO this must be done before
-	s3Config := getS3ConfigFromSdkConfig(DefaultConfig)
-	bucketName := s3Config.Bucket
+	//s3Conf := getS3ConfigFromSdkConfig(DefaultConfig)
 
-	s3Conf := getS3ConfigFromSdkConfig(DefaultConfig)
-	cfg, e := sdk_s3.LoadAwsConfig(ctx, CellsStore, DefaultConfig.SdkConfig, s3Config)
+	var options []interface{}
+
+	if CellsStore == nil {
+		fmt.Println("[WARNING] could not found a cells store")
+	} else {
+		options = append(options, sdk_s3.WithCellsConfigStore(CellsStore))
+	}
+
+	if int(common.S3RequestTimeout) > 0 {
+		to := time.Duration(int(common.S3RequestTimeout)) * time.Second
+		options = append(options, sdk_http.WithTimout(to))
+	}
+
+	if logOption := configureLogMode(); logOption != nil {
+		options = append(options, logOption)
+	}
+
+	cfg, e := sdk_s3.LoadConfig(ctx, DefaultConfig.SdkConfig, options...)
 	if e != nil {
 		return nil, "", e
 	}
-	cfg = configureLogMode(cfg)
-	s3Client := sdk_s3.NewClientFromConfig(cfg, s3Conf.Endpoint)
 
-	// s3Client, e := sdk_s3.GetClient(CellsStore, DefaultConfig.SdkConfig, s3Config)
-	// s3Client.Config.S3DisableContentMD5Validation = aws.Bool(true)
-	return s3Client, bucketName, e
-}
+	s3Client := sdk_s3.NewClientFromConfig(cfg, DefaultConfig.Url)
 
-// GetFrom performs an authenticated GET request for the passed URI (that must start with a '/').
-func GetFrom(config *CecConfig, uri string) (*http.Response, error) {
-	currURL := config.Url + uri
-	req, err := http.NewRequest("GET", currURL, nil)
-	if err != nil {
-		return nil, err
-	}
-	return AuthenticatedRequest(req, config.SdkConfig)
-}
-
-// AuthenticatedGet performs an authenticated GET request for the passed URI (that must start with a '/').
-func AuthenticatedGet(uri string) (*http.Response, error) {
-
-	currURL := DefaultConfig.Url + uri
-	req, err := http.NewRequest("GET", currURL, nil)
-	if err != nil {
-		return nil, err
-	}
-	return AuthenticatedRequest(req, DefaultConfig.SdkConfig)
-}
-
-// AuthenticatedRequest performs the passed request after adding an authorization Header.
-func AuthenticatedRequest(req *http.Request, sdkConfig *cells_sdk.SdkConfig) (*http.Response, error) {
-
-	tp, e := transport.TokenProviderFromConfig(sdkConfig)
-	if e != nil {
-		return nil, e
-	}
-
-	httpClient := &http.Client{Transport: transport.New(
-		transport.WithSkipVerify(sdkConfig.SkipVerify),
-		transport.WithCustomHeaders(sdkConfig.CustomHeaders),
-		transport.WithBearer(tp),
-	)}
-
-	resp, e := httpClient.Do(req)
-	if e != nil {
-		log.Println("... Authenticated request failed, cause:", e)
-		return nil, e
-	}
-	return resp, nil
+	// For the time being, we assume that the bucket used is always the same
+	return s3Client, cells_sdk.DefaultS3Bucket, e
 }
 
 func GetConfigFilePath() string {
@@ -186,29 +153,75 @@ func CloneConfig(from *CecConfig) *CecConfig {
 	return &conClone
 }
 
-func getS3ConfigFromSdkConfig(sConf *CecConfig) *cells_sdk.S3Config {
-	conf := cells_sdk.NewS3Config()
-	conf.Endpoint = sConf.Url
-	conf.RequestTimout = int(common.S3RequestTimeout)
-	return conf
+//func getS3ConfigFromSdkConfig(sConf *CecConfig) *cells_sdk.S3Config {
+//	conf := cells_sdk.NewS3Config()
+//	conf.Endpoint = sConf.Url
+//	conf.RequestTimout = int(common.S3RequestTimeout)
+//	return conf
+//}
+
+func userAgent() string {
+	return common.AppName + "/" + common.Version
+}
+
+// getFrom performs an authenticated GET request for the passed URI (that must start with a '/').
+func getFrom(config *CecConfig, uri string) (*http.Response, error) {
+	currURL := config.Url + uri
+	req, err := http.NewRequest("GET", currURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	return authenticatedRequest(req, config.SdkConfig)
+}
+
+// authenticatedGet performs an authenticated GET request for the passed URI (that must start with a '/').
+func authenticatedGet(uri string) (*http.Response, error) {
+	currURL := DefaultConfig.Url + uri
+	req, err := http.NewRequest("GET", currURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	return authenticatedRequest(req, DefaultConfig.SdkConfig)
+}
+
+// authenticatedRequest performs the passed request after adding an authorization Header.
+func authenticatedRequest(req *http.Request, sdkConfig *cells_sdk.SdkConfig) (*http.Response, error) {
+
+	tp, e := transport.TokenProviderFromConfig(sdkConfig)
+	if e != nil {
+		return nil, e
+	}
+
+	httpClient := &http.Client{Transport: transport.New(
+		sdk_http.WithCustomHeaders(sdkConfig.CustomHeaders),
+		sdk_http.WithBearer(tp),
+		sdk_http.WithSkipVerify(sdkConfig.SkipVerify),
+	)}
+
+	resp, e := httpClient.Do(req)
+	if e != nil {
+		log.Println("... Authenticated request failed, cause:", e)
+		return nil, e
+	}
+	return resp, nil
 }
 
 // TODO WiP: finalize and clean
 
-func configureLogMode(cfg aws.Config) aws.Config {
+func configureLogMode() cells_sdk.AwsConfigOption {
 	switch common.CurrentLogLevel {
 	case common.Info:
-		return cfg
+		return nil
 	case common.Debug:
 		logMode := aws.LogSigning | aws.LogRetries
-		return sdk_s3.WithLogger(cfg, printLnWriter{}, logMode)
+		return sdk_s3.WithLogger(printLnWriter{}, logMode)
 	case common.Trace:
 		logMode := aws.LogSigning | aws.LogRetries | aws.LogRequest | aws.LogResponse | aws.LogDeprecatedUsage | aws.LogRequestEventMessage | aws.LogResponseEventMessage
-		return sdk_s3.WithLogger(cfg, printLnWriter{}, logMode)
+		return sdk_s3.WithLogger(printLnWriter{}, logMode)
 	default:
 		log.Fatal("unsupported log level:", common.CurrentLogLevel)
 	}
-	return cfg
+	return nil
 }
 
 type printLnWriter struct{}
