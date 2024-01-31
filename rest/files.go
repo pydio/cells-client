@@ -286,6 +286,7 @@ func uploadManager(ctx context.Context, stats os.FileInfo, path string, content 
 }
 
 func computePartSize(fileSize int64) (partSize int64, er error) {
+
 	partSize = common.UploadDefaultPartSize * (1024 * 1024)
 	maxNumberOfParts := common.UploadMaxPartsNumber
 	steps := common.UploadPartsSteps

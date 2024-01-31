@@ -15,7 +15,10 @@ DESCRIPTION
 `,
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cm *cobra.Command, args []string) {
-		cm.Usage()
+		err := cm.Usage()
+		if err != nil {
+			return
+		}
 	},
 }
 
