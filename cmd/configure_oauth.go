@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -69,7 +70,7 @@ USAGE
 			err = oAuthInteractive(newConf)
 		}
 		if err != nil {
-			if err == promptui.ErrInterrupt {
+			if errors.Is(err, promptui.ErrInterrupt) {
 				log.Fatal("operation aborted by user")
 			}
 			log.Fatal(err.Error())
@@ -157,7 +158,15 @@ func oAuthInteractive(newConf *rest.CecConfig) error {
 	// Starting authentication process
 	var returnCode string
 	state := rest.RandString(16)
-	directUrl, callbackUrl, err := sdk_rest.OAuthPrepareUrl(common.AppName, newConf.Url, state, openBrowser)
+	var callbackUrl string
+
+	if openBrowser {
+		callbackUrl = sdk_rest.DefaultCallbackUrl // "http://localhost:3000/servers/callback" TODO make this more dynamic
+	} else {
+		callbackUrl = newConf.Url + "/oauth2/oob"
+	}
+
+	directUrl, err := sdk_rest.OAuthPrepareUrl(common.AppName, newConf.Url, state, callbackUrl)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -197,9 +206,6 @@ func oAuthInteractive(newConf *rest.CecConfig) error {
 		log.Fatal(err)
 	}
 	fmt.Printf("%s Successfully Received Token. It will be refreshed at %v\n", promptui.IconGood, time.Unix(int64(newConf.TokenExpiresAt), 0))
-
-	// cells_sdk.Log("... Configured OAuth for [%s]", newConf.GetId())
-
 	return nil
 }
 

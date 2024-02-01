@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/url"
@@ -44,7 +45,7 @@ USAGE
 			err = interactive(newConf)
 		}
 		if err != nil {
-			if err == promptui.ErrInterrupt {
+			if errors.Is(err, promptui.ErrInterrupt) {
 				log.Fatalf("operation aborted by user")
 			}
 			log.Fatalf(err.Error())
