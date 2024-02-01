@@ -279,23 +279,23 @@ func (c *CrawlNode) upload(ctx context.Context, src *CrawlNode, bar *uiprogress.
 	}
 	_, done := wrapper.CreateErrorChan()
 	defer close(done)
-	bname := src.RelPath
+	bName := src.RelPath
 	if c.NewFileName != "" {
-		bname = c.NewFileName
+		bName = c.NewFileName
 	}
 
-	fullpath := c.Join(c.FullPath, bname)
+	fullPath := c.Join(c.FullPath, bName)
 	// Handle corner case when trying to upload a file and *folder* with same name already exists at target path
-	if tn, b := StatNode(ctx, fullpath); b && *tn.Type == models.TreeNodeTypeCOLLECTION {
+	if tn, b := StatNode(ctx, fullPath); b && *tn.Type == models.TreeNodeTypeCOLLECTION {
 		// target root is not a folder, fail fast.
-		return fmt.Errorf("cannot upload file to %s, a folder with same name already exists at target path", fullpath)
+		return fmt.Errorf("cannot upload file to %s, a folder with same name already exists at target path", fullPath)
 	}
 	wrapper.double = false
 	if stats.Size() <= common.UploadSwitchMultipart*(1024*1024) {
-		if _, err := PutFile(ctx, fullpath, wrapper, false, wrapper.errChan); err != nil {
+		if _, err := PutFile(ctx, fullPath, wrapper, false, wrapper.errChan); err != nil {
 			return err
 		}
-	} else if err := uploadManager(ctx, stats, fullpath, wrapper, wrapper.errChan); err != nil {
+	} else if err := uploadManager(ctx, stats, fullPath, wrapper, wrapper.errChan); err != nil {
 		return err
 	}
 	return nil
@@ -325,7 +325,7 @@ func (c *CrawlNode) download(ctx context.Context, src *CrawlNode, bar *uiprogres
 	return e
 }
 
-// CopyAllVerbose parallely performs the real upload/download of files that have been prepared
+// CopyAllVerbose parallely performs the real upload/download of files that have been prepared.
 // during the Walk step with no progress bar and rather more logs.
 func (c *CrawlNode) CopyAllVerbose(ctx context.Context, dd []*CrawlNode) (errs []error) {
 	idx := -1
@@ -364,22 +364,22 @@ func (c *CrawlNode) uploadVerbose(ctx context.Context, src *CrawlNode) error {
 		return e
 	}
 	stats, _ := file.Stat()
-	bname := src.RelPath
+	bName := src.RelPath
 	if c.NewFileName != "" {
-		bname = c.NewFileName
+		bName = c.NewFileName
 	}
 
-	fullpath := c.Join(c.FullPath, bname)
+	fullPath := c.Join(c.FullPath, bName)
 	// Handle corner case when trying to upload a file and *folder* with same name already exists at target path
-	if tn, b := StatNode(ctx, fullpath); b && *tn.Type == models.TreeNodeTypeCOLLECTION {
+	if tn, b := StatNode(ctx, fullPath); b && *tn.Type == models.TreeNodeTypeCOLLECTION {
 		// target root is not a folder, fail fast.
-		return fmt.Errorf("cannot upload file to %s, a folder with same name already exists at target path", fullpath)
+		return fmt.Errorf("cannot upload file to %s, a folder with same name already exists at target path", fullPath)
 	}
 	if stats.Size() <= common.UploadSwitchMultipart*(1024*1024) {
-		if _, err := PutFile(ctx, fullpath, file, false); err != nil {
+		if _, err := PutFile(ctx, fullPath, file, false); err != nil {
 			return err
 		}
-	} else if err := uploadManager(ctx, stats, fullpath, file); err != nil {
+	} else if err := uploadManager(ctx, stats, fullPath, file); err != nil {
 		return err
 	}
 	return nil
@@ -390,11 +390,11 @@ func (c *CrawlNode) downloadVerbose(ctx context.Context, src *CrawlNode) error {
 	if e != nil {
 		return e
 	}
-	bname := src.RelPath
+	bName := src.RelPath
 	if c.NewFileName != "" {
-		bname = c.NewFileName
+		bName = c.NewFileName
 	}
-	downloadToLocation := c.Join(c.FullPath, bname)
+	downloadToLocation := c.Join(c.FullPath, bName)
 	writer, e := os.OpenFile(downloadToLocation, os.O_CREATE|os.O_WRONLY, 0644)
 	if e != nil {
 		return e

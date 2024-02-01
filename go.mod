@@ -62,7 +62,7 @@ require (
 	github.com/go-openapi/loads v0.21.5 // indirect
 	github.com/go-openapi/spec v0.20.14 // indirect
 	github.com/go-openapi/swag v0.22.9 // indirect
-	github.com/go-openapi/validate v0.22.6 // indirect
+	github.com/go-openapi/validate v0.23.0 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/golang/glog v1.2.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect

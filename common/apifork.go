@@ -23,7 +23,7 @@ type ServerVersion struct {
 	ServerOffset  int64
 }
 
-// ProgressMonitor provides a TeeReader to wrap a reader and send a progress inside a dedicated channel
+// ProgressMonitor provides a TeeReader to wrap a reader and sends a progress inside a dedicated channel.
 type ProgressMonitor struct {
 	expectedSize uint64
 	currentSize  uint64
@@ -33,7 +33,7 @@ type ProgressMonitor struct {
 	SizeChan     chan uint64
 }
 
-// BodyWithProgressMonitor creates a ProgressMonitor directly from an http.Response
+// BodyWithProgressMonitor creates a ProgressMonitor directly from a http.Response.
 func BodyWithProgressMonitor(resp *http.Response, progress chan float64, done chan bool) io.Reader {
 	expected := uint64(0)
 	if resp.ContentLength > 0 {
@@ -42,7 +42,7 @@ func BodyWithProgressMonitor(resp *http.Response, progress chan float64, done ch
 	return io.TeeReader(resp.Body, NewProgressMonitor(expected, progress, done))
 }
 
-// NewProgressMonitor initialize a ProgressMonitor with the channels
+// NewProgressMonitor initializes a ProgressMonitor with the channels.
 func NewProgressMonitor(expected uint64, progress chan float64, done chan bool) *ProgressMonitor {
 	m := &ProgressMonitor{
 		expectedSize: expected,
@@ -52,7 +52,7 @@ func NewProgressMonitor(expected uint64, progress chan float64, done chan bool) 
 	return m
 }
 
-// Write implements the io.Writer interface to be used by a TeeReader
+// Write implements the io.Writer interface to be used by a TeeReader.
 func (m *ProgressMonitor) Write(p []byte) (int, error) {
 	n := len(p)
 	m.currentSize += uint64(n)

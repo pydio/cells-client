@@ -153,13 +153,6 @@ func CloneConfig(from *CecConfig) *CecConfig {
 	return &conClone
 }
 
-//func getS3ConfigFromSdkConfig(sConf *CecConfig) *cells_sdk.S3Config {
-//	conf := cells_sdk.NewS3Config()
-//	conf.Endpoint = sConf.Url
-//	conf.RequestTimout = int(common.S3RequestTimeout)
-//	return conf
-//}
-
 func userAgent() string {
 	return common.AppName + "/" + common.Version
 }

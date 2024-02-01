@@ -28,9 +28,9 @@ import (
 )
 
 type UpdateRequest struct {
-	// Channel name
+	// Channel name.
 	Channel string `json:"Channel,omitempty"`
-	// Name of the currently running application
+	// PackageName is the technical name of the currently running application.
 	PackageName string `json:"PackageName,omitempty"`
 	// Current version of the application
 	CurrentVersion string `json:"CurrentVersion,omitempty"`
@@ -237,7 +237,7 @@ func ApplyUpdate(ctx context.Context, p *UpdatePackage, dryRun bool, pgChan chan
 			errorChan <- er
 		}
 
-		// Now try to move previous version to the services folder. Do not break on error, just Warn in the logs.
+		// Now try to move previous version to the service folder. Do not break on error, just Warn in the logs.
 		// dataDir, _ := config.ServiceDataDir(common.SERVICE_GRPC_NAMESPACE_ + common.SERVICE_UPDATE)
 
 		// backupPath := filepath.Join("dataDir", filepath.Base(backupFile))

@@ -46,10 +46,10 @@ func GetAuthTypeLabel(authType string) string {
 		label = AuthTypePatLabel
 	case cells_sdk.AuthTypeClientAuth:
 		label = AuthTypeBasicLabel
-		// TODO this should never be used, remove once we are confiant the migration has been correctly implemented
 	case LegacyCecConfigAuthTypePat,
 		LegacyCecConfigAuthTypeBasic,
 		LegacyCecConfigAuthTypeOAuth:
+		// TODO this should never be used, remove once we are confidant the migration has been correctly implemented
 		label = "Unmigrated - " + authType
 	default:
 		label = "Unknown"
@@ -57,8 +57,8 @@ func GetAuthTypeLabel(authType string) string {
 	return label
 }
 
+// Legacy values before we moved this in the Cells SDK (for v5+)
 const (
-	// Legacy values before we moved this in the Cells SDK (for v5+)
 	LegacyCecConfigAuthTypePat   = "Personal Access Token"
 	LegacyCecConfigAuthTypeBasic = "Client Credentials"
 	LegacyCecConfigAuthTypeOAuth = "OAuth2"
@@ -84,5 +84,5 @@ var (
 	UploadSkipMD5          = false
 	S3RequestTimeout       = int64(-1)
 
-	CurrentLogLevel LogLevel = Info
+	CurrentLogLevel = Info
 )

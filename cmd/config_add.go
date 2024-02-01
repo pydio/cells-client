@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -92,7 +93,7 @@ Please update your scripts to be ready.
 		s := promptui.Select{Label: "Select authentication method", Size: 3, Items: items}
 		n, _, err := s.Run()
 		if err != nil {
-			if err == promptui.ErrInterrupt {
+			if errors.Is(err, promptui.ErrInterrupt) {
 				log.Fatal("operation aborted by user")
 			}
 			log.Fatal(err)
