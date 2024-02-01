@@ -48,7 +48,7 @@ var RootCmd = &cobra.Command{
 	Use:                    os.Args[0],
 	Short:                  "Connect to a Pydio Cells server using the command line",
 	BashCompletionFunction: bashCompletionFunc,
-	Args:                   cobra.MinimumNArgs(1),
+	//Args:                   cobra.MinimumNArgs(1),
 	Long: `
 DESCRIPTION
 
@@ -84,6 +84,10 @@ ENVIRONMENT
     $ ` + os.Args[0] + ` ls
 
 `, PersistentPreRun: func(cmd *cobra.Command, args []string) {
+
+		if len(os.Args) == 1 {
+			return
+		}
 
 		needSetup := true
 
@@ -135,7 +139,7 @@ ENVIRONMENT
 	},
 
 	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Help()
+		cmd.Usage()
 	},
 }
 

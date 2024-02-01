@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -113,12 +112,6 @@ func GetAllBulkMeta(ctx context.Context, path string) (nodes []*models.TreeNode,
 	if len(nodes) >= pageSize {
 		pg := res.Payload.Pagination
 		for i := pageSize; i <= int(pg.Total); i += pageSize {
-			// params = tree_service.NewBulkStatNodesParams()
-			// params.Body = &models.RestGetBulkMetaRequest{
-			// 	Limit:     pageSize,
-			// 	NodePaths: []string{path},
-			// 	Offset:    int32(i),
-			// }
 			params.Body.Offset = int32(i)
 			res, err = client.TreeService.BulkStatNodes(params)
 			if err != nil {
@@ -126,11 +119,7 @@ func GetAllBulkMeta(ctx context.Context, path string) (nodes []*models.TreeNode,
 			}
 			nodes = append(nodes, res.Payload.Nodes...)
 			pg = res.Payload.Pagination
-			fmt.Println("#", i, "Current page:", pg.CurrentPage, "CurrentOffset:", pg.CurrentOffset, "TotalPages: ", pg.TotalPages)
-			fmt.Println(" Found:", len(res.Payload.Nodes), "nodes in page ", pg.CurrentOffset, "- TotalPages:", pg.TotalPages)
-			fmt.Println(" Length after append:", len(nodes))
 		}
-
 	}
 	return nodes, nil
 }
@@ -244,7 +233,8 @@ func uploadManager(ctx context.Context, stats os.FileInfo, path string, content 
 	}
 
 	fSize := stats.Size()
-	ps, err := computePartSize(fSize)
+
+	ps, err := sdk_s3.ComputePartSize(fSize, common.UploadDefaultPartSize, common.UploadMaxPartsNumber)
 	if err != nil {
 		if errChan != nil {
 			errChan[0] <- err
@@ -283,26 +273,4 @@ func uploadManager(ctx context.Context, stats os.FileInfo, path string, content 
 	}
 
 	return nil
-}
-
-func computePartSize(fileSize int64) (partSize int64, er error) {
-
-	partSize = common.UploadDefaultPartSize * (1024 * 1024)
-	maxNumberOfParts := common.UploadMaxPartsNumber
-	steps := common.UploadPartsSteps
-	if partSize%steps != 0 {
-		return 0, fmt.Errorf("PartSize must be a multiple of 10MB")
-	}
-
-	if mnp := os.Getenv("CELLS_MAX_PARTS_NUMBER"); mnp != "" {
-		if m, e := strconv.Atoi(mnp); e == nil {
-			maxNumberOfParts = int64(m)
-		}
-	}
-	if int64(float64(fileSize)/float64(partSize)) < maxNumberOfParts {
-		return
-	}
-	partSize = int64(float64(fileSize) / float64(maxNumberOfParts))
-	partSize = partSize + steps - partSize%steps
-	return
 }
