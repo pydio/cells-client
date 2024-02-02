@@ -2,6 +2,7 @@ DEV_VERSION=4.1.0-dev
 ENV=env GOOS=linux
 TIMESTAMP:=$(shell date -u +%Y%m%d%H%M%S)
 CELLS_CLIENT_VERSION?=${DEV_VERSION}.${TIMESTAMP}
+MOD_UPDATE?=v5-dev
 
 .PHONY: all clean main linux arm arm64 win darwin xgo
 
@@ -40,6 +41,16 @@ dev:
 	 -ldflags "-X github.com/pydio/cells-client/v4/common.Version=${DEV_VERSION}"\
 	 -o cec\
 	 .
+
+## We assume the sdk and cells client projects are in the same folder...
+mod-local:
+	go mod edit -replace github.com/pydio/cells-sdk-go/v5=../cells-sdk-go
+
+mod-update:
+	go mod edit -dropreplace github.com/pydio/cells-sdk-go/v5
+	go get -d github.com/pydio/cells-sdk-go/v5@${MOD_UPDATE}
+	go mod download github.com/pydio/cells-sdk-go/v5
+	GONOSUMDB=* go mod tidy
 
 clean:
 	rm -f cec
