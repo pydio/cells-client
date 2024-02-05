@@ -14,7 +14,9 @@ The v4 version of this tools is meant to be used with a remote Cells server that
 
 ## Usage
 
-Use the `cec --help` command to know about available commands. Below are a few interesting ones for manipulating files:
+Use the `cec --help` command to know about available commands. You can also find the [complete documentation for each command on our website](https://pydio.com/en/docs/developer-guide/cells-client-cec)
+
+Below are a few interesting commands for manipulating files:
 
 - `cec ls`: List files and folders on the server, when no path is provided, it lists the workspaces that the current user can access.
 - `cec scp`: Upload/Download file to/from a remote server.
@@ -22,7 +24,7 @@ Use the `cec --help` command to know about available commands. Below are a few i
 - `cec mkdir`: Create a folder on the remote server
 - `cec clear`: Clear authentication tokens stored in your keychain.
 
-For your convenience, below are a few examples.
+For your convenience, here are a few examples:
 
 ### 1/ Listing the content of the personal-files workspace
 
