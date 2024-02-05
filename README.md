@@ -24,7 +24,7 @@ Below are a few interesting commands for manipulating files:
 - `cec mkdir`: Create a folder on the remote server
 - `cec clear`: Clear authentication tokens stored in your keychain.
 
-For your convenience, here are a few examples:
+For your convenience, here are a few examples, assuming that your client is connected to a server (see [Section below](#connecting-to-cells) for connecting) :
 
 ### 1/ Listing the content of the personal-files workspace
 
