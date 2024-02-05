@@ -118,7 +118,7 @@ Once a valid user is available, there are 2 options:
 
 ### Persistent Mode
 
-Connections can be configured and persisted locally on the client machine. As from version **v2.2.0**, you can configure multiple _accounts_ on the client side and switch between them as necessary.
+Connections can be configured and persisted locally on the client machine. As from version **v2.2.0**, you can [configure multiple _accounts_ on the client side and switch between them as necessary](https://github.com/pydio/build-cells/blob/407c3127961b3334a5223c85e3f5411df7105372/release/changelogs/cells-client-v2.2.0.md).  
 Last used connection is persisted locally in the main configuration file and will be re-used the next time you call the `cec` command.
 
 To switch between accounts, simply call `cec config use`. 
@@ -145,13 +145,13 @@ Supported keyrings are MacOSX Keychain, Linux DBUS and Windows Credential Manage
 
 #### Troubleshooting
 
-When launching cells-client, following error is thrown:
+When launching the Cells Client, following error is thrown:
 
 ```sh
 2022/10/14 17:33:07 unexpected error during initialisation phase: exec: "dbus-launch": executable file not found in $PATH
 ```
 
-This mostly happens when Cells Client cannot find a keyring that it expects to store credentials. Under Debian/Ubuntu Linux, you can install necessary software with (even if you do not use GNOME):
+This mostly happens when Cells Client cannot find the keyring it expects to store credentials. Under Debian/Ubuntu Linux, you can install necessary software with (even if you do not use GNOME):
 
 ```sh 
 sudo apt install dbus-launch libpam-gnome-keyring gnome-keyring-pkcs11
