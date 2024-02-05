@@ -2,6 +2,7 @@ package rest
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -10,11 +11,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	smithy "github.com/aws/smithy-go"
+	"github.com/aws/smithy-go"
 
 	"github.com/pydio/cells-sdk-go/v5/client/tree_service"
 	"github.com/pydio/cells-sdk-go/v5/models"
-	sdk_s3 "github.com/pydio/cells-sdk-go/v5/transport/s3"
+	sdkS3 "github.com/pydio/cells-sdk-go/v5/transport/s3"
 
 	"github.com/pydio/cells-client/v4/common"
 )
@@ -234,7 +235,7 @@ func uploadManager(ctx context.Context, stats os.FileInfo, path string, content 
 
 	fSize := stats.Size()
 
-	ps, err := sdk_s3.ComputePartSize(fSize, common.UploadDefaultPartSize, common.UploadMaxPartsNumber)
+	ps, err := sdkS3.ComputePartSize(fSize, common.UploadDefaultPartSize, common.UploadMaxPartsNumber)
 	if err != nil {
 		if errChan != nil {
 			errChan[0] <- err
@@ -250,7 +251,7 @@ func uploadManager(ctx context.Context, stats os.FileInfo, path string, content 
 	)
 
 	// Adds a callback entry point so that we can follow the effective part upload.
-	uploader.BufferProvider = sdk_s3.NewCallbackTransferProvider(path, fSize, ps)
+	uploader.BufferProvider = sdkS3.NewCallbackTransferProvider(path, fSize, ps)
 
 	_, err = uploader.Upload(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(bucketName),
@@ -259,12 +260,13 @@ func uploadManager(ctx context.Context, stats os.FileInfo, path string, content 
 	})
 
 	if err != nil {
-		if aerr, ok := err.(smithy.APIError); ok {
+		var apiErr smithy.APIError
+		if errors.As(err, &apiErr) {
 			// TODO better error handling
 			if errChan != nil {
-				errChan[0] <- aerr
+				errChan[0] <- apiErr
 			}
-			return aerr
+			return apiErr
 		}
 		if errChan != nil {
 			errChan[0] <- err

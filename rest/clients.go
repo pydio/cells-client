@@ -31,8 +31,9 @@ var (
 	// DefaultConfig  stores the current active config, we must initialise it to avoid nil panic dereference
 	DefaultConfig    *CecConfig
 	DefaultTransport openapiruntime.ClientTransport
-	configFilePath   string
-	once             = &sync.Once{}
+
+	configFilePath string
+	once           = &sync.Once{}
 )
 
 // CecConfig extends the default SdkConfig with custom parameters.
@@ -63,7 +64,7 @@ func GetApiClient(anonymous ...bool) (*client.PydioCellsRestAPI, error) {
 	if len(anonymous) > 0 && anonymous[0] {
 		anon = true
 	}
-	DefaultConfig.CustomHeaders = map[string]string{transport.UserAgentKey: userAgent()}
+	DefaultConfig.CustomHeaders = map[string]string{cells_sdk.UserAgentKey: userAgent()}
 	var err error
 	once.Do(func() {
 		currConf := DefaultConfig.SdkConfig
@@ -81,10 +82,8 @@ func GetApiClient(anonymous ...bool) (*client.PydioCellsRestAPI, error) {
 func GetS3Client(ctx context.Context) (*s3.Client, string, error) {
 
 	DefaultConfig.CustomHeaders = map[string]string{
-		transport.UserAgentKey: userAgent(),
+		cells_sdk.UserAgentKey: userAgent(),
 	}
-
-	//s3Conf := getS3ConfigFromSdkConfig(DefaultConfig)
 
 	var options []interface{}
 

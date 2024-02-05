@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -44,11 +45,11 @@ func ConfigToKeyring(conf *CecConfig) error {
 }
 
 // ConfigFromKeyring tries to find sensitive info inside local keychain and feed the conf.
-func ConfigFromKeyring(conf *CecConfig) error {
+func ConfigFromKeyring(ctx context.Context, conf *CecConfig) error {
 	value, err := keyring.Get(getKeyringServiceName(), key(conf.Url, conf.User))
 	if err != nil {
 		// Best effort to retrieve legacy conf
-		err = retrieveLegacyKey(conf)
+		err = retrieveLegacyKey(ctx, conf)
 		if err != nil {
 			return err
 		}
@@ -129,7 +130,7 @@ func ClearKeyring(c *CecConfig) error {
 	return nil
 }
 
-func retrieveLegacyKey(conf *CecConfig) error {
+func retrieveLegacyKey(ctx context.Context, conf *CecConfig) error {
 	if conf.User != "" && conf.Password == "" { // client auth
 		if value, e := keyring.Get(getKeyringServiceName(), key(conf.Url, "ClientCredentials")); e == nil {
 			parts := splitValue(value)
@@ -147,7 +148,7 @@ func retrieveLegacyKey(conf *CecConfig) error {
 			conf.IdToken = parts[0]
 			conf.RefreshToken = parts[1]
 			conf.AuthType = cells_sdk.AuthTypeOAuth
-			CellsStore.RefreshIfRequired(conf.SdkConfig)
+			CellsStore.RefreshIfRequired(ctx, conf.SdkConfig)
 			_ = keyring.Delete(getKeyringServiceName(), key(conf.Url, "IdToken"))
 		} else {
 			return e

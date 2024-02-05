@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,8 +11,8 @@ import (
 
 	"github.com/manifoldco/promptui"
 
-	cells_sdk "github.com/pydio/cells-sdk-go/v5"
-	sdk_rest "github.com/pydio/cells-sdk-go/v5/transport/rest"
+	cellsSdk "github.com/pydio/cells-sdk-go/v5"
+	sdkRest "github.com/pydio/cells-sdk-go/v5/transport/rest"
 
 	"github.com/pydio/cells-client/v4/common"
 )
@@ -106,15 +107,15 @@ func migrateAuthTypes(configList *ConfigList) (bool, error) {
 	for _, v := range configList.Configs {
 		switch v.AuthType {
 		case common.LegacyCecConfigAuthTypeBasic:
-			v.AuthType = cells_sdk.AuthTypeClientAuth
+			v.AuthType = cellsSdk.AuthTypeClientAuth
 			v.CreatedAtVersion = common.Version
 			hasChanged = true
 		case common.LegacyCecConfigAuthTypePat:
-			v.AuthType = cells_sdk.AuthTypePat
+			v.AuthType = cellsSdk.AuthTypePat
 			v.CreatedAtVersion = common.Version
 			hasChanged = true
 		case common.LegacyCecConfigAuthTypeOAuth:
-			v.AuthType = cells_sdk.AuthTypeOAuth
+			v.AuthType = cellsSdk.AuthTypeOAuth
 			v.CreatedAtVersion = common.Version
 			hasChanged = true
 		}
@@ -142,26 +143,26 @@ func (list *ConfigList) SetActiveConfig(id string) error {
 	return nil
 }
 
-func (list *ConfigList) GetActiveConfig() (*CecConfig, error) {
-	c := list.Configs[list.ActiveConfigID]
-	if c == nil {
+func (list *ConfigList) GetActiveConfig(ctx context.Context) (*CecConfig, error) {
+	activeConfig := list.Configs[list.ActiveConfigID]
+	if activeConfig == nil {
 		return nil, fmt.Errorf("active config not found")
 	}
-	if !c.SkipKeyring {
-		if err := ConfigFromKeyring(c); err != nil {
+	if !activeConfig.SkipKeyring {
+		if err := ConfigFromKeyring(ctx, activeConfig); err != nil {
 			return nil, err
 		}
 	}
-	return c, nil
+	return activeConfig, nil
 }
 
-func (list *ConfigList) GetStoredConfig(id string) (*CecConfig, error) {
+func (list *ConfigList) GetStoredConfig(ctx context.Context, id string) (*CecConfig, error) {
 	c := list.Configs[id]
 	if c == nil {
 		return nil, fmt.Errorf("no config found for %s", id)
 	}
 	if !c.SkipKeyring {
-		if err := ConfigFromKeyring(c); err != nil {
+		if err := ConfigFromKeyring(ctx, c); err != nil {
 			return nil, err
 		}
 	}
@@ -177,13 +178,13 @@ func (list *ConfigList) SaveConfigFile() error {
 	return nil
 }
 
-// CellsConfigStore implements a Cells Client specific store for credentials.
+// CellsConfigStore implements a Cells Client specific ConfigRefresher, that also securely stores credentials:
 // It wraps a keyring if such a tool is correctly configured and can be reached by the client.
 type CellsConfigStore struct {
 	refreshLock sync.Mutex
 }
 
-func (store *CellsConfigStore) RefreshIfRequired(sdkConfig *cells_sdk.SdkConfig) (bool, error) {
+func (store *CellsConfigStore) RefreshIfRequired(ctx context.Context, sdkConfig *cellsSdk.SdkConfig) (bool, error) {
 
 	// No token to refresh
 	if sdkConfig.IdToken == "" || sdkConfig.RefreshToken == "" || sdkConfig.TokenExpiresAt == 0 {
@@ -200,11 +201,11 @@ func (store *CellsConfigStore) RefreshIfRequired(sdkConfig *cells_sdk.SdkConfig)
 	if err != nil {
 		return false, fmt.Errorf("could not refresh retrieve stored config list to update, cause: %s", err.Error())
 	}
-	storedConf, err := list.GetStoredConfig(configId)
+	storedConf, err := list.GetStoredConfig(ctx, configId)
 	if err != nil {
 		return false, err
 	}
-	updated, err := sdk_rest.RefreshJwtToken(common.AppName, storedConf.SdkConfig)
+	updated, err := sdkRest.RefreshJwtToken(common.AppName, storedConf.SdkConfig)
 	if err != nil {
 		return false, fmt.Errorf("could not refresh JWT token for %s, cause: %s", configId, err.Error())
 	}
@@ -218,7 +219,7 @@ func (store *CellsConfigStore) RefreshIfRequired(sdkConfig *cells_sdk.SdkConfig)
 
 	// Store the updated config
 
-	//  Finally, if user name has changed. Not sure it is really relevant here.
+	//  Finally, if username has changed. Not sure if it is really relevant here.
 	newId := id(sdkConfig)
 	if newId != configId {
 		// // Set new active config
@@ -234,7 +235,7 @@ func (store *CellsConfigStore) RefreshIfRequired(sdkConfig *cells_sdk.SdkConfig)
 	return true, nil
 }
 
-func NewCellsConfigStore() cells_sdk.ConfigStore {
+func NewCellsConfigStore() cellsSdk.ConfigRefresher {
 	return &CellsConfigStore{}
 }
 
@@ -262,8 +263,6 @@ func UpdateConfig(newConf *CecConfig) error {
 	newConf.CreatedAtVersion = common.Version
 	DefaultConfig = newConf
 
-	// cells_sdk.Log("... Got a new conf for %s", newConf.GetId())
-
 	// We create a clone that will be persisted without sensitive info
 	persistedConf := CloneConfig(newConf)
 	if err = ConfigToKeyring(persistedConf); err != nil {
@@ -290,7 +289,7 @@ func createID(c *CecConfig) string {
 	return id(c.SdkConfig)
 }
 
-func id(conf *cells_sdk.SdkConfig) string {
+func id(conf *cellsSdk.SdkConfig) string {
 	var port string
 	u, _ := url.Parse(conf.Url)
 	port = u.Port()

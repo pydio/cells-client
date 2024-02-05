@@ -163,10 +163,10 @@ func oAuthInteractive(newConf *rest.CecConfig) error {
 	if openBrowser {
 		callbackUrl = sdk_rest.DefaultCallbackUrl // "http://localhost:3000/servers/callback" TODO make this more dynamic
 	} else {
-		callbackUrl = newConf.Url + "/oauth2/oob"
+		callbackUrl = newConf.Url + sdk_rest.NoBrowserCallbackSuffix
 	}
 
-	directUrl, err := sdk_rest.OAuthPrepareUrl(common.AppName, newConf.Url, state, callbackUrl)
+	directUrl, err := sdk_rest.OAuthPrepareUrl(common.AppName, state, newConf.Url, callbackUrl)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -35,37 +35,9 @@ func RetryCallback(callback func() error, number int, interval time.Duration) er
 
 // RetrieveSessionLogin tries to get the registry of the server defined by the passed configuration
 // and parse the result to get current user login. Typically useful when using PAT auth.
-func RetrieveSessionLogin(newConf *CecConfig) (string, error) {
+func RetrieveSessionLogin(currConf *CecConfig) (string, error) {
 	uri := "/a/frontend/state"
-	resp, err := getFrom(newConf, uri)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	// Simply check tags on the fly and stops when a <user id=""> tag has been found.
-	decoder := xml.NewDecoder(resp.Body)
-	for {
-		t, _ := decoder.Token()
-		if t == nil {
-			break
-		}
-		switch se := t.(type) {
-		case xml.StartElement:
-			if se.Name.Local == "user" && se.Attr[0].Name.Local == "id" {
-				return se.Attr[0].Value, nil
-			}
-		}
-	}
-	return "", fmt.Errorf("no <user> tag found in registry. Are you sure you are connected?")
-}
-
-// RetrieveCurrentSessionLogin requests the registry of the current configured server & login
-// and parse the result to get current user login. Typically useful when using PAT auth.
-func RetrieveCurrentSessionLogin() (string, error) {
-
-	uri := "/a/frontend/state"
-	resp, err := authenticatedGet(uri)
+	resp, err := getFrom(currConf, uri)
 	if err != nil {
 		return "", err
 	}
@@ -162,16 +134,16 @@ func ValidURL(input string) error {
 	return nil
 }
 
-const LetterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
 func RandString(n int) string {
 	b := make([]byte, n)
 	// rand.Seed(time.Now().Unix())
 	for i := range b {
-		b[i] = LetterBytes[rand.Intn(len(LetterBytes))]
+		b[i] = letterBytes[rand.Intn(len(letterBytes))]
 	}
 	return string(b)
 }
+
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 func safelyDecode(src map[string]interface{}) *common.ServerVersion {
 

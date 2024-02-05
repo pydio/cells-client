@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -127,7 +128,7 @@ ENVIRONMENT
 		skipVerify = viper.GetBool("skip_verify")
 
 		if needSetup {
-			e := setUpEnvironment()
+			e := setUpEnvironment(cmd.Context())
 			if e != nil {
 				if !os.IsNotExist(e) {
 					log.Fatalf("unexpected error during initialisation phase: %s", e.Error())
@@ -167,7 +168,7 @@ func init() {
 // SetUpEnvironment configures the current runtime by setting the SDK Config that is used by child commands.
 // It first tries to retrieve parameters via flags or environment variables. If it is not enough to define a valid connection,
 // we check for a locally defined configuration file (that might also relies on local keyring to store sensitive info).
-func setUpEnvironment() error {
+func setUpEnvironment(ctx context.Context) error {
 
 	if configFilePath != "" {
 		// override default location for the configuration file
@@ -190,14 +191,14 @@ func setUpEnvironment() error {
 			return err
 		}
 
-		activeConfig, err := cl.GetActiveConfig()
+		activeConfig, err := cl.GetActiveConfig(ctx)
 		if err != nil {
 			return err
 		}
 		c = activeConfig
 
 		// Also refresh token if required
-		if _, err := rest.CellsStore.RefreshIfRequired(c.SdkConfig); err != nil {
+		if _, err := rest.CellsStore.RefreshIfRequired(ctx, c.SdkConfig); err != nil {
 			log.Fatal("SetUp env: could not refresh authentication token:", err)
 		}
 	}
