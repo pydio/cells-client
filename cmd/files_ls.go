@@ -7,6 +7,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/dustin/go-humanize"
@@ -19,72 +20,86 @@ import (
 	"github.com/pydio/cells-client/v4/rest"
 )
 
-var lsCmdExample = `
-1/ Listing the content of the personal-files workspace
+var lsCmdExample = ` 1/ Listing the content of the personal-files workspace
+  
+  $ ` + os.Args[0] + ` ls personal-files
+  +--------+--------------------------+
+  |  TYPE  |           NAME           |
+  +--------+--------------------------+
+  | Folder | .			      |
+  | File   | Cat.jpg                  |
+  | File   | Photo.png                |
+  | Folder | Others                   |
+  | File   | info.txt                 |
+  | Folder | recycle_bin              |
+  +--------+--------------------------+
+  
+ 2/ Showing details about a file
+  
+  $ ` + os.Args[0] + ` ls personal-files/photo.jpg -d
+  Listing: 1 results for personal-files/photo.jpg
+  +------+--------------------------------------+-----------------------------+--------+------------+
+  | TYPE |                 UUID                 |            NAME             |  SIZE  |  MODIFIED  |
+  +------+--------------------------------------+-----------------------------+--------+------------+
+  | File | 98bbd86c-acb9-4b56-a6f3-837609155ba6 | personal-files/photo.jpg    | 3.1 MB | 5 days ago |
+  +------+--------------------------------------+-----------------------------+--------+------------+
+  
+  Will show the metadata for this node (uuid, size, modification date)
+  
+ 3/ Only listing files and folders, one per line.
+  
+  $ ` + os.Args[0] + ` ls personal-files -r
+  Cat.jpg
+  info.txt
+  Huge Photo.jpg
+  ...
+  
+ 4/ Using a template:
 
-$ ` + os.Args[0] + ` ls personal-files
-+--------+--------------------------+
-|  TYPE  |           NAME           |
-+--------+--------------------------+
-| Folder | .			            |
-| File   | Huge Photo-1.jpg         |
-| File   | Huge Photo.jpg           |
-| File   | IMG_9723.JPG             |
-| File   | P5021040.jpg             |
-| Folder | UPLOAD                   |
-| File   | anothercopy              |
-| File   | cec22                    |
-| Folder | recycle_bin              |
-| File   | test_crud-1545206681.txt |
-| File   | test_crud-1545206846.txt |
-| File   | test_file2.txt           |
-+--------+--------------------------+
-
-2/ Showing details about a file
-
-$ ` + os.Args[0] + ` ls personal-files/P5021040.jpg -d
-Listing: 1 results for personal-files/P5021040.jpg
-+------+--------------------------------------+-----------------------------+--------+------------+
-| TYPE |                 UUID                 |            NAME             |  SIZE  |  MODIFIED  |
-+------+--------------------------------------+-----------------------------+--------+------------+
-| File | 98bbd86c-acb9-4b56-a6f3-837609155ba6 | personal-files/P5021040.jpg | 3.1 MB | 5 days ago |
-+------+--------------------------------------+-----------------------------+--------+------------+
-
-
-Will show the metadata for this node (uuid, size, modification date)
-
-3/ Only listing files and folders, one per line.
-
-$ ` + os.Args[0] + ` ls personal-files/P5021040.jpg -r
-personal-files/P5021040.jpg
-
-$ ` + os.Args[0] + ` ls personal-files -r
-Huge Photo-1.jpg
-Huge Photo.jpg
-IMG_9723.JPG
-(...)
-
-4/ Check path existence.
-
-$ ` + os.Args[0] + ` ls personal-files/P5021040.jpg -f
-true
-
-$ ` + os.Args[0] + ` ls personal-files/P5021040-not-here -f
-false
-...
+  $ ` + os.Args[0] + ` ls personal-files --format '"{{.Name}}";"{{.Type}}";"{{.Path}}";"{{.HumanSize}}";"{{.Date}}"' personal-files/
+  "Cat.jpg";"File";"personal-files/Cat.jpg";"1.3 MB";"2 months ago"
+  "Others";"Folder";"personal-files/Others";"12 MB";"11 minutes ago"
+  "Photo.png";"File";"personal-files/Photo.png";"8.1 MB";"3 minutes ago"
+  ...
+  
+ 5/ Check path existence.
+  
+  $ ` + os.Args[0] + ` ls personal-files/info.txt -f
+  true
+  
+  $ ` + os.Args[0] + ` ls personal-files/not-here -f
+  false
 `
 
+// List the various modes that have been implemented
 const (
 	exists      = "EXISTS"
 	raw         = "RAW"
 	defaultList = "DEFAULT"
 	details     = "DETAILS"
+	goTemplate  = "TEMPLATE"
 )
 
+// Known node meta data
+const (
+	metaType      = "Type"
+	metaUuid      = "Uuid"
+	metaName      = "Name"
+	metaPath      = "Path"
+	metaHumanSize = "HumanSize"
+	metaSizeBytes = "SizeBytes"
+	metaTimestamp = "TimeStamp"
+	medaDate      = "Date"
+)
+
+// Store options
 var (
 	lsDetails bool
 	lsRaw     bool
 	lsExists  bool
+	lsFormat  string
+
+	parsedTemplate *template.Template
 )
 
 var listFiles = &cobra.Command{
@@ -102,8 +117,21 @@ SYNTAX
    - d (--details) flag to display more information, 
    - r (--raw) flag to only list the paths of found files and folders
    - f (--exists) flag to only check if given path exists on the server.
+   - format flag with a valid go template to get a custom listing.
 
-  Note that you can only use *one* of the three above flags at a time.
+  Note that you can only use *one* of the above flags at a time.
+
+  As reference, known attributes for the Go templates are:
+   - Type: File, Folder or Workspace
+   - Uuid: the unique ID of the corresponding node in the Cells Server
+   - Name: name of the item
+   - Path: the path from the root of the server
+   - HumanSize: a human-friendly formatted size
+   - SizeBytes: the size of the object in bytes 
+   - TimeStamp: number of seconds since 1970 when the item was last modified 
+   - Date: a human-friendly date for the last modification
+
+Note that the last 4 meta-data are only indicative for folders: they might be out of date, if the listing happens shortly after a modification in the sub-tree.
 
 EXAMPLES
 
@@ -112,7 +140,7 @@ EXAMPLES
 	Run: func(cmd *cobra.Command, args []string) {
 
 		// Retrieve requested display type and check it is valid
-		dt := sanityCheck()
+		displayMode := sanityCheck()
 
 		// Retrieve and pre-process path if defined
 		lsPath := ""
@@ -204,7 +232,7 @@ EXAMPLES
 				if currPath == "" && wsLevel {
 					hiddenRowNb++
 					continue // processingLoop
-				} else if lsRaw && (t == "Folder" || t == "Workspace") {
+				} else if (displayMode == raw || displayMode == goTemplate) && (t == "Folder" || t == "Workspace") {
 					// We do not want to list parent folder or workspace in simple lists
 					hiddenRowNb++
 					continue
@@ -214,7 +242,7 @@ EXAMPLES
 				}
 			}
 
-			switch dt {
+			switch displayMode {
 			case details:
 				if wsLevel {
 					table.Append([]string{
@@ -226,7 +254,7 @@ EXAMPLES
 						fromMetaStore(node, "ws_permissions"),
 					})
 				} else {
-					table.Append([]string{t, node.UUID, currName, sizeToBytes(node.Size), stampToDate(node.MTime)})
+					table.Append([]string{t, node.UUID, currName, sizeToHuman(node.Size), stampToDate(node.MTime)})
 				}
 			case raw:
 				if node.Type != nil && *node.Type == models.TreeNodeTypeCOLLECTION {
@@ -235,18 +263,37 @@ EXAMPLES
 				} else {
 					_, _ = fmt.Fprintln(os.Stdout, node.Path)
 				}
+			case goTemplate:
+
+				values := map[string]string{
+					metaType:      t,
+					metaUuid:      node.UUID,
+					metaName:      currName,
+					metaPath:      node.Path,
+					metaHumanSize: sizeToHuman(node.Size),
+					metaSizeBytes: node.Size,
+					metaTimestamp: node.MTime,
+					medaDate:      stampToDate(node.MTime),
+				}
+
+				if err = parsedTemplate.Execute(os.Stdout, values); err != nil {
+					log.Fatalln("could not execute template", err)
+				}
+				fmt.Println("") // explicit carriage return
+
 			default:
 				table.Append([]string{t, currName})
 			}
 		}
 
 		// Add meta-info and table headers and render (if necessary)
+
 		rowNb := len(result.Payload.Nodes) - hiddenRowNb
 		legend := fmt.Sprintf("Found %d nodes at %s:", rowNb, p)
 		if p == "" { // root of the server
 			legend = fmt.Sprintf("Listing %d workspaces:", rowNb)
 		}
-		switch dt {
+		switch displayMode {
 		case details:
 			fmt.Println(legend)
 			if wsLevel {
@@ -255,8 +302,8 @@ EXAMPLES
 				table.SetHeader([]string{"Type", "Uuid", "Name", "Size", "Modified"})
 			}
 			table.Render()
-		case raw: // Nothing to add: we just want the raw values that we already displayed while looping
-			break
+		case raw, goTemplate: // Nothing to add: we just want the raw values that we already displayed while looping
+			return
 		default:
 			fmt.Println(legend)
 			table.SetHeader([]string{"Type", "Name"})
@@ -282,6 +329,16 @@ func sanityCheck() string {
 		nb++
 		displayType = raw
 	}
+	if lsFormat != "" {
+		nb++
+		displayType = goTemplate
+		// for go templates, also validate the passed template
+		tmpl, err := template.New("lsNode").Parse(lsFormat)
+		if err != nil {
+			log.Fatalln("failed to parse template:", err)
+		}
+		parsedTemplate = tmpl
+	}
 	if nb > 1 {
 		log.Fatal("Please use at most *one* modifier flag")
 	}
@@ -295,7 +352,7 @@ func fromMetaStore(node *models.TreeNode, key string) string {
 	return ""
 }
 
-func sizeToBytes(size string) string {
+func sizeToHuman(size string) string {
 	if size == "" {
 		return "-"
 	}
@@ -321,6 +378,7 @@ func init() {
 	flags.BoolVarP(&lsDetails, "details", "d", false, "Show more information about retrieved objects")
 	flags.BoolVarP(&lsRaw, "raw", "r", false, "List found paths (one per line) with no further info to be able to use returned results in later commands")
 	flags.BoolVarP(&lsExists, "exists", "f", false, "Check if the passed path exists on the server and return non zero status code if not")
+	flags.StringVar(&lsFormat, "format", "", "Use go template to format each line of the output listing")
 
 	RootCmd.AddCommand(listFiles)
 }

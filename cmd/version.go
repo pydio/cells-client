@@ -32,7 +32,7 @@ type cecVersion struct {
 }
 
 var (
-	format string
+	versionFormat string
 )
 
 var versionCmd = &cobra.Command{
@@ -91,8 +91,8 @@ DESCRIPTION
 
 		var runningTmpl string
 
-		if format != "" {
-			runningTmpl = format
+		if versionFormat != "" {
+			runningTmpl = versionFormat
 		} else {
 			// Default version template
 			runningTmpl = cellsVersionTpl
@@ -116,6 +116,6 @@ func init() {
 	versionCmd.AddCommand(hiddenIrCmd)
 	versionCmd.AddCommand(hiddenIgtCmd)
 
-	versionCmd.Flags().StringVarP(&format, "format", "f", "", "Use go template to format version output")
+	versionCmd.Flags().StringVarP(&versionFormat, "format", "f", "", "Use go template to format version output")
 	RootCmd.AddCommand(versionCmd)
 }
