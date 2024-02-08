@@ -247,5 +247,5 @@ func init() {
 	irCmd.Flags().BoolVarP(&versionQuiet, "quiet", "q", false, "Simply returns 1 (true) or 0 (false) if the version represents valid release or not, without writing to standard error stream")
 	igtCmd.Flags().BoolVarP(&versionQuiet, "quiet", "q", false, "Simply returns 1 (true) or 0 (false) if first passed version is greater than the second, without writing to standard error stream")
 	tvCmd.AddCommand(ivCmd, irCmd, igtCmd)
-	toolsCmd.AddCommand(tvCmd)
+	ToolsCmd.AddCommand(tvCmd)
 }

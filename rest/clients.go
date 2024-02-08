@@ -13,24 +13,23 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	openapiruntime "github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
 	"github.com/shibukawa/configdir"
 
-	cells_sdk "github.com/pydio/cells-sdk-go/v5"
+	cellsSdk "github.com/pydio/cells-sdk-go/v5"
 	"github.com/pydio/cells-sdk-go/v5/client"
 	"github.com/pydio/cells-sdk-go/v5/transport"
-	sdk_http "github.com/pydio/cells-sdk-go/v5/transport/http"
-	sdk_rest "github.com/pydio/cells-sdk-go/v5/transport/rest"
-	sdk_s3 "github.com/pydio/cells-sdk-go/v5/transport/s3"
+	sdkHttp "github.com/pydio/cells-sdk-go/v5/transport/http"
+	sdkRest "github.com/pydio/cells-sdk-go/v5/transport/rest"
+	sdkS3 "github.com/pydio/cells-sdk-go/v5/transport/s3"
 
 	"github.com/pydio/cells-client/v4/common"
 )
 
 var (
 	// DefaultConfig  stores the current active config, we must initialise it to avoid nil panic dereference
-	DefaultConfig    *CecConfig
-	DefaultTransport openapiruntime.ClientTransport
+	DefaultConfig *CecConfig
+	// DefaultTransport openapiruntime.ClientTransport
 
 	configFilePath string
 	once           = &sync.Once{}
@@ -38,7 +37,7 @@ var (
 
 // CecConfig extends the default SdkConfig with custom parameters.
 type CecConfig struct {
-	*cells_sdk.SdkConfig
+	*cellsSdk.SdkConfig
 	Label            string `json:"label"`
 	SkipKeyring      bool   `json:"skipKeyring"`
 	CreatedAtVersion string `json:"createdAtVersion"`
@@ -47,9 +46,9 @@ type CecConfig struct {
 // DefaultCecConfig simply creates a new configuration struct.
 func DefaultCecConfig() *CecConfig {
 	return &CecConfig{
-		SdkConfig: &cells_sdk.SdkConfig{
+		SdkConfig: &cellsSdk.SdkConfig{
 			UseTokenCache: true,
-			AuthType:      cells_sdk.AuthTypePat,
+			AuthType:      cellsSdk.AuthTypePat,
 		},
 		SkipKeyring: false,
 	}
@@ -58,23 +57,58 @@ func DefaultCecConfig() *CecConfig {
 // GetApiClient returns a client to directly communicate with the Pydio Cells REST API.
 // Requests are anonymous when corresponding flag is set. Otherwise, the authentication is managed
 // by the client, using the current active SDKConfig to provide valid credentials.
-func GetApiClient(anonymous ...bool) (*client.PydioCellsRestAPI, error) {
+//func GetApiClient(anonymous ...bool) (*client.PydioCellsRestAPI, error) {
+//
+//	anon := false
+//	if len(anonymous) > 0 && anonymous[0] {
+//		anon = true
+//	}
+//	DefaultConfig.CustomHeaders = map[string]string{cellsSdk.UserAgentKey: userAgent()}
+//	var err error
+//	once.Do(func() {
+//		currConf := DefaultConfig.SdkConfig
+//		DefaultTransport, err = sdkRest.GetApiTransport(currConf, anon)
+//	})
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	return client.New(DefaultTransport, strfmt.Default), nil
+//}
 
-	anon := false
-	if len(anonymous) > 0 && anonymous[0] {
-		anon = true
+// GetApiClient returns a client to directly communicate with the Pydio Cells REST API.
+// Requests are anonymous when corresponding flag is set. Otherwise, the authentication is managed
+// by the client, using the current active SDKConfig to provide valid credentials.
+func GetApiClient(customConf ...*cellsSdk.SdkConfig) (*client.PydioCellsRestAPI, error) {
+
+	currConf := DefaultConfig.SdkConfig
+	if len(customConf) == 1 {
+		currConf = customConf[0]
 	}
-	DefaultConfig.CustomHeaders = map[string]string{cells_sdk.UserAgentKey: userAgent()}
-	var err error
-	once.Do(func() {
-		currConf := DefaultConfig.SdkConfig
-		DefaultTransport, err = sdk_rest.GetApiTransport(currConf, anon)
-	})
+	return doGetApiClient(currConf, false)
+}
+
+func GetAnonymousApiClient(customConf ...*cellsSdk.SdkConfig) (*client.PydioCellsRestAPI, error) {
+	currConf := DefaultConfig.SdkConfig
+	if len(customConf) == 1 {
+		currConf = customConf[0]
+	}
+	return doGetApiClient(currConf, true)
+}
+
+// by the client, using the current active SDKConfig to provide valid credentials.
+func doGetApiClient(conf *cellsSdk.SdkConfig, anonymous bool) (*client.PydioCellsRestAPI, error) {
+	if conf.CustomHeaders == nil {
+		conf.CustomHeaders = map[string]string{cellsSdk.UserAgentKey: userAgent()}
+	} else {
+		conf.CustomHeaders[cellsSdk.UserAgentKey] = userAgent()
+	}
+
+	t, err := sdkRest.GetApiTransport(conf, anonymous)
 	if err != nil {
 		return nil, err
 	}
-
-	return client.New(DefaultTransport, strfmt.Default), nil
+	return client.New(t, strfmt.Default), nil
 }
 
 // GetS3Client creates a new default S3 client based on current active config
@@ -82,7 +116,7 @@ func GetApiClient(anonymous ...bool) (*client.PydioCellsRestAPI, error) {
 func GetS3Client(ctx context.Context) (*s3.Client, string, error) {
 
 	DefaultConfig.CustomHeaders = map[string]string{
-		cells_sdk.UserAgentKey: userAgent(),
+		cellsSdk.UserAgentKey: userAgent(),
 	}
 
 	var options []interface{}
@@ -90,27 +124,27 @@ func GetS3Client(ctx context.Context) (*s3.Client, string, error) {
 	if CellsStore == nil {
 		fmt.Println("[WARNING] could not found a cells store")
 	} else {
-		options = append(options, sdk_s3.WithCellsConfigStore(CellsStore))
+		options = append(options, sdkS3.WithCellsConfigStore(CellsStore))
 	}
 
 	if int(common.S3RequestTimeout) > 0 {
 		to := time.Duration(int(common.S3RequestTimeout)) * time.Second
-		options = append(options, sdk_http.WithTimout(to))
+		options = append(options, sdkHttp.WithTimout(to))
 	}
 
 	if logOption := configureLogMode(); logOption != nil {
 		options = append(options, logOption)
 	}
 
-	cfg, e := sdk_s3.LoadConfig(ctx, DefaultConfig.SdkConfig, options...)
+	cfg, e := sdkS3.LoadConfig(ctx, DefaultConfig.SdkConfig, options...)
 	if e != nil {
 		return nil, "", e
 	}
 
-	s3Client := sdk_s3.NewClientFromConfig(cfg, DefaultConfig.Url)
+	s3Client := sdkS3.NewClientFromConfig(cfg, DefaultConfig.Url)
 
 	// For the time being, we assume that the bucket used is always the same
-	return s3Client, cells_sdk.DefaultS3Bucket, e
+	return s3Client, cellsSdk.DefaultS3Bucket, e
 }
 
 func GetConfigFilePath() string {
@@ -177,7 +211,7 @@ func authenticatedGet(uri string) (*http.Response, error) {
 }
 
 // authenticatedRequest performs the passed request after adding an authorization Header.
-func authenticatedRequest(req *http.Request, sdkConfig *cells_sdk.SdkConfig) (*http.Response, error) {
+func authenticatedRequest(req *http.Request, sdkConfig *cellsSdk.SdkConfig) (*http.Response, error) {
 
 	tp, e := transport.TokenProviderFromConfig(sdkConfig)
 	if e != nil {
@@ -185,9 +219,9 @@ func authenticatedRequest(req *http.Request, sdkConfig *cells_sdk.SdkConfig) (*h
 	}
 
 	httpClient := &http.Client{Transport: transport.New(
-		sdk_http.WithCustomHeaders(sdkConfig.CustomHeaders),
-		sdk_http.WithBearer(tp),
-		sdk_http.WithSkipVerify(sdkConfig.SkipVerify),
+		sdkHttp.WithCustomHeaders(sdkConfig.CustomHeaders),
+		sdkHttp.WithBearer(tp),
+		sdkHttp.WithSkipVerify(sdkConfig.SkipVerify),
 	)}
 
 	resp, e := httpClient.Do(req)
@@ -200,16 +234,16 @@ func authenticatedRequest(req *http.Request, sdkConfig *cells_sdk.SdkConfig) (*h
 
 // TODO WiP: finalize and clean
 
-func configureLogMode() cells_sdk.AwsConfigOption {
+func configureLogMode() cellsSdk.AwsConfigOption {
 	switch common.CurrentLogLevel {
 	case common.Info:
 		return nil
 	case common.Debug:
 		logMode := aws.LogSigning | aws.LogRetries
-		return sdk_s3.WithLogger(printLnWriter{}, logMode)
+		return sdkS3.WithLogger(printLnWriter{}, logMode)
 	case common.Trace:
 		logMode := aws.LogSigning | aws.LogRetries | aws.LogRequest | aws.LogResponse | aws.LogDeprecatedUsage | aws.LogRequestEventMessage | aws.LogResponseEventMessage
-		return sdk_s3.WithLogger(printLnWriter{}, logMode)
+		return sdkS3.WithLogger(printLnWriter{}, logMode)
 	default:
 		log.Fatal("unsupported log level:", common.CurrentLogLevel)
 	}
