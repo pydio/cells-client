@@ -29,7 +29,6 @@ import (
 var (
 	// DefaultConfig  stores the current active config, we must initialise it to avoid nil panic dereference
 	DefaultConfig *CecConfig
-	// DefaultTransport openapiruntime.ClientTransport
 
 	configFilePath string
 	once           = &sync.Once{}
@@ -54,6 +53,13 @@ func DefaultCecConfig() *CecConfig {
 	}
 }
 
+func UserAgent() string {
+	osVersion := fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
+	goVersion := fmt.Sprintf("%s", runtime.Version())
+	appVersion := fmt.Sprintf("github.com/pydio/%s/%s", common.AppName, common.Version)
+	return fmt.Sprintf("%s; %s; %s", osVersion, goVersion, appVersion)
+}
+
 // GetApiClient returns a client to directly communicate with the Pydio Cells REST API.
 // Requests are anonymous when corresponding flag is set. Otherwise, the authentication is managed
 // by the client, using the current active SDKConfig to provide valid credentials.
@@ -72,15 +78,6 @@ func GetAnonymousApiClient(customConf ...*cellsSdk.SdkConfig) (*client.PydioCell
 		currConf = customConf[0]
 	}
 	return doGetApiClient(currConf, true)
-}
-
-// by the client, using the current active SDKConfig to provide valid credentials.
-func doGetApiClient(conf *cellsSdk.SdkConfig, anonymous bool) (*client.PydioCellsRestAPI, error) {
-	t, err := sdkRest.GetApiTransport(conf, anonymous)
-	if err != nil {
-		return nil, err
-	}
-	return client.New(t, strfmt.Default), nil
 }
 
 // GetS3Client creates a new default S3 client based on current active config
@@ -154,11 +151,13 @@ func CloneConfig(from *CecConfig) *CecConfig {
 	return &conClone
 }
 
-func UserAgent() string {
-	osVersion := fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
-	goVersion := fmt.Sprintf("Go_%s", runtime.Version())
-	appVersion := fmt.Sprintf("%s/%s", common.AppName, common.Version)
-	return fmt.Sprintf("%s; %s; %s", osVersion, goVersion, appVersion)
+// doGetApiClient performs the real request to retrieve a valid API client.
+func doGetApiClient(conf *cellsSdk.SdkConfig, anonymous bool) (*client.PydioCellsRestAPI, error) {
+	t, err := sdkRest.GetApiTransport(conf, anonymous)
+	if err != nil {
+		return nil, err
+	}
+	return client.New(t, strfmt.Default), nil
 }
 
 // getFrom performs an authenticated GET request for the passed URI (that must start with a '/').
