@@ -57,28 +57,6 @@ func DefaultCecConfig() *CecConfig {
 // GetApiClient returns a client to directly communicate with the Pydio Cells REST API.
 // Requests are anonymous when corresponding flag is set. Otherwise, the authentication is managed
 // by the client, using the current active SDKConfig to provide valid credentials.
-//func GetApiClient(anonymous ...bool) (*client.PydioCellsRestAPI, error) {
-//
-//	anon := false
-//	if len(anonymous) > 0 && anonymous[0] {
-//		anon = true
-//	}
-//	DefaultConfig.CustomHeaders = map[string]string{cellsSdk.UserAgentKey: userAgent()}
-//	var err error
-//	once.Do(func() {
-//		currConf := DefaultConfig.SdkConfig
-//		DefaultTransport, err = sdkRest.GetApiTransport(currConf, anon)
-//	})
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	return client.New(DefaultTransport, strfmt.Default), nil
-//}
-
-// GetApiClient returns a client to directly communicate with the Pydio Cells REST API.
-// Requests are anonymous when corresponding flag is set. Otherwise, the authentication is managed
-// by the client, using the current active SDKConfig to provide valid credentials.
 func GetApiClient(customConf ...*cellsSdk.SdkConfig) (*client.PydioCellsRestAPI, error) {
 
 	currConf := DefaultConfig.SdkConfig
@@ -98,12 +76,6 @@ func GetAnonymousApiClient(customConf ...*cellsSdk.SdkConfig) (*client.PydioCell
 
 // by the client, using the current active SDKConfig to provide valid credentials.
 func doGetApiClient(conf *cellsSdk.SdkConfig, anonymous bool) (*client.PydioCellsRestAPI, error) {
-	if conf.CustomHeaders == nil {
-		conf.CustomHeaders = map[string]string{cellsSdk.UserAgentKey: userAgent()}
-	} else {
-		conf.CustomHeaders[cellsSdk.UserAgentKey] = userAgent()
-	}
-
 	t, err := sdkRest.GetApiTransport(conf, anonymous)
 	if err != nil {
 		return nil, err
@@ -114,10 +86,6 @@ func doGetApiClient(conf *cellsSdk.SdkConfig, anonymous bool) (*client.PydioCell
 // GetS3Client creates a new default S3 client based on current active config
 // to transfer files to/from a distant Cells server.
 func GetS3Client(ctx context.Context) (*s3.Client, string, error) {
-
-	DefaultConfig.CustomHeaders = map[string]string{
-		cellsSdk.UserAgentKey: userAgent(),
-	}
 
 	var options []interface{}
 
@@ -186,8 +154,11 @@ func CloneConfig(from *CecConfig) *CecConfig {
 	return &conClone
 }
 
-func userAgent() string {
-	return common.AppName + "/" + common.Version
+func UserAgent() string {
+	osVersion := fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
+	goVersion := fmt.Sprintf("Go_%s", runtime.Version())
+	appVersion := fmt.Sprintf("%s/%s", common.AppName, common.Version)
+	return fmt.Sprintf("%s; %s; %s", osVersion, goVersion, appVersion)
 }
 
 // getFrom performs an authenticated GET request for the passed URI (that must start with a '/').

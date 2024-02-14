@@ -16,7 +16,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	cells_sdk "github.com/pydio/cells-sdk-go/v5"
+	cellsSdk "github.com/pydio/cells-sdk-go/v5"
 
 	"github.com/pydio/cells-client/v4/common"
 	"github.com/pydio/cells-client/v4/rest"
@@ -180,7 +180,6 @@ func setUpEnvironment(ctx context.Context) error {
 
 	// Fallback to registered account
 	if c.SdkConfig == nil {
-
 		_, err := os.ReadFile(configFilePath)
 		if err != nil {
 			return err
@@ -196,15 +195,22 @@ func setUpEnvironment(ctx context.Context) error {
 			return err
 		}
 		c = activeConfig
+	}
 
-		// Also refresh token if required
-		if _, err := rest.CellsStore.RefreshIfRequired(ctx, c.SdkConfig); err != nil {
-			log.Fatal("SetUp env: could not refresh authentication token:", err)
-		}
+	// Set the user agent
+	if c.CustomHeaders == nil {
+		c.CustomHeaders = map[string]string{cellsSdk.UserAgentKey: rest.UserAgent()}
+	} else {
+		c.CustomHeaders[cellsSdk.UserAgentKey] = rest.UserAgent()
 	}
 
 	// Expose active configuration (with credentials) as a static singleton
 	rest.DefaultConfig = c
+
+	// Also refresh token if required
+	if _, err := rest.CellsStore.RefreshIfRequired(ctx, c.SdkConfig); err != nil {
+		log.Fatal("SetUp env: could not refresh authentication token:", err)
+	}
 
 	return nil
 }
@@ -216,16 +222,16 @@ func getCecConfigFromEnv() *rest.CecConfig {
 
 	// Flags and env variable have been managed by viper => we can rely on local variable
 	cecConfig := new(rest.CecConfig)
-	sdkConfig := new(cells_sdk.SdkConfig)
+	sdkConfig := new(cellsSdk.SdkConfig)
 	validConfViaContext := false
 
 	if len(serverURL) > 0 {
 		if len(token) > 0 { // PAT auth
-			authType = cells_sdk.AuthTypePat
+			authType = cellsSdk.AuthTypePat
 			sdkConfig.IdToken = token
 			validConfViaContext = true
 		} else if len(login) > 0 && len(password) > 0 { // client auth
-			authType = cells_sdk.AuthTypeClientAuth
+			authType = cellsSdk.AuthTypeClientAuth
 			sdkConfig.Password = password
 			sdkConfig.User = login
 			validConfViaContext = true
