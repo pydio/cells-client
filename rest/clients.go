@@ -56,8 +56,8 @@ func DefaultCecConfig() *CecConfig {
 func UserAgent() string {
 	osVersion := fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
 	goVersion := fmt.Sprintf("%s", runtime.Version())
-	appVersion := fmt.Sprintf("github.com/pydio/%s/%s", common.AppName, common.Version)
-	return fmt.Sprintf("%s; %s; %s", osVersion, goVersion, appVersion)
+	appVersion := fmt.Sprintf("github.com/pydio/%s@v%s", common.AppName, common.Version)
+	return fmt.Sprintf("%s %s %s", osVersion, goVersion, appVersion)
 }
 
 // GetApiClient returns a client to directly communicate with the Pydio Cells REST API.
@@ -202,8 +202,7 @@ func authenticatedRequest(req *http.Request, sdkConfig *cellsSdk.SdkConfig) (*ht
 	return resp, nil
 }
 
-// TODO WiP: finalize and clean
-
+// TODO Work in progress: finalize and clean
 func configureLogMode() cellsSdk.AwsConfigOption {
 	switch common.CurrentLogLevel {
 	case common.Info:
