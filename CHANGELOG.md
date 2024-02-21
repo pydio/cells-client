@@ -1,7 +1,16 @@
-# Changes between v4.0.1 and v4.1.0-beta1
+# Changes between v4.0.1 and v4.1.0
 
-[See Full Changelog](https://github.com/pydio/cells-client/compare/v4.0.1...v4.1.0-beta1)
+[See Full Changelog](https://github.com/pydio/cells-client/compare/v4.0.1...v4.1.0)
 
+- [#b2ab49d](https://github.com/pydio/cells-client/commit/b2ab49da1b12c5d675ebbddb54c1ab10eeb955e8): Use latest SDK that ensures that a default AWS region is always set
+- [#6ba94da](https://github.com/pydio/cells-client/commit/6ba94da81e0dfacec4eee303000597e7aa25281a): Use latest TPs
+- [#cd19f62](https://github.com/pydio/cells-client/commit/cd19f62d81f501d83defc38a82d9a02995b99c4b): Use latest AWS SDK
+- [#817acfa](https://github.com/pydio/cells-client/commit/817acfaa1188ef0527efa680ae58c669bca6607f): Better naming for the User Agent
+- [#ce3f77f](https://github.com/pydio/cells-client/commit/ce3f77f08183a4f1a1e82676006054da6ce546fb): Better user agent identifier
+- [#a3119b2](https://github.com/pydio/cells-client/commit/a3119b2413f87ba5e4260d2875916dfde15bc712): Fix concurrent map issue
+- [#da0903c](https://github.com/pydio/cells-client/commit/da0903c38c4bbf0634deff035ade0a8e7cf8af32): Update TPs
+- [#f143e16](https://github.com/pydio/cells-client/commit/f143e1643d5ea0ff8430bebe761e011e12ab58c1): Make tools sub-command extensible (for extending tools)
+- [#8c147bc](https://github.com/pydio/cells-client/commit/8c147bc908631c3456a5667bcac0988cb8bbb1f6): Release v4.1.0-beta1
 - [#6d37b9f](https://github.com/pydio/cells-client/commit/6d37b9faf647df999251115112287cc8039eb675): Use SDK v5 alpha1
 - [#334d68f](https://github.com/pydio/cells-client/commit/334d68f3808a476f5dbd1253342fc0779c110420): Add a flag to format folder listings
 - [#cf6f9f3](https://github.com/pydio/cells-client/commit/cf6f9f34f6a331bee41782685075dacc81bce62a): Adapt to latest SDK, propagate context more cleanly
