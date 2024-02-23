@@ -15,8 +15,9 @@ import (
 )
 
 var (
-	force        bool
-	wildcardChar = "%"
+	rmPermanently  bool
+	rmForce        bool
+	rmWildcardChar = "%"
 )
 
 var rmCmd = &cobra.Command{
@@ -57,7 +58,7 @@ EXAMPLES
 
 		// Ask for user approval before deleting
 		p := promptui.Select{Label: "Are you sure", Items: []string{"No", "Yes"}}
-		if !force {
+		if !rmForce {
 			if _, resp, e := p.Run(); resp == "No" && e == nil {
 				log.Println("Nothing will be deleted")
 				return
@@ -66,11 +67,11 @@ EXAMPLES
 		ctx := cmd.Context()
 		targetNodes := make([]string, 0)
 		for _, arg := range args {
-			_, exists := rest.StatNode(ctx, strings.TrimRight(arg, wildcardChar))
+			_, exists := rest.StatNode(ctx, strings.TrimRight(arg, rmWildcardChar))
 			if !exists {
 				log.Printf("Node not found %v, could not delete\n", arg)
 			}
-			if path.Base(arg) == wildcardChar {
+			if path.Base(arg) == rmWildcardChar {
 				dir, _ := path.Split(arg)
 				newArg := path.Join(dir, "*")
 				nodes, err := rest.ListNodesPath(ctx, newArg)
@@ -96,7 +97,7 @@ EXAMPLES
 			return
 		}
 
-		jobUUID, err := rest.DeleteNode(ctx, targetNodes)
+		jobUUID, err := rest.DeleteNode(ctx, targetNodes, rmPermanently)
 		if err != nil {
 			log.Fatalf("could not delete nodes, cause: %s\n", err)
 		}
@@ -120,5 +121,6 @@ EXAMPLES
 
 func init() {
 	RootCmd.AddCommand(rmCmd)
-	rmCmd.Flags().BoolVarP(&force, "force", "f", false, "Do not ask for user approval")
+	rmCmd.Flags().BoolVarP(&rmForce, "force", "f", false, "Do not ask for user approval")
+	rmCmd.Flags().BoolVarP(&rmPermanently, "permanently", "p", false, "Skip recycle bin and directly permanently delete the target files. Warning: this is not un-doable")
 }

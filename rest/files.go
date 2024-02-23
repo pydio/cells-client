@@ -60,7 +60,7 @@ func ListNodesPath(ctx context.Context, path string) ([]string, error) {
 	return nodes, nil
 }
 
-func DeleteNode(ctx context.Context, paths []string) (jobUUIDs []string, e error) {
+func DeleteNode(ctx context.Context, paths []string, permanently ...bool) (jobUUIDs []string, e error) {
 	if len(paths) == 0 {
 		e = fmt.Errorf("no paths found to delete")
 		return
@@ -75,9 +75,15 @@ func DeleteNode(ctx context.Context, paths []string) (jobUUIDs []string, e error
 		nn = append(nn, &models.TreeNode{Path: p})
 	}
 
+	var perm bool
+	if len(permanently) > 0 && permanently[0] {
+		perm = true
+	}
+
 	params := tree_service.NewDeleteNodesParamsWithContext(ctx)
 	params.Body = &models.RestDeleteNodesRequest{
-		Nodes: nn,
+		Nodes:             nn,
+		RemovePermanently: perm,
 	}
 	res, err := client.TreeService.DeleteNodes(params)
 	if err != nil {

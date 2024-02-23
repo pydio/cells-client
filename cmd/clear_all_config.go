@@ -25,7 +25,7 @@ DESCRIPTION
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		if !force {
+		if !rmForce {
 			prompt := promptui.Prompt{
 				Label:     "Are you sure you wish to erase the configuration",
 				IsConfirm: true,
@@ -69,5 +69,5 @@ func ClearConfig() error {
 
 func init() {
 	RootCmd.AddCommand(clearCmd)
-	clearCmd.Flags().BoolVarP(&force, "force", "f", false, "Non interactive way to clear")
+	clearCmd.Flags().BoolVarP(&rmForce, "force", "f", false, "Non interactive way to clear")
 }
