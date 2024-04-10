@@ -251,7 +251,7 @@ source /etc/bash_completion.d/cec
 
 If you rather want to directly compile the source code on your workstation, you require:
 
-- Go language 1.20 or higher (tested with latest 1.20 & 1.21), with a [correctly configured](https://golang.org/doc/install#testing) Go toolchain,
+- Go language 1.21 or higher, with a [correctly configured](https://golang.org/doc/install#testing) Go toolchain,
 - The necessary build utils (typically `make`, `gcc`, ...)
 - A git client
 
