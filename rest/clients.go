@@ -101,6 +101,19 @@ func GetS3Client(ctx context.Context) (*s3.Client, string, error) {
 		options = append(options, logOption)
 	}
 
+	if common.TransferRetryMaxBackoff != common.TransferRetryMaxBackoffDefault ||
+		common.TransferRetryMaxAttempts != common.TransferRetryMaxAttemptsDefault {
+		// TODO finalize addition of extra error codes that must be seen as "retry-able"
+		options = append(
+			options,
+			sdkS3.WithCustomRetry(
+				common.TransferRetryMaxAttempts,
+				common.TransferRetryMaxBackoff,
+				"ClientDisconnected",
+			),
+		)
+	}
+
 	cfg, e := sdkS3.LoadConfig(ctx, DefaultConfig.SdkConfig, options...)
 	if e != nil {
 		return nil, "", e

@@ -217,7 +217,7 @@ func (c *CrawlNode) MkdirAll(ctx context.Context, dd []*CrawlNode, pool *BarsPoo
 	return nil
 }
 
-// CopyAll parallely performs the real upload/download of files that have been prepared during the Walk step.
+// CopyAll performs the real parallel transfers of file, after they have been prepared during the Walk step.
 func (c *CrawlNode) CopyAll(ctx context.Context, dd []*CrawlNode, pool *BarsPool) (errs []error) {
 	idx := -1
 	buf := make(chan struct{}, PoolSize)
@@ -325,8 +325,9 @@ func (c *CrawlNode) download(ctx context.Context, src *CrawlNode, bar *uiprogres
 	return e
 }
 
-// CopyAllVerbose parallely performs the real upload/download of files that have been prepared.
-// during the Walk step with no progress bar and rather more logs.
+// CopyAllVerbose performs the real transfer of files in parallel.
+// It relies on the list that has been prepared during the Walk step,
+// uses no progress bar and rather adds more logs.
 func (c *CrawlNode) CopyAllVerbose(ctx context.Context, dd []*CrawlNode) (errs []error) {
 	idx := -1
 	buf := make(chan struct{}, PoolSize)
@@ -363,7 +364,11 @@ func (c *CrawlNode) uploadVerbose(ctx context.Context, src *CrawlNode) error {
 	if e != nil {
 		return e
 	}
-	stats, _ := file.Stat()
+	stats, e := file.Stat()
+	if e != nil {
+		fmt.Printf("[Error] could not stat file at %s, cause: %s", src.FullPath, e.Error())
+		return e
+	}
 	bName := src.RelPath
 	if c.NewFileName != "" {
 		bName = c.NewFileName

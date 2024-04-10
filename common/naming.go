@@ -1,7 +1,9 @@
 package common
 
 import (
-	cells_sdk "github.com/pydio/cells-sdk-go/v5"
+	"time"
+
+	cellsSdk "github.com/pydio/cells-sdk-go/v5"
 )
 
 var (
@@ -40,11 +42,11 @@ const (
 func GetAuthTypeLabel(authType string) string {
 	var label string
 	switch authType {
-	case cells_sdk.AuthTypeOAuth:
+	case cellsSdk.AuthTypeOAuth:
 		label = AuthTypeOAuthLabel
-	case cells_sdk.AuthTypePat:
+	case cellsSdk.AuthTypePat:
 		label = AuthTypePatLabel
-	case cells_sdk.AuthTypeClientAuth:
+	case cellsSdk.AuthTypeClientAuth:
 		label = AuthTypeBasicLabel
 	case LegacyCecConfigAuthTypePat,
 		LegacyCecConfigAuthTypeBasic,
@@ -73,12 +75,19 @@ const (
 	Warn
 	Error
 	Fatal
+
+	TransferRetryMaxAttemptsDefault = 3
+	TransferRetryMaxBackoffDefault  = time.Second * 3
 )
 
 var (
-	UploadSwitchMultipart  = int64(100)
-	UploadDefaultPartSize  = int64(50)
-	UploadMaxPartsNumber   = int64(5000)
+	UploadSwitchMultipart = int64(100)
+	UploadDefaultPartSize = int64(50)
+	UploadMaxPartsNumber  = int64(5000)
+
+	TransferRetryMaxAttempts = TransferRetryMaxAttemptsDefault
+	TransferRetryMaxBackoff  = TransferRetryMaxBackoffDefault
+
 	UploadPartsSteps       = int64(10 * 1024 * 1024)
 	UploadPartsConcurrency = 3
 	UploadSkipMD5          = false

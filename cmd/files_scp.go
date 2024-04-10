@@ -26,6 +26,7 @@ var (
 	scpQuiet         bool
 	scpVerbose       bool
 	scpVeryVerbose   bool
+	scpMaxBackoffStr string
 )
 
 var scpFiles = &cobra.Command{
@@ -37,8 +38,8 @@ DESCRIPTION
   Copy files from the client machine to your Pydio Cells server instance (and vice versa).
 
   To differentiate local from remote, prefix remote paths with 'cells://' or with 'cells//' (without the column) if you have installed the completion and intend to use it.
-  For the time being, copy can only be performed from the client machine to the server or the otherway round:
-  it is not yet possible to copy from one Cells instance to another.
+  For the time being, copy can only be performed from the client machine to the server or the other way round:
+  it is not yet possible to directly transfer files from one Cells instance to another.
 
 SYNTAX
 
@@ -68,6 +69,16 @@ EXAMPLES
 		from := args[0]
 		to := args[1]
 		ctx := cmd.Context()
+
+		if scpMaxBackoffStr != "" {
+			// Parse and set a specific backoff duration
+			var e error
+			common.TransferRetryMaxBackoff, e = time.ParseDuration(scpMaxBackoffStr)
+			if e != nil {
+				log.Fatal("could not parse backoff duration:", e)
+				return
+			}
+		}
 
 		if scpVeryVerbose {
 			common.CurrentLogLevel = common.Trace
@@ -237,6 +248,7 @@ func init() {
 	flags.IntVar(&common.UploadPartsConcurrency, "parts-concurrency", 3, "Number of concurrent part uploads.")
 	flags.BoolVar(&common.UploadSkipMD5, "skip-md5", false, "Do not compute md5 (for files bigger than 5GB, it is not computed by default for smaller files).")
 	flags.Int64Var(&common.UploadSwitchMultipart, "multipart-threshold", int64(100), "Files bigger than this size (in MB) will be uploaded using Multipart Upload.")
-	flags.Int64Var(&common.S3RequestTimeout, "timeout", int64(-1), "Set an arbitrary timeout for each upload request (in sec.), default is no timeout.")
+	flags.IntVar(&common.TransferRetryMaxAttempts, "retry-max-attempts", common.TransferRetryMaxAttemptsDefault, "Limit the number of attempts before aborting. '0' allows the SDK to retry all retryable errors until the request succeeds, or a non-retryable error is thrown.")
+	flags.StringVar(&scpMaxBackoffStr, "retry-max-backoff", common.TransferRetryMaxBackoffDefault.String(), "Maximum duration to wait after a part transfer fails, before trying again, expressed in Go duration format, e.g., '20s' or '3m'.")
 	RootCmd.AddCommand(scpFiles)
 }
