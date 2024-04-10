@@ -133,7 +133,7 @@ DESCRIPTION
 
 func init() {
 	updateBinCmd.Flags().StringVarP(&updateToVersion, "version", "v", "", "Specify the version to be installed and trigger the actual upgrade")
-	updateBinCmd.Flags().BoolVarP(&updateDryRun, "dry-run", "d", false, "If set, this flag will grab the package and save it to the tmp directory instead of replacing current binary")
+	updateBinCmd.Flags().BoolVarP(&updateDryRun, "dry_run", "d", false, "If set, this flag will grab the package and save it to the tmp directory instead of replacing current binary")
 	updateBinCmd.Flags().BoolVar(&devChannel, "dev", false, "If set this flag will use the dev channel to load the updates")
 
 	RootCmd.AddCommand(updateBinCmd)

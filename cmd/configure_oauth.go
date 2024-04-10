@@ -246,7 +246,7 @@ func oAuthNonInteractive(conf *rest.CecConfig) error {
 
 func init() {
 	flags := configureOAuthCmd.PersistentFlags()
-	flags.StringVar(&oauthIDToken, "id_token", "", "A currently valid OAuth2 ID token, retrived via the OIDC credential flow")
+	flags.StringVar(&oauthIDToken, "id_token", "", "A currently valid OAuth2 ID token, retrieved via the OIDC credential flow")
 	configureCmd.AddCommand(configureOAuthCmd)
 	configAddCmd.AddCommand(configureOAuthCmd)
 }

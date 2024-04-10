@@ -36,7 +36,7 @@ DESCRIPTION
 
 		var err error
 		if token != "" && serverURL != "" {
-			// non interactive
+			// Non-interactive
 			newConf.IdToken = token
 			newConf.Url = serverURL
 
