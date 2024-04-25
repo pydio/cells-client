@@ -191,11 +191,11 @@ func targetToFullPath(ctx context.Context, from, to string) (string, bool, bool,
 
 			parPath, _ := path.Split(toPath)
 			if parPath == "" {
-				// unexisting workspace
+				// Non-existing workspace
 				return toPath, true, false, fmt.Errorf("target path %s does not exist on remote server, please double check and correct. ", toPath)
 			}
 
-			// Check if parent exists. In such case, we rename the file or root folder that has been passed as local source
+			// Check if the parent exists. In such case, we rename the file or root folder that has been passed as local source
 			// Typically, `cec scp README.txt cells//common-files/readMe.md` or `cec scp local-folder cells//common-files/remote-folder`
 			if _, ok2 := rest.StatNode(ctx, parPath); !ok2 {
 				// Target parent folder does not exist, we do not create it

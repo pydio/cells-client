@@ -25,7 +25,7 @@ import (
 var (
 	// These commands and respective children do not need an already configured environment.
 	infoCommands = []string{
-		"help", "--help", "config", "version", "completion", "oauth", "clear", "doc", "update", "token",
+		"help", "--help", "config", "version", "completion", "oauth", "clear", "doc", "update", "token", "tools",
 		// legacy
 		"configure",
 	}
