@@ -10,7 +10,7 @@ import (
 
 var infoCmd = &cobra.Command{
 	Use:   "info",
-	Short: "Display the active user, server and authentication type",
+	Short: "Display the active connection's info: user, server and authentication type",
 	Run: func(cmd *cobra.Command, args []string) {
 
 		dc := rest.DefaultConfig

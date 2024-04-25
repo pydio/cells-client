@@ -15,8 +15,8 @@ import (
 	"github.com/skratchdot/open-golang/open"
 	"github.com/spf13/cobra"
 
-	cells_sdk "github.com/pydio/cells-sdk-go/v5"
-	sdk_rest "github.com/pydio/cells-sdk-go/v5/transport/rest"
+	cellsSdk "github.com/pydio/cells-sdk-go/v5"
+	sdkRest "github.com/pydio/cells-sdk-go/v5/transport/rest"
 
 	"github.com/pydio/cells-client/v4/common"
 	"github.com/pydio/cells-client/v4/rest"
@@ -60,7 +60,7 @@ USAGE
 	Run: func(cm *cobra.Command, args []string) {
 
 		newConf := rest.DefaultCecConfig()
-		newConf.AuthType = cells_sdk.AuthTypeOAuth
+		newConf.AuthType = cellsSdk.AuthTypeOAuth
 		newConf.SkipKeyring = skipKeyring
 
 		var err error
@@ -161,12 +161,12 @@ func oAuthInteractive(newConf *rest.CecConfig) error {
 	var callbackUrl string
 
 	if openBrowser {
-		callbackUrl = sdk_rest.DefaultCallbackUrl // "http://localhost:3000/servers/callback" TODO make this more dynamic
+		callbackUrl = sdkRest.DefaultCallbackUrl // TODO make this more dynamic
 	} else {
-		callbackUrl = newConf.Url + sdk_rest.NoBrowserCallbackSuffix
+		callbackUrl = newConf.Url + sdkRest.NoBrowserCallbackSuffix
 	}
 
-	directUrl, err := sdk_rest.OAuthPrepareUrl(common.AppName, state, newConf.Url, callbackUrl)
+	directUrl, err := sdkRest.OAuthPrepareUrl(common.AppName, state, newConf.Url, callbackUrl)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -202,7 +202,7 @@ func oAuthInteractive(newConf *rest.CecConfig) error {
 	}
 
 	fmt.Println(promptui.IconGood + " Now exchanging the code for a valid IdToken")
-	if err := sdk_rest.OAuthExchangeCode(newConf.SdkConfig, common.AppName, returnCode, callbackUrl); err != nil {
+	if err := sdkRest.OAuthExchangeCode(newConf.SdkConfig, common.AppName, returnCode, callbackUrl); err != nil {
 		log.Fatal(err)
 	}
 	fmt.Printf("%s Successfully Received Token. It will be refreshed at %v\n", promptui.IconGood, time.Unix(int64(newConf.TokenExpiresAt), 0))

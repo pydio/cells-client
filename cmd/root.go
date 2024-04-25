@@ -145,7 +145,7 @@ ENVIRONMENT
 }
 
 func init() {
-	handleLegagyParams()
+	handleLegacyParams()
 	viper.SetEnvPrefix(common.EnvPrefix)
 	viper.AutomaticEnv()
 
@@ -253,8 +253,8 @@ func getCecConfigFromEnv() *rest.CecConfig {
 	return cecConfig
 }
 
-// handleLegagyParams manages backward compatibility for ENV variables and flags.
-func handleLegagyParams() {
+// handleLegacyParams manages backward compatibility for ENV variables and flags.
+func handleLegacyParams() {
 
 	prefOld := "CELLS_CLIENT_TARGET_"
 

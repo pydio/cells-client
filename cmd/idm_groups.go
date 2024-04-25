@@ -16,7 +16,7 @@ var listGroups = &cobra.Command{
 	Use:   "list-groups",
 	Short: "List groups",
 	Long: `
-DESCRIPION
+DESCRIPTION
 
   List user groups that are defined in your Pydio Cells instance.
 `,

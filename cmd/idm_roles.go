@@ -19,7 +19,7 @@ var listRoles = &cobra.Command{
 DESCRIPTION
 	
   List the roles defined in your Pydio Cells instance, including technical roles 
-  that are implicitely created upon user or group creation.
+  that are implicitly created upon user or group creation.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 

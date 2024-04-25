@@ -23,7 +23,7 @@ var (
 
 var listAcls = &cobra.Command{
 	Use:   "list-acls",
-	Short: "List acls by node UUID",
+	Short: "List ACLs by node UUID",
 	Long: `
 DESCRIPTION	
 
@@ -64,7 +64,7 @@ Found 4 nodes at test:
 		ctx := cmd.Context()
 
 		if len(listAclsByNodeIds) == 0 {
-			log.Fatal("Cannot list ACLS. Please precise *at least* one node UUID")
+			log.Fatal("Cannot list ACLs. Please precise *at least* one node UUID.")
 		}
 
 		params := &acl_service.SearchAclsParams{

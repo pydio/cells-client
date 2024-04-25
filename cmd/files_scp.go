@@ -108,7 +108,7 @@ EXAMPLES
 			isSrcLocal = false
 			var isRemote bool
 			crawlerPath = strings.TrimPrefix(from, scpCurrentPrefix)
-			targetPath, isRemote, rename, err = targetToFullPath(ctx, from, to)
+			targetPath, isRemote, rename, err = targetToFullPath(ctx, to)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -120,7 +120,7 @@ EXAMPLES
 			// Upload
 			targetPath = strings.TrimPrefix(to, scpCurrentPrefix)
 			// Check target path existence and handle rename corner cases
-			if _, _, rename, err = targetToFullPath(ctx, from, to); err != nil {
+			if _, _, rename, err = targetToFullPath(ctx, to); err != nil {
 				log.Fatal(err)
 			}
 			crawlerPath = from
@@ -177,7 +177,7 @@ EXAMPLES
 	},
 }
 
-func targetToFullPath(ctx context.Context, from, to string) (string, bool, bool, error) {
+func targetToFullPath(ctx context.Context, to string) (string, bool, bool, error) {
 	var toPath string
 	//var isDir bool
 	var isRemote bool
@@ -204,7 +204,6 @@ func targetToFullPath(ctx context.Context, from, to string) (string, bool, bool,
 
 			// Parent folder exists on remote, we rename src file or folder
 			return toPath, true, true, nil
-
 		}
 	} else {
 		// This is local: DOWNLOAD
@@ -234,7 +233,6 @@ func targetToFullPath(ctx context.Context, from, to string) (string, bool, bool,
 			}
 		}
 	}
-
 	return toPath, isRemote, false, nil
 }
 

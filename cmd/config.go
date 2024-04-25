@@ -70,7 +70,7 @@ var configUseCmd = &cobra.Command{
 			return err
 		}
 
-		// interactive mode with promptui
+		// interactive mode with prompt-ui
 		var items []string
 
 		for k := range cl.Configs {

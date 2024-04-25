@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/pydio/cells-client/v4/rest"
-	cells_sdk "github.com/pydio/cells-sdk-go/v5"
+	cellsSdk "github.com/pydio/cells-sdk-go/v5"
 )
 
 var configurePersonalAccessTokenCmd = &cobra.Command{
@@ -20,7 +20,7 @@ var configurePersonalAccessTokenCmd = &cobra.Command{
 	Long: `
 DESCRIPTION
 
-  Configure your Cells Client to connect to your distant server using a Personal Acces Token.
+  Configure your Cells Client to connect to your distant server using a Personal Access Token.
   A token can be generated with the 'token' command for a given user on the server side (not in this client),
   see 'cells admin user token --help' for further details.
 
@@ -31,7 +31,7 @@ DESCRIPTION
 	Run: func(cmd *cobra.Command, args []string) {
 
 		newConf := rest.DefaultCecConfig()
-		newConf.AuthType = cells_sdk.AuthTypePat
+		newConf.AuthType = cellsSdk.AuthTypePat
 		newConf.SkipKeyring = skipKeyring
 
 		var err error
