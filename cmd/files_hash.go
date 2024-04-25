@@ -27,9 +27,10 @@ DESCRIPTION
 This command uses the same block-based algorithm as in the Cells server to verify a local file hash.
 Output should be the same as the File Metadata > Internal Hash displayed on the web UX.
 
-BlockHashing computes hashes for blocks of ` + humanize.Bytes(hasher.DefaultBlockSize) + ` using a specific hasher, then computes 
-md5 of all these hashes joined together. Block-level hasing is done using the  standard golang md5 library. You can switch 
-to SIMD implementation (it may be a bit faster) by exporting environment variable 'CELLS_ENABLE_SIMDMD5=true'. 
+BlockHashing computes hashes for blocks of ` + humanize.Bytes(hasher.DefaultBlockSize) + ` using a specific hasher, then computes md5 of all these hashes joined together. 
+
+Block-level hasing is done using the  standard golang md5 library. You can switch to SIMD implementation (it may be a 
+bit faster) by exporting environment variable 'CELLS_ENABLE_SIMDMD5=true'. 
 
 EXAMPLE
 
