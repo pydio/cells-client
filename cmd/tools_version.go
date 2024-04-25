@@ -10,7 +10,7 @@ import (
 
 var versionQuiet bool
 
-// tvCmd are helpers to manipulate software versions
+// tvCmd are helpers to manipulate software versions.
 var tvCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Version helpers",
@@ -43,10 +43,10 @@ DESCRIPTION
 EXAMPLES
 
   A valid version:
-   ` + os.Args[0] + ` version isvalid 2.0.6-dev.20191205
+   ` + os.Args[0] + ` tools version isvalid 2.0.6-dev.20191205
 
   A *non* valid version:
-   ` + os.Args[0] + ` version isvalid 2.a
+   ` + os.Args[0] + ` tools version isvalid 2.a
 `,
 	Run: func(cm *cobra.Command, args []string) {
 		if len(args) != 1 {
@@ -95,10 +95,10 @@ DESCRIPTION
 EXAMPLES
 
   A valid release version:
-   ` + os.Args[0] + ` version isrelease 2.0.6
+   ` + os.Args[0] + ` tools version isrelease 2.0.6
 
   A *non* release version:
-   ` + os.Args[0] + ` version isrelease 2.0.6-dev.20191205
+   ` + os.Args[0] + ` tools version isrelease 2.0.6-dev.20191205
 `,
 	Run: func(cm *cobra.Command, args []string) {
 		if len(args) != 1 {
@@ -113,12 +113,10 @@ EXAMPLES
 		v, err := hashivers.NewVersion(versionStr)
 		if err != nil {
 			resultOK = false
-			errMessage = fmt.Sprintf("[%s] is *not* a valid version\n", versionStr)
-		}
-
-		if v.Prerelease() != "" {
+			errMessage = fmt.Sprintf("[%s] is *not* a valid version", versionStr)
+		} else if v.Prerelease() != "" {
 			resultOK = false
-			errMessage = fmt.Sprintf("[%s] is *not* a valid release version\n", versionStr)
+			errMessage = fmt.Sprintf("[%s] is *not* a valid release version", versionStr)
 		}
 
 		if versionQuiet {
@@ -133,7 +131,7 @@ EXAMPLES
 				cm.Println(errMessage)
 				os.Exit(1)
 			}
-			// Valid release version and not quiet mode, nothing to do.
+			// Valid release version and not in quiet mode, we simply do nothing.
 		}
 	},
 }
@@ -162,15 +160,15 @@ DESCRIPTION
 EXAMPLE
 
   This exits with status 1:
-   ` + os.Args[0] + ` version isgreater 2.0.6-dev.20191205 2.0.6
+   ` + os.Args[0] + ` tools version isgreater 2.0.6-dev.20191205 2.0.6
 
   This returns 0 - false (and exits with status 0):
-   ` + os.Args[0] + ` version isgreater --quiet 4.0.5-rc2 4.0.5
+   ` + os.Args[0] + ` tools version isgreater --quiet 4.0.5-rc2 4.0.5
 
 `,
-	Run: func(cm *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 2 {
-			cm.Printf("Please provide two versions to be compared\n")
+			cmd.Printf("Please provide two versions to be compared\n")
 			os.Exit(1)
 		}
 
@@ -197,14 +195,14 @@ EXAMPLE
 
 		if versionQuiet {
 			if resultOK {
-				cm.Println("1")
+				cmd.Println("1")
 			} else {
-				cm.Println("0")
+				cmd.Println("0")
 			}
 			os.Exit(0)
 		} else {
 			if !resultOK {
-				cm.Println(errMessage)
+				cmd.Println(errMessage)
 				os.Exit(1)
 			}
 			// Valid and ordered release versions, nothing to do.
@@ -218,6 +216,8 @@ var hiddenIvCmd = &cobra.Command{
 	Hidden: true,
 	Short:  "Check if a given string represents a valid version",
 	Run: func(cmd *cobra.Command, args []string) {
+		cmd.Println("[WARNING] this command is deprecated and will be removed in a future release.")
+		cmd.Println("Rather use:", os.Args[0], " tools version isvalid 4.1.1-dev.20240425")
 		ivCmd.Run(cmd, args)
 	},
 }
@@ -228,6 +228,8 @@ var hiddenIrCmd = &cobra.Command{
 	Hidden: true,
 	Short:  "Check if a given string represents a valid **RELEASE** version",
 	Run: func(cmd *cobra.Command, args []string) {
+		cmd.Println("[WARNING] this command is deprecated and will be removed in a future release.")
+		cmd.Println("Rather use:", os.Args[0], " tools version isrelease 4.1.1-dev.20240425")
 		irCmd.Run(cmd, args)
 	},
 }
@@ -238,6 +240,8 @@ var hiddenIgtCmd = &cobra.Command{
 	Hidden: true,
 	Short:  "Compare the two versions, succeed when the first is greater than the second",
 	Run: func(cmd *cobra.Command, args []string) {
+		cmd.Println("[WARNING] this command is deprecated and will be removed in a future release.")
+		cmd.Println("Rather use:", os.Args[0], " tools version isgreater 4.1.1 4.1.1-dev.20240425")
 		igtCmd.Run(cmd, args)
 	},
 }
