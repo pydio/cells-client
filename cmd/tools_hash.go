@@ -24,17 +24,16 @@ var hashFile = &cobra.Command{
 	Long: `
 DESCRIPTION
 
-This command uses the same block-based algorithm as in the Cells server to verify a local file hash.
-Output should be the same as the File Metadata > Internal Hash displayed on the web UX.
+ This command uses the same block-based algorithm as in the Cells server to verify a local file hash.
+ Output should be the same as the File Metadata > Internal Hash displayed on the web UX.
 
-BlockHashing computes hashes for blocks of ` + humanize.Bytes(hasher.DefaultBlockSize) + ` using a specific hasher, then computes md5 of all these hashes joined together. 
+ BlockHashing computes hashes for blocks of ` + humanize.Bytes(hasher.DefaultBlockSize) + ` using a specific hasher, then computes md5 of all these hashes joined together. 
 
-Block-level hasing is done using the  standard golang md5 library. You can switch to SIMD implementation (it may be a 
-bit faster) by exporting environment variable 'CELLS_ENABLE_SIMDMD5=true'. 
+ Block-level hashing is done using the  standard golang md5 library. You can switch to SIMD implementation (it may be a bit faster) by exporting environment variable 'CELLS_ENABLE_SIMDMD5=true'. 
 
 EXAMPLE
 
-    $ ` + os.Args[0] + ` hash --file /path/to/file.ext
+    $ ` + os.Args[0] + ` tools hash --file /path/to/file.ext
 
 `,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -77,5 +76,5 @@ EXAMPLE
 func init() {
 	flags := hashFile.PersistentFlags()
 	flags.StringVarP(&hashFilePath, "file", "f", "", "Path to file")
-	RootCmd.AddCommand(hashFile)
+	ToolsCmd.AddCommand(hashFile)
 }
