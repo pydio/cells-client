@@ -242,7 +242,7 @@ func init() {
 	flags := scpFiles.PersistentFlags()
 	flags.BoolVarP(&scpVerbose, "verbose", "v", false, "Hide progress bar and rather display more log info during the transfers")
 	flags.BoolVarP(&scpVeryVerbose, "very_verbose", "w", false, "Hide progress bar and rather print out a maximum of log info")
-	flags.BoolVarP(&scpQuiet, "quiet", "q", false, "Reduce refresh frequency of the progress bars, e.g when runing cec in a bash script")
+	flags.BoolVarP(&scpQuiet, "quiet", "q", false, "Reduce refresh frequency of the progress bars, e.g when running cec in a bash script")
 	flags.Int64Var(&common.UploadMaxPartsNumber, "max_parts_number", int64(5000), "Maximum number of parts, S3 supports 10000 but some storage require less parts.")
 	flags.Int64Var(&common.UploadDefaultPartSize, "part_size", int64(50), "Default part size (MB), must always be a multiple of 10MB. It will be recalculated based on the max-parts-number value.")
 	flags.IntVar(&common.UploadPartsConcurrency, "parts_concurrency", 3, "Number of concurrent part uploads.")
