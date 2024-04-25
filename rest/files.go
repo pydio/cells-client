@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/smithy-go"
+	"github.com/dustin/go-humanize"
 
 	"github.com/pydio/cells-sdk-go/v5/client/tree_service"
 	"github.com/pydio/cells-sdk-go/v5/models"
@@ -232,7 +234,7 @@ func PutFile(ctx context.Context, pathToFile string, content io.ReadSeeker, chec
 	return obj, nil
 }
 
-func uploadManager(ctx context.Context, stats os.FileInfo, path string, content io.ReadSeeker, errChan ...chan error) error {
+func uploadManager(ctx context.Context, stats os.FileInfo, path string, content io.ReadSeeker, verbose bool, errChan ...chan error) error {
 
 	s3Client, bucketName, err := GetS3Client(ctx)
 	if err != nil {
@@ -247,6 +249,13 @@ func uploadManager(ctx context.Context, stats os.FileInfo, path string, content 
 			errChan[0] <- err
 		}
 		return err
+	}
+	if verbose {
+		fmt.Println("## Launching upload for", path)
+		numParts := math.Ceil(float64(fSize) / float64(ps))
+		fmt.Println("    Size:", humanize.Bytes(uint64(fSize)))
+		fmt.Println("    Part Size:", humanize.Bytes(uint64(ps)))
+		fmt.Println("    Number of parts:", numParts)
 	}
 
 	uploader := manager.NewUploader(s3Client,

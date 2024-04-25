@@ -295,7 +295,7 @@ func (c *CrawlNode) upload(ctx context.Context, src *CrawlNode, bar *uiprogress.
 		if _, err := PutFile(ctx, fullPath, wrapper, false, wrapper.errChan); err != nil {
 			return err
 		}
-	} else if err := uploadManager(ctx, stats, fullPath, wrapper, wrapper.errChan); err != nil {
+	} else if err := uploadManager(ctx, stats, fullPath, wrapper, false, wrapper.errChan); err != nil {
 		return err
 	}
 	return nil
@@ -384,7 +384,7 @@ func (c *CrawlNode) uploadVerbose(ctx context.Context, src *CrawlNode) error {
 		if _, err := PutFile(ctx, fullPath, file, false); err != nil {
 			return err
 		}
-	} else if err := uploadManager(ctx, stats, fullPath, file); err != nil {
+	} else if err := uploadManager(ctx, stats, fullPath, file, true); err != nil {
 		return err
 	}
 	return nil
