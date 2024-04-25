@@ -1,51 +1,13 @@
-# Changes between v4.0.1 and v4.1.0
+# Changes between v4.1.0 and v4.1.1-alpha1
 
-[See Full Changelog](https://github.com/pydio/cells-client/compare/v4.0.1...v4.1.0)
+[See Full Changelog](https://github.com/pydio/cells-client/compare/v4.1.0...v4.1.1-alpha1)
 
-- [#b2ab49d](https://github.com/pydio/cells-client/commit/b2ab49da1b12c5d675ebbddb54c1ab10eeb955e8): Use latest SDK that ensures that a default AWS region is always set
-- [#6ba94da](https://github.com/pydio/cells-client/commit/6ba94da81e0dfacec4eee303000597e7aa25281a): Use latest TPs
-- [#cd19f62](https://github.com/pydio/cells-client/commit/cd19f62d81f501d83defc38a82d9a02995b99c4b): Use latest AWS SDK
-- [#817acfa](https://github.com/pydio/cells-client/commit/817acfaa1188ef0527efa680ae58c669bca6607f): Better naming for the User Agent
-- [#ce3f77f](https://github.com/pydio/cells-client/commit/ce3f77f08183a4f1a1e82676006054da6ce546fb): Better user agent identifier
-- [#a3119b2](https://github.com/pydio/cells-client/commit/a3119b2413f87ba5e4260d2875916dfde15bc712): Fix concurrent map issue
-- [#da0903c](https://github.com/pydio/cells-client/commit/da0903c38c4bbf0634deff035ade0a8e7cf8af32): Update TPs
-- [#f143e16](https://github.com/pydio/cells-client/commit/f143e1643d5ea0ff8430bebe761e011e12ab58c1): Make tools sub-command extensible (for extending tools)
-- [#8c147bc](https://github.com/pydio/cells-client/commit/8c147bc908631c3456a5667bcac0988cb8bbb1f6): Release v4.1.0-beta1
-- [#6d37b9f](https://github.com/pydio/cells-client/commit/6d37b9faf647df999251115112287cc8039eb675): Use SDK v5 alpha1
-- [#334d68f](https://github.com/pydio/cells-client/commit/334d68f3808a476f5dbd1253342fc0779c110420): Add a flag to format folder listings
-- [#cf6f9f3](https://github.com/pydio/cells-client/commit/cf6f9f34f6a331bee41782685075dacc81bce62a): Adapt to latest SDK, propagate context more cleanly
-- [#00295d6](https://github.com/pydio/cells-client/commit/00295d662ac6a9d596a647a166ce98d59d16c7df): Update README.md
-- [#5636bfb](https://github.com/pydio/cells-client/commit/5636bfb168034581d9f4fec12bf76e4b6d7923df): Also add a link to the commands documentation on our website
-- [#8fec4bd](https://github.com/pydio/cells-client/commit/8fec4bd826a91fb5664c5f2d96019d0f42abff69): Add a like to v2.2 RElease note, when we introduced multi config support
-- [#c198949](https://github.com/pydio/cells-client/commit/c198949df771b7c1c7762c5c1a24f6324a16991d): Add helpers in the make file to update the SDK and to switch to dev mode
-- [#fcf3df7](https://github.com/pydio/cells-client/commit/fcf3df7555f89c30fa39b034f55b9fbdfb4d59a9): Release v4.1.0-alpha2
-- [#0df9e7c](https://github.com/pydio/cells-client/commit/0df9e7c88c68ca94ba59cdaba3db6ee9171fc0bd): Fix a few glitches seen with alpha 1
-- [#ca8dacb](https://github.com/pydio/cells-client/commit/ca8dacb79f204990658b6ee11f2200d8a7430eef): Release v4.1.0-alpha1
-- [#a5e5ab0](https://github.com/pydio/cells-client/commit/a5e5ab0706e13612051e55465d763515afa4a4c1): More clean before the first alpha
-- [#9c25d51](https://github.com/pydio/cells-client/commit/9c25d51c21852eeca7d627d0d4236194b3e8cce7): Rather handle the callback URL on client side
-- [#083bf3e](https://github.com/pydio/cells-client/commit/083bf3e0358d607fdec6154cc44526924645a614): Use latest SDK v5
-- [#5360c89](https://github.com/pydio/cells-client/commit/5360c89326897b24b325ca7eaf716f872775857e): Adapt to latest SDK, cleaner management of the options
-- [#b539dfa](https://github.com/pydio/cells-client/commit/b539dfa9a80262f999baf025affcccf255d1c16b): Cosmetic changes
-- [#ec2ce78](https://github.com/pydio/cells-client/commit/ec2ce789c18d19049a74982a9999526dc6a30ff4): Cosmetic changes
-- [#8d11721](https://github.com/pydio/cells-client/commit/8d117210f642812da62298df0ff461a3868784b5): Introduce verbose mode for SCP to ease diagnostic when transfers fail
-- [#7cc6acc](https://github.com/pydio/cells-client/commit/7cc6acc332cb44ec2b8cbe481c481e341ff2475c): Fix typo
-- [#9271fb7](https://github.com/pydio/cells-client/commit/9271fb797d1f533a264c76d0fa8c7a47fb212c83): Factorize and clean
-- [#da589c9](https://github.com/pydio/cells-client/commit/da589c913ed2ecbc6dc53ac55f81008cd25a4f47): Use latest version of the sdk go v5
-- [#8d7c52d](https://github.com/pydio/cells-client/commit/8d7c52d9dbaefdc59cab878400fbfa47191f699e): Do not stop after one page when downloading large tree structure
-- [#1410549](https://github.com/pydio/cells-client/commit/1410549258d4605f56a471fb40334b5aafee2105): Better management of context
-- [#435a9fd](https://github.com/pydio/cells-client/commit/435a9fd3d0bbf9195d2250e8cd817251a18aa363): Cleaner naming
-- [#f34bc5c](https://github.com/pydio/cells-client/commit/f34bc5ca34c804a736339f51bb8dba3658c8470c): Adapt after fixing new well-known auth type values
-- [#7038ad5](https://github.com/pydio/cells-client/commit/7038ad5c70f87aab8a831f75aa7e536812881f56): Use latest commit of the cells-sdk-go v5
-- [#b75ac90](https://github.com/pydio/cells-client/commit/b75ac9010dccefbac5504a03c09ae18db0adbd8c): Factorize Auth type in the SDK
-- [#95c2ca8](https://github.com/pydio/cells-client/commit/95c2ca8e983af8d1664620c09c00677fde94dd96): Rather rely on cells sdk v5
-- [#101a895](https://github.com/pydio/cells-client/commit/101a895a25cb1b2b0af876dfe8185806cdcd2e0b): Use last commit from the sdk go
-- [#b830700](https://github.com/pydio/cells-client/commit/b8307005420de57a12031d419994ddef301ad31f): More cleaning
-- [#ba4c50b](https://github.com/pydio/cells-client/commit/ba4c50b9e6368da39e4d606ed505a070cbc31b32): Add a parameter for s3 transfer timeout
-- [#5b863b0](https://github.com/pydio/cells-client/commit/5b863b0cb5cb3c84f599cf18689364c98254f23a): Also refresh current loaded config
-- [#cbdfb23](https://github.com/pydio/cells-client/commit/cbdfb23cb45f84227d1f877ebcff8399be743895): Use AWS SDK v2, delegate OAuth to Cells SDK
-- [#6449cb0](https://github.com/pydio/cells-client/commit/6449cb0dbe06971d5040e81bdb82958fea37d8ba): Cleaner code
-- [#ad3d30a](https://github.com/pydio/cells-client/commit/ad3d30aa0aa87d21be9829c55678e0e1591416b9): Centralizes constants
-- [#2894be3](https://github.com/pydio/cells-client/commit/2894be3e4fd4afd5810b6b096087539db6965d90): Fix interractive configuration
-- [#4f81ca4](https://github.com/pydio/cells-client/commit/4f81ca41c0bb52307149d4839f75c1ad027a43c1): Update TPs
-- [#4be5a11](https://github.com/pydio/cells-client/commit/4be5a11efd25124421f7fd12ceff001fb96e2b29): Update third party library versions
-- [#4b71161](https://github.com/pydio/cells-client/commit/4b711611685c19e2bdd6d9e8bb13e1f5ec7f1d8e): Next development cycle
+- [#9084f4c](https://github.com/pydio/cells-client/commit/9084f4ca7643d9de5674a3ac5af4a4c543aa26a0): Update minimal Go version
+- [#5168a3c](https://github.com/pydio/cells-client/commit/5168a3c5478a5cecbaa4ce83daf3d19cc58416bc): Use underscore rather than dash in new flags to stay homogeneus with existing flags
+- [#5ddec77](https://github.com/pydio/cells-client/commit/5ddec77462a61e00f7e131f041aa68e737ce88db): Make retry strategy configurable
+- [#735533b](https://github.com/pydio/cells-client/commit/735533bd27ca91ff99da48ec8b9a43439bff0837): Update libraries
+- [#807470a](https://github.com/pydio/cells-client/commit/807470a96b8b5eff4f1dfa0d5416470459e2c6a0): Use latest Cells SDK
+- [#2770bb0](https://github.com/pydio/cells-client/commit/2770bb0b3e15e105d79a4aeafdf8908e9ce23369): Update AWS SDK
+- [#e983eb9](https://github.com/pydio/cells-client/commit/e983eb9e8427fb245dbc6ee4f55f7b4caaac280a): Update third party libraries
+- [#8e2c5dd](https://github.com/pydio/cells-client/commit/8e2c5ddaea31e4b891bcf7bbec0eecdcb9505169): Wire remove permanently option for the rm sub-command
+- [#f124049](https://github.com/pydio/cells-client/commit/f124049371d69b3450c54d054b449901690c6c37): Next development cycle
