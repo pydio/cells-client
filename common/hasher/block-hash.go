@@ -1,7 +1,9 @@
 package hasher
 
 import (
+	"encoding/hex"
 	"hash"
+	"io"
 )
 
 const (
@@ -14,7 +16,7 @@ type HashCloser interface {
 
 // BlockHash is a hash.Hash implementation that compute sub-hashes on each blocks of BlockSize and re-hash them together
 // at the end. It is uses to provide a stable hashing algorithm for standard PUT Object requests vs Multipart Uploads.
-// Bewre that this implies that the Multipart PartSize must be a multiple of this block size.
+// Beware that this implies that the Multipart PartSize must be a multiple of this block size.
 type BlockHash struct {
 	hash.Hash
 	blockSize int
@@ -75,4 +77,53 @@ func (b *BlockHash) Reset() {
 	b.Hash.Reset()
 	b.blocks = [][]byte{}
 	b.writtenSize = 0
+}
+
+type Reader struct {
+	io.Reader
+	hash.Hash
+	metaName string
+	complete func(string, [][]byte)
+	done     bool
+	total    int
+
+	final string
+}
+
+func (r *Reader) Read(p []byte) (n int, err error) {
+	n, err = r.Reader.Read(p)
+	r.total += n
+	if r.done {
+		return
+	}
+	if n > 0 {
+		r.Hash.Write(p[:n])
+	}
+	if err == io.EOF {
+		r.done = true
+		bb := r.Hash.Sum(nil)
+		r.final = hex.EncodeToString(bb)
+		if r.complete != nil {
+			var blocks [][]byte
+			if bh, ok := r.Hash.(*BlockHash); ok {
+				blocks = bh.blocks
+			}
+			r.complete(r.final, blocks)
+		}
+	}
+	return
+}
+
+func (r *Reader) ExtractedMeta() (map[string]string, bool) {
+	// Un-implemented method. This Reader is only used for Unit Tests.
+	return nil, false
+}
+
+func Tee(reader io.Reader, hashFunc func() hash.Hash, metaName string, complete func(s string, hashes [][]byte)) io.Reader {
+	return &Reader{
+		Reader:   reader,
+		Hash:     hashFunc(),
+		metaName: metaName,
+		complete: complete,
+	}
 }

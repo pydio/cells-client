@@ -55,10 +55,15 @@ EXAMPLE
 		bH := hasher.NewBlockHash(simd.MD5(), hasher.DefaultBlockSize)
 		file, e := os.Open(hashFilePath)
 		if e != nil {
-			fmt.Println("Cannot open file to hash: " + e.Error())
+			fmt.Println("Cannot open file to hash:", e.Error())
 			return
 		}
-		defer file.Close()
+		defer func(file *os.File) {
+			err := file.Close()
+			if err != nil {
+				fmt.Println("[Warning] could not close the file reader:", err.Error())
+			}
+		}(file)
 		written, er := io.Copy(bH, file)
 		if er != nil {
 			fmt.Println("Could not copy file content to hash: " + e.Error())

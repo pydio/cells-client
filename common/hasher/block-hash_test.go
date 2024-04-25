@@ -68,7 +68,6 @@ func testFunc(suite testSuite, t *testing.T) {
 			So(s, ShouldEqual, outString)
 		})
 		_, _ = io.ReadAll(reader)
-
 	})
 
 }
