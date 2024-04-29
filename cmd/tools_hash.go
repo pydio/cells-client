@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"crypto/md5"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -11,12 +12,14 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/pydio/cells-client/v4/common/hasher"
-	"github.com/pydio/cells-client/v4/common/hasher/simd"
 )
 
 var (
 	hashFilePath string
 )
+
+// Removed as it does not improve compute efficiency:
+//  Block-level hashing is done using the  standard golang md5 library. You can switch to SIMD implementation (it may be a bit faster) by exporting environment variable 'CEC_ENABLE_SIMDMD5=true'.
 
 var hashFile = &cobra.Command{
 	Use:   "hash",
@@ -29,12 +32,9 @@ DESCRIPTION
 
  BlockHashing computes hashes for blocks of ` + humanize.Bytes(hasher.DefaultBlockSize) + ` using a specific hasher, then computes md5 of all these hashes joined together. 
 
- Block-level hashing is done using the  standard golang md5 library. You can switch to SIMD implementation (it may be a bit faster) by exporting environment variable 'CELLS_ENABLE_SIMDMD5=true'. 
-
 EXAMPLE
 
     $ ` + os.Args[0] + ` tools hash --file /path/to/file.ext
-
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Create a Reader on File & Use Hasher to compute hash
@@ -51,7 +51,9 @@ EXAMPLE
 		}
 		fmt.Println("Starting hashing for file " + hashFilePath)
 		t := time.Now()
-		bH := hasher.NewBlockHash(simd.MD5(), hasher.DefaultBlockSize)
+		bH := hasher.NewBlockHash(md5.New(), hasher.DefaultBlockSize)
+		// bH := hasher.NewBlockHash(simd.MD5(), hasher.DefaultBlockSize)
+
 		file, e := os.Open(hashFilePath)
 		if e != nil {
 			fmt.Println("Cannot open file to hash:", e.Error())
