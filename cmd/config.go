@@ -5,7 +5,7 @@ import (
 	"os"
 	"sort"
 
-	"github.com/manifoldco/promptui"
+	pui "github.com/manifoldco/promptui"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 
@@ -87,7 +87,7 @@ var configUseCmd = &cobra.Command{
 		}
 
 		if len(items) > 0 {
-			pSelect := promptui.Select{Label: "Select the account you want to use", Items: items, Size: len(items), CursorPos: initialCursor}
+			pSelect := pui.Select{Label: "Select the account you want to use", Items: items, Size: len(items), CursorPos: initialCursor}
 			_, result, err := pSelect.Run()
 			if err != nil {
 				return err
@@ -129,17 +129,23 @@ var configRemoveCmd = &cobra.Command{
 		var active string
 
 		if len(items) == 1 {
-			return ClearConfig()
+			if confirmAccountDeletion(items[0]) {
+				return ClearConfig()
+			}
 		} else if len(items) > 1 {
 
-			pSelect := promptui.Select{Label: "Select a configuration to remove", Items: items, Size: len(items)}
+			pSelect := pui.Select{Label: "Select a configuration to remove", Items: items, Size: len(items)}
 			index, removed, err = pSelect.Run()
 			if err != nil {
 				return err
 			}
+			if !confirmAccountDeletion(items[index]) {
+				fmt.Println("  Operation canceled by user...")
+				return nil
+			}
+
 			items = append(items[:index], items[index+1:]...)
 
-			// TODO also remove the key from the keyring
 			if !cl.Configs[removed].SkipKeyring {
 				err = rest.ClearKeyring(cl.Configs[removed])
 				if err != nil {
@@ -147,8 +153,8 @@ var configRemoveCmd = &cobra.Command{
 				}
 			}
 
-			if removed != cl.ActiveConfigID && len(items) > 1 {
-				pSelect2 := promptui.Select{Label: "Please select the new active configuration", Items: items, Size: len(items)}
+			if removed == cl.ActiveConfigID && len(items) > 1 {
+				pSelect2 := pui.Select{Label: "Please select the new active configuration", Items: items, Size: len(items)}
 				_, active, err = pSelect2.Run()
 				if err != nil {
 					return err
@@ -182,13 +188,21 @@ var configRemoveCmd = &cobra.Command{
 			return err
 		}
 
-		cmd.Printf("Removed the following configuration %s\n\n", removed)
+		cmd.Printf("  This connection has been removed: %s\n", removed)
 		if active != "" {
-			cmd.Printf("The new active configuration is: %s\n", cl.ActiveConfigID)
+			cmd.Printf("  The new active configuration is: %s\n", cl.ActiveConfigID)
 		}
 
 		return nil
 	},
+}
+
+func confirmAccountDeletion(urn string) bool {
+	q := fmt.Sprintf("You are about to forget this connection [%s], are you sure you want to proceed", urn)
+	confirm := pui.Prompt{Label: q, IsConfirm: true}
+	// Always returns an error if the end user does not confirm
+	_, e := confirm.Run()
+	return e == nil
 }
 
 var checkKeyringCmd = &cobra.Command{
@@ -203,10 +217,10 @@ DESCRIPTION
 	Run: func(cm *cobra.Command, args []string) {
 
 		if err := rest.CheckKeyring(); err != nil {
-			fmt.Println(promptui.IconWarn + " " + rest.NoKeyringMsg)
+			fmt.Println(pui.IconWarn + " " + rest.NoKeyringMsg)
 			os.Exit(1)
 		} else {
-			fmt.Println(promptui.IconGood + " Keyring seems to be here and working.")
+			fmt.Println(pui.IconGood + " Keyring seems to be here and working.")
 		}
 	},
 }
