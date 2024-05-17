@@ -93,7 +93,8 @@ ENVIRONMENT
 		needSetup := true
 
 		for _, skip := range infoCommands { // info commands do not require a configured env.
-			if os.Args[1] == skip {
+			// We only check this at the 2 first command "levels" for the time being
+			if os.Args[1] == skip || (len(os.Args) > 2 && os.Args[2] == skip) {
 				needSetup = false
 				break
 			}
@@ -142,6 +143,12 @@ ENVIRONMENT
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Usage()
 	},
+}
+
+// RegisterExtraOfflineCommand adds the passed commands to the list of commands that skip the verifications
+// that ensure that we have a valid connection to a distant Cells server defined.
+func RegisterExtraOfflineCommand(commands ...string) {
+	infoCommands = append(infoCommands, commands...)
 }
 
 func init() {
