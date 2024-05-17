@@ -162,12 +162,14 @@ EXAMPLES
 			}
 		} else { // Rather display logs than the progress bar
 			fmt.Printf("... After walking the tree, found %d nodes to copy\n", len(nn))
+			fmt.Println("... First creating folders")
 
 			e = targetNode.MkdirAll(ctx, nn, nil)
 			if e != nil {
 				log.Fatal(e)
 			}
 
+			fmt.Println("... Now launching real file transfers")
 			errs := targetNode.CopyAllVerbose(ctx, nn)
 			if len(errs) > 0 {
 				log.Fatal(errs)
