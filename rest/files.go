@@ -2,25 +2,14 @@ package rest
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"io"
-	"math"
-	"os"
-	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/smithy-go"
-	"github.com/dustin/go-humanize"
-
+	"github.com/pkg/errors"
 	"github.com/pydio/cells-sdk-go/v5/client/tree_service"
 	"github.com/pydio/cells-sdk-go/v5/models"
-	sdkS3 "github.com/pydio/cells-sdk-go/v5/transport/s3"
-
-	"github.com/pydio/cells-client/v4/common"
 )
+
+const pageSize = 100
 
 func StatNode(ctx context.Context, pathToFile string) (*models.TreeNode, bool) {
 	client, e := GetApiClient()
@@ -99,8 +88,6 @@ func DeleteNode(ctx context.Context, paths []string, permanently ...bool) (jobUU
 	return
 }
 
-const pageSize = 100
-
 func GetAllBulkMeta(ctx context.Context, path string) (nodes []*models.TreeNode, err error) {
 	client, err := GetApiClient()
 	if err != nil {
@@ -133,161 +120,38 @@ func GetAllBulkMeta(ctx context.Context, path string) (nodes []*models.TreeNode,
 	return nodes, nil
 }
 
-func TreeCreateNodes(nodes []*models.TreeNode) error {
+// createRemoteFolders creates necessary folders on the distant server.
+func createRemoteFolders(ctx context.Context, mm []*models.TreeNode, pool *BarsPool) error {
+
 	client, err := GetApiClient()
 	if err != nil {
 		return err
-
-	}
-	params := tree_service.NewCreateNodesParams()
-	params.Body = &models.RestCreateNodesRequest{
-		Nodes:     nodes,
-		Recursive: false,
 	}
 
-	_, e := client.TreeService.CreateNodes(params)
-	if e != nil {
-		return e
-	}
-	// TODO monitor jobs to wait for the index
-	return nil
-}
+	for i := 0; i < len(mm); i += pageSize {
+		end := i + pageSize
+		if end > len(mm) {
+			end = len(mm)
+		}
+		subArray := mm[i:end]
 
-func GetFile(ctx context.Context, pathToFile string) (io.Reader, int, error) {
-
-	s3Client, bucketName, e := GetS3Client(ctx)
-	if e != nil {
-		return nil, 0, e
-	}
-	hO, err := s3Client.HeadObject(
-		ctx,
-		&s3.HeadObjectInput{
-			Bucket: aws.String(bucketName),
-			Key:    aws.String(pathToFile),
-		},
-	)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	obj, err := s3Client.GetObject(
-		ctx,
-		&s3.GetObjectInput{
-			Bucket: aws.String(bucketName),
-			Key:    aws.String(pathToFile),
-		},
-	)
-	if err != nil {
-		return nil, 0, err
-	}
-	return obj.Body, int(*hO.ContentLength), nil
-}
-
-func PutFile(ctx context.Context, pathToFile string, content io.ReadSeeker, checkExists bool, errChan ...chan error) (*s3.PutObjectOutput, error) {
-
-	s3Client, bucketName, e := GetS3Client(ctx)
-	if e != nil {
-		return nil, e
-	}
-
-	key := pathToFile
-	var obj *s3.PutObjectOutput
-	e = RetryCallback(func() error {
-		var err error
-		obj, err = s3Client.PutObject(
-			ctx,
-			&s3.PutObjectInput{
-				Bucket: aws.String(bucketName),
-				Key:    aws.String(pathToFile),
-				Body:   content,
-			},
-		)
+		params := tree_service.NewCreateNodesParams()
+		params.Body = &models.RestCreateNodesRequest{
+			Nodes:     subArray,
+			Recursive: false,
+		}
+		_, err := client.TreeService.CreateNodes(params)
 		if err != nil {
-			if len(errChan) > 0 {
-				errChan[0] <- err
-			} else {
-				fmt.Printf(" ## Could not upload file %s, cause: %s\n", key, err.Error())
+			return errors.Errorf("could not create folders: %s", err.Error())
+		}
+		// TODO:  Stat all folders to make sure they are indexed ?
+		if pool != nil {
+			for range subArray {
+				pool.Done()
 			}
+		} else { // verbose mode
+			fmt.Printf("... Creating folders on remote server: %d / %d\n", end, len(mm))
 		}
-		return err
-	}, 3, 2*time.Second)
-	if e != nil {
-		return nil, fmt.Errorf("could not put object in bucket %s with key %s, \ncause: %s", bucketName, key, e.Error())
 	}
-
-	if checkExists {
-		fmt.Println(" ## Waiting for file to be indexed...")
-		// Now stat Node to make sure it is indexed
-		e = RetryCallback(func() error {
-			_, ok := StatNode(ctx, pathToFile)
-			if !ok {
-				return fmt.Errorf("cannot stat node just after PutFile operation")
-			}
-			return nil
-
-		}, 3, 3*time.Second)
-		if e != nil {
-			return nil, e
-		}
-		fmt.Println(" ## File correctly indexed")
-	}
-	return obj, nil
-}
-
-func uploadManager(ctx context.Context, stats os.FileInfo, path string, content io.ReadSeeker, verbose bool, errChan ...chan error) error {
-
-	s3Client, bucketName, err := GetS3Client(ctx)
-	if err != nil {
-		return err
-	}
-
-	fSize := stats.Size()
-
-	ps, err := sdkS3.ComputePartSize(fSize, common.UploadDefaultPartSize, common.UploadMaxPartsNumber)
-	if err != nil {
-		if errChan != nil {
-			errChan[0] <- err
-		}
-		return err
-	}
-	if verbose {
-		fmt.Println("## Launching upload for", path)
-		numParts := math.Ceil(float64(fSize) / float64(ps))
-		fmt.Println("    Size:", humanize.Bytes(uint64(fSize)))
-		fmt.Println("    Part Size:", humanize.Bytes(uint64(ps)))
-		fmt.Println("    Number of parts:", numParts)
-	}
-
-	uploader := manager.NewUploader(s3Client,
-		func(u *manager.Uploader) {
-			u.Concurrency = common.UploadPartsConcurrency
-			u.PartSize = ps
-		},
-	)
-
-	// Adds a callback entry point so that we can follow the effective part upload.
-	uploader.BufferProvider = sdkS3.NewCallbackTransferProvider(path, fSize, ps)
-
-	_, err = uploader.Upload(ctx, &s3.PutObjectInput{
-		Bucket: aws.String(bucketName),
-		Key:    aws.String(path),
-		Body:   content,
-	})
-
-	if err != nil {
-		var apiErr smithy.APIError
-		if errors.As(err, &apiErr) {
-			// TODO better error handling
-			if errChan != nil {
-				errChan[0] <- apiErr
-			}
-			return apiErr
-		}
-		if errChan != nil {
-			errChan[0] <- err
-		}
-		return err
-	}
-
 	return nil
 }

@@ -162,24 +162,26 @@ func (c *CrawlNode) MkdirAll(ctx context.Context, dd []*CrawlNode, pool *BarsPoo
 
 	var createRoot bool
 	var mm []*models.TreeNode
-	if !c.IsLocal {
-		// Remote : append root if required
-		if tn, b := StatNode(ctx, c.FullPath); !b {
-			mm = append(mm, &models.TreeNode{Path: c.FullPath, Type: models.NewTreeNodeType(models.TreeNodeTypeCOLLECTION)})
-			createRoot = true
-		} else if *tn.Type != models.TreeNodeTypeCOLLECTION {
-			// target root is not a folder, fail fast.
-			return fmt.Errorf("%s exists on the server and is not a folder, cannot upload there", c.FullPath)
-		}
-	} else {
+	// Manage current folder
+	if c.IsLocal {
 		if _, e := os.Stat(c.FullPath); e != nil {
+			// Create base folder if necessary
 			if DryRun {
 				fmt.Println("MkDir: \t", c.FullPath)
 			} else if e1 := os.MkdirAll(c.FullPath, 0755); e1 != nil {
 				return e1
 			}
 		}
+	} else { //  Remote
+		if tn, b := StatNode(ctx, c.FullPath); !b { // Append root if required
+			mm = append(mm, &models.TreeNode{Path: c.FullPath, Type: models.NewTreeNodeType(models.TreeNodeTypeCOLLECTION)})
+			createRoot = true
+		} else if *tn.Type != models.TreeNodeTypeCOLLECTION { // Sanity check
+			// Target root is not a folder: failing fast
+			return fmt.Errorf("%s exists on the server and is not a folder, cannot upload there", c.FullPath)
+		}
 	}
+	// Manage descendants: local folders are created and remote are gathered in the mm array
 	for _, d := range dd {
 		if !d.IsDir {
 			continue
@@ -203,16 +205,7 @@ func (c *CrawlNode) MkdirAll(ctx context.Context, dd []*CrawlNode, pool *BarsPoo
 		}
 	}
 	if !c.IsLocal && !DryRun && len(mm) > 0 {
-		e := TreeCreateNodes(mm)
-		if e != nil {
-			return e
-		}
-		if pool != nil {
-			for range mm {
-				pool.Done()
-			}
-		}
-		// TODO:  Stat all folders to make sure they are indexed ?
+		return createRemoteFolders(ctx, mm, pool)
 	}
 	return nil
 }
@@ -288,17 +281,16 @@ func (c *CrawlNode) upload(ctx context.Context, src *CrawlNode, bar *uiprogress.
 	// Handle corner case when trying to upload a file and *folder* with same name already exists at target path
 	if tn, b := StatNode(ctx, fullPath); b && *tn.Type == models.TreeNodeTypeCOLLECTION {
 		// target root is not a folder, fail fast.
-		return fmt.Errorf("cannot upload file to %s, a folder with same name already exists at target path", fullPath)
+		return fmt.Errorf("cannot upload *file* to %s, a *folder* with same name already exists at the target path", fullPath)
 	}
 	wrapper.double = false
+	var putError error
 	if stats.Size() <= common.UploadSwitchMultipart*(1024*1024) {
-		if _, err := PutFile(ctx, fullPath, wrapper, false, wrapper.errChan); err != nil {
-			return err
-		}
-	} else if err := uploadManager(ctx, stats, fullPath, wrapper, false, wrapper.errChan); err != nil {
-		return err
+		_, putError = PutFile(ctx, fullPath, wrapper, false, wrapper.errChan)
+	} else {
+		putError = uploadManager(ctx, stats, fullPath, wrapper, false, wrapper.errChan)
 	}
-	return nil
+	return putError
 }
 
 func (c *CrawlNode) download(ctx context.Context, src *CrawlNode, bar *uiprogress.Bar) error {
@@ -443,65 +435,6 @@ func (c *CrawlNode) Dir() string {
 	} else {
 		return path.Dir(c.FullPath)
 	}
-}
-
-type BarsPool struct {
-	*uiprogress.Progress
-	showGlobal bool
-	nodesBar   *uiprogress.Bar
-}
-
-func NewBarsPool(showGlobal bool, totalNodes int, refreshInterval time.Duration) *BarsPool {
-	b := &BarsPool{}
-	b.Progress = uiprogress.New()
-	b.Progress.SetRefreshInterval(refreshInterval)
-	b.showGlobal = showGlobal
-	if showGlobal {
-		b.nodesBar = b.AddBar(totalNodes)
-		b.nodesBar.PrependCompleted()
-		b.nodesBar.AppendFunc(func(b *uiprogress.Bar) string {
-			if b.Current() == b.Total {
-				return fmt.Sprintf("Transferred %d/%d files and folders (%s)", b.Current(), b.Total, b.TimeElapsedString())
-			} else {
-				return fmt.Sprintf("Transfering %d/%d files or folders", b.Current()+1, b.Total)
-			}
-		})
-	}
-	return b
-}
-
-func (b *BarsPool) Done() {
-	if !b.showGlobal {
-		return
-	}
-	b.nodesBar.Incr()
-	if b.nodesBar.Current() == b.nodesBar.Total {
-		// Finished, remove all bars
-		b.Bars = []*uiprogress.Bar{b.nodesBar}
-	}
-}
-
-func (b *BarsPool) Get(i int, total int, name string) *uiprogress.Bar {
-	idx := i % PoolSize
-	var nBars []*uiprogress.Bar
-	if b.showGlobal {
-		idx++
-		nBars = append(nBars, b.nodesBar)
-	}
-	// Remove old bar
-	for k, bar := range b.Bars {
-		if k == idx || (b.showGlobal && bar == b.nodesBar) {
-			continue
-		}
-		nBars = append(nBars, bar)
-	}
-	b.Bars = nBars
-	bar := b.AddBar(total)
-	bar.PrependCompleted()
-	bar.AppendFunc(func(b *uiprogress.Bar) string {
-		return fmt.Sprint(name)
-	})
-	return bar
 }
 
 type PgReader struct {
