@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/gosuri/uiprogress"
 	"io"
 	"math"
 	"os"
 	"time"
+
+	"github.com/gosuri/uiprogress"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
@@ -121,14 +122,14 @@ func NewBarsPool(showGlobal bool, totalNodes int, refreshInterval time.Duration)
 	b.Progress = uiprogress.New()
 	b.Progress.SetRefreshInterval(refreshInterval)
 	b.showGlobal = showGlobal
-	if showGlobal {
+	if showGlobal { // we are transferring more than one file
 		b.nodesBar = b.AddBar(totalNodes)
 		b.nodesBar.PrependCompleted()
 		b.nodesBar.AppendFunc(func(b *uiprogress.Bar) string {
 			if b.Current() == b.Total {
-				return fmt.Sprintf("Transferred %d/%d files and folders (%s)", b.Current(), b.Total, b.TimeElapsedString())
+				return fmt.Sprintf("Transferred %d/%d files and folders in %s.", b.Current(), b.Total, b.TimeElapsedString())
 			} else {
-				return fmt.Sprintf("Transfering %d/%d files or folders", b.Current()+1, b.Total)
+				return fmt.Sprintf("Copying folders and files since %s: %d/%d", b.TimeElapsedString(), b.Current(), b.Total)
 			}
 		})
 	}
@@ -169,14 +170,8 @@ func (b *BarsPool) Get(i int, total int, name string) *uiprogress.Bar {
 	return bar
 }
 
-func uploadManager(ctx context.Context, stats os.FileInfo, path string, content io.ReadSeeker, verbose bool, errChan ...chan error) error {
-
-	s3Client, bucketName, err := GetS3Client(ctx)
-	if err != nil {
-		return err
-	}
-
-	fSize := stats.Size()
+func s3Upload(ctx context.Context, s3Client *s3.Client, bucketName string, path string,
+	content io.ReadSeeker, fSize int64, verbose bool, errChan ...chan error) error {
 
 	ps, err := sdkS3.ComputePartSize(fSize, common.UploadDefaultPartSize, common.UploadMaxPartsNumber)
 	if err != nil {
@@ -223,12 +218,17 @@ func uploadManager(ctx context.Context, stats os.FileInfo, path string, content 
 		}
 		return err
 	}
-
 	return nil
 }
 
-func multiPartUpload(ctx context.Context, s3Client *s3.Client, bucketName string, path string,
-	content io.ReadSeeker, fSize int64, verbose bool, errChan ...chan error) error {
+func uploadManager(ctx context.Context, stats os.FileInfo, path string, content io.ReadSeeker, verbose bool, errChan ...chan error) error {
+
+	s3Client, bucketName, err := GetS3Client(ctx)
+	if err != nil {
+		return err
+	}
+
+	fSize := stats.Size()
 
 	ps, err := sdkS3.ComputePartSize(fSize, common.UploadDefaultPartSize, common.UploadMaxPartsNumber)
 	if err != nil {

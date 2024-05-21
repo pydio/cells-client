@@ -71,7 +71,7 @@ func GetConfigList() (*ConfigList, error) {
 	return configList, nil
 }
 
-// tryToGetLegacyConfig is best effort to retrieve and migrate cec v2 configuration to the latest format at first use.
+// tryToGetLegacyConfig is best-effort to retrieve and migrate cec v2 configuration to the latest format at first use.
 func tryToGetLegacyConfig(data []byte) (*ConfigList, error) {
 
 	var oldConf *CecConfig
@@ -99,7 +99,7 @@ func tryToGetLegacyConfig(data []byte) (*ConfigList, error) {
 	return configList, nil
 }
 
-// migrateAuthTypes simply replaces AuthType values in the passed structure to use SDK v5 standard values.
+// migrateAuthTypes simply replaces AuthType values in the given structure to use SDK v5 standard values.
 // The resulting config is **not** saved to disk / keyring
 func migrateAuthTypes(configList *ConfigList) (bool, error) {
 

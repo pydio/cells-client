@@ -26,7 +26,10 @@ func testFunc(suite testSuite, t *testing.T) {
 		b := NewBlockHash(suite.hasher(), suite.blockSize)
 		f, e := os.Open("./testdata/" + suite.fileName)
 		So(e, ShouldBeNil)
-		defer f.Close()
+		defer func(f *os.File) {
+			err := f.Close()
+			So(err, ShouldBeNil)
+		}(f)
 
 		// Precompute parts for reference
 		all, _ := io.ReadAll(f)
