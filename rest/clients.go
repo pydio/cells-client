@@ -31,7 +31,9 @@ var (
 	DefaultConfig *CecConfig
 
 	configFilePath string
-	once           = &sync.Once{}
+
+	currentClient *client.PydioCellsRestAPI
+	once          = &sync.Once{}
 )
 
 // CecConfig extends the default SdkConfig with custom parameters.
@@ -63,34 +65,36 @@ func UserAgent() string {
 // GetApiClient returns a client to directly communicate with the Pydio Cells REST API.
 // Requests are anonymous when corresponding flag is set. Otherwise, the authentication is managed
 // by the client, using the current active SDKConfig to provide valid credentials.
+// Warning: we only create the client *once* so we do not yet support multiple conf in a single process.
 func GetApiClient(customConf ...*cellsSdk.SdkConfig) (*client.PydioCellsRestAPI, error) {
-
 	currConf := DefaultConfig.SdkConfig
 	if len(customConf) == 1 {
 		currConf = customConf[0]
 	}
-	return doGetApiClient(currConf, false)
+	var err error
+	once.Do(func() {
+		currentClient, err = doGetApiClient(currConf, false)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return currentClient, nil
 }
 
-func GetAnonymousApiClient(customConf ...*cellsSdk.SdkConfig) (*client.PydioCellsRestAPI, error) {
-	currConf := DefaultConfig.SdkConfig
-	if len(customConf) == 1 {
-		currConf = customConf[0]
-	}
-	return doGetApiClient(currConf, true)
-}
+//func GetAnonymousApiClient(customConf ...*cellsSdk.SdkConfig) (*client.PydioCellsRestAPI, error) {
+//	currConf := DefaultConfig.SdkConfig
+//	if len(customConf) == 1 {
+//		currConf = customConf[0]
+//	}
+//	return doGetApiClient(currConf, true)
+//}
 
 // GetS3Client creates a new default S3 client based on current active config
 // to transfer files to/from a distant Cells server.
 func GetS3Client(ctx context.Context) (*s3.Client, string, error) {
 
 	var options []interface{}
-
-	if CellsStore == nil {
-		fmt.Println("[WARNING] could not found a cells store")
-	} else {
-		options = append(options, sdkS3.WithCellsConfigStore(CellsStore))
-	}
+	options = append(options, sdkS3.WithCellsConfigStore(CellsStore()))
 
 	if int(common.S3RequestTimeout) > 0 {
 		to := time.Duration(int(common.S3RequestTimeout)) * time.Second

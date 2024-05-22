@@ -17,7 +17,18 @@ import (
 	"github.com/pydio/cells-client/v4/common"
 )
 
-var CellsStore = NewCellsConfigStore()
+var (
+	defaultCellsStore cellsSdk.ConfigRefresher
+
+	cellsStoreInit = &sync.Once{}
+)
+
+func CellsStore() cellsSdk.ConfigRefresher {
+	cellsStoreInit.Do(func() {
+		defaultCellsStore = &CellsConfigStore{}
+	})
+	return defaultCellsStore
+}
 
 type ConfigList struct {
 	ActiveConfigID string
@@ -178,6 +189,8 @@ func (list *ConfigList) SaveConfigFile() error {
 	return nil
 }
 
+var mu sync.Mutex
+
 // CellsConfigStore implements a Cells Client specific ConfigRefresher, that also securely stores credentials:
 // It wraps a keyring if such a tool is correctly configured and can be reached by the client.
 type CellsConfigStore struct {
@@ -233,10 +246,6 @@ func (store *CellsConfigStore) RefreshIfRequired(ctx context.Context, sdkConfig 
 		return true, fmt.Errorf("could not store updated conf for %s, cause: %s", newId, err.Error())
 	}
 	return true, nil
-}
-
-func NewCellsConfigStore() cellsSdk.ConfigRefresher {
-	return &CellsConfigStore{}
 }
 
 func UpdateConfig(newConf *CecConfig) error {
