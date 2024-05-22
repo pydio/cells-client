@@ -26,13 +26,13 @@ DESCRIPTION
   List all the datasources that are defined on the server side.
   Note that the currently used user account must have be given the necessary Admin permissions.
 `,
-	Run: func(cm *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, args []string) {
 
-		apiClient, err := rest.GetApiClient()
+		apiClient, err := rest.GetApiClient(cmd.Context())
 		if err != nil {
 			log.Fatal(err.Error())
 		}
-		ctx := cm.Context()
+		ctx := cmd.Context()
 
 		/*ListDataSourcesParams contains all the parameters to send to the API endpoint
 		for the list data sources operation typically these are written to a http.Request */
@@ -71,21 +71,21 @@ var resyncDs = &cobra.Command{
 	Use:   "resync-ds",
 	Short: "Launch a resync",
 	Long:  `Launch a resync job on the specified datasource`,
-	Run: func(cm *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, args []string) {
 
 		if len(args) != 1 {
 			log.Fatal(fmt.Errorf("please provide the name of the datasource to resync"))
 		}
 		dsName := args[0]
 
-		client, err := rest.GetApiClient()
+		client, err := rest.GetApiClient(cmd.Context())
 		if err != nil {
 			log.Fatal(err.Error())
 		}
 
 		jsonParam := fmt.Sprintf("{\"dsName\":\"%s\"}", dsName)
 		body := jobs_service.UserCreateJobBody{JSONParameters: jsonParam}
-		params := &jobs_service.UserCreateJobParams{JobName: "datasource-resync", Body: body, Context: cm.Context()}
+		params := &jobs_service.UserCreateJobParams{JobName: "datasource-resync", Body: body, Context: cmd.Context()}
 
 		_, err = client.JobsService.UserCreateJob(params)
 		if err != nil {

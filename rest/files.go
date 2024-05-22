@@ -3,6 +3,7 @@ package rest
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/pydio/cells-sdk-go/v5/client/tree_service"
@@ -12,7 +13,7 @@ import (
 const pageSize = 100
 
 func StatNode(ctx context.Context, pathToFile string) (*models.TreeNode, bool) {
-	client, e := GetApiClient()
+	client, e := GetApiClient(ctx)
 	if e != nil {
 		return nil, false
 	}
@@ -20,6 +21,60 @@ func StatNode(ctx context.Context, pathToFile string) (*models.TreeNode, bool) {
 	params.SetNode(pathToFile)
 	params.SetContext(ctx)
 	resp, err := client.TreeService.HeadNode(params)
+	if err != nil {
+		//if errors.As(err, &tree_service.HeadNodeNotFound{}) {
+		//	return nil, false
+		//}
+		switch err.(type) {
+		case *tree_service.HeadNodeNotFound:
+			return nil, false
+		}
+		fmt.Println("#############")
+		fmt.Println("#############")
+		fmt.Printf("Could not stat %s: %s\n", pathToFile, err.Error())
+		fmt.Printf("Could not stat %s: %s\n", pathToFile, err.Error())
+		// sleep and retry
+		time.Sleep(2000 * time.Millisecond)
+		resp, err = client.TreeService.HeadNode(params)
+		if err != nil {
+			//if errors.As(err, &tree_service.HeadNodeNotFound{}) {
+			//	return nil, false
+			//}
+			switch err.(type) {
+			case *tree_service.HeadNodeNotFound:
+				return nil, false
+			}
+			// Try to refresh
+			refreshed, err2 := CellsStore().RefreshIfRequired(ctx, DefaultConfig.SdkConfig)
+			if err2 != nil {
+				fmt.Println("#############")
+				fmt.Println("#############")
+				fmt.Println("Could not refresh:", err.Error())
+				return nil, false
+			} else if refreshed {
+				fmt.Println("#############")
+				fmt.Println("#############")
+				fmt.Println("#############")
+				fmt.Println("Node: Token has been refreshed")
+				fmt.Println("Node: Token has been refreshed")
+			}
+			client, err2 = GetApiClient(ctx)
+			if err2 != nil {
+				fmt.Println("#################")
+				fmt.Println("[Error] Could not retrieve client after token refresh")
+				return nil, false
+			}
+			resp, err = client.TreeService.HeadNode(params)
+			if err != nil {
+				switch err.(type) {
+				case *tree_service.HeadNodeNotFound:
+					return nil, false
+				}
+				fmt.Println("#############")
+				fmt.Println("Abort the mission:", err.Error())
+			}
+		}
+	}
 	if err == nil && resp.Payload.Node != nil {
 		return resp.Payload.Node, true
 	} else {
@@ -28,7 +83,7 @@ func StatNode(ctx context.Context, pathToFile string) (*models.TreeNode, bool) {
 }
 
 func ListNodesPath(ctx context.Context, path string) ([]string, error) {
-	client, err := GetApiClient()
+	client, err := GetApiClient(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +111,7 @@ func DeleteNode(ctx context.Context, paths []string, permanently ...bool) (jobUU
 		e = fmt.Errorf("no paths found to delete")
 		return
 	}
-	client, err := GetApiClient()
+	client, err := GetApiClient(ctx)
 	if err != nil {
 		e = err
 		return
@@ -89,7 +144,7 @@ func DeleteNode(ctx context.Context, paths []string, permanently ...bool) (jobUU
 }
 
 func GetAllBulkMeta(ctx context.Context, path string) (nodes []*models.TreeNode, err error) {
-	client, err := GetApiClient()
+	client, err := GetApiClient(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +178,7 @@ func GetAllBulkMeta(ctx context.Context, path string) (nodes []*models.TreeNode,
 // createRemoteFolders creates necessary folders on the distant server.
 func createRemoteFolders(ctx context.Context, mm []*models.TreeNode, pool *BarsPool) error {
 
-	client, err := GetApiClient()
+	client, err := GetApiClient(ctx)
 	if err != nil {
 		return err
 	}

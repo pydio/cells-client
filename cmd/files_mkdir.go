@@ -53,7 +53,7 @@ EXAMPLES
 		}
 
 		// Connect to the Pydio API via the sdkConfig
-		apiClient, err := rest.GetApiClient()
+		apiClient, err := rest.GetApiClient(cmd.Context())
 		if err != nil {
 			log.Fatal(err)
 		}

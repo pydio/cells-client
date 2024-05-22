@@ -52,7 +52,7 @@ func MoveJob(ctx context.Context, jsonParams string) (string, error) {
 // RunJob runs a job.
 func RunJob(ctx context.Context, jobName string, jsonParams string) (string, error) {
 
-	client, err := GetApiClient()
+	client, err := GetApiClient(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -69,7 +69,7 @@ func RunJob(ctx context.Context, jobName string, jsonParams string) (string, err
 
 // GetTaskStatusForJob retrieves the task status, progress and message.
 func GetTaskStatusForJob(ctx context.Context, jobID string) (status models.JobsTaskStatus, msg string, pg float32, e error) {
-	client, err := GetApiClient()
+	client, err := GetApiClient(ctx)
 	if err != nil {
 		e = err
 		return

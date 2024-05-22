@@ -10,7 +10,7 @@ import (
 
 func CreateSimpleFolderLink(ctx context.Context, targetNodeUuid, label string) (*models.RestShareLink, error) {
 
-	client, e := GetApiClient()
+	client, e := GetApiClient(ctx)
 	if e != nil {
 		return nil, e
 	}

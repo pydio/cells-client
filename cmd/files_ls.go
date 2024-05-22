@@ -150,7 +150,7 @@ EXAMPLES
 		p := strings.Trim(lsPath, "/")
 
 		// Connect to the Cells API
-		apiClient, err := rest.GetApiClient()
+		apiClient, err := rest.GetApiClient(cmd.Context())
 		if err != nil {
 			log.Fatal(err)
 		}

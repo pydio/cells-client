@@ -57,7 +57,7 @@ Found 4 nodes at test:
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		apiClient, err := rest.GetApiClient()
+		apiClient, err := rest.GetApiClient(cmd.Context())
 		if err != nil {
 			log.Fatal(err)
 		}

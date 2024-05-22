@@ -57,7 +57,7 @@ func DefaultCecConfig() *CecConfig {
 
 func UserAgent() string {
 	osVersion := fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
-	goVersion := fmt.Sprintf("%s", runtime.Version())
+	goVersion := runtime.Version()
 	appVersion := fmt.Sprintf("github.com/pydio/%s@v%s", common.AppName, common.Version)
 	return fmt.Sprintf("%s %s %s", osVersion, goVersion, appVersion)
 }
@@ -66,7 +66,7 @@ func UserAgent() string {
 // Requests are anonymous when corresponding flag is set. Otherwise, the authentication is managed
 // by the client, using the current active SDKConfig to provide valid credentials.
 // Warning: we only create the client *once* so we do not yet support multiple conf in a single process.
-func GetApiClient(customConf ...*cellsSdk.SdkConfig) (*client.PydioCellsRestAPI, error) {
+func GetApiClient(ctx context.Context, customConf ...*cellsSdk.SdkConfig) (*client.PydioCellsRestAPI, error) {
 	currConf := DefaultConfig.SdkConfig
 	if len(customConf) == 1 {
 		currConf = customConf[0]
@@ -78,6 +78,20 @@ func GetApiClient(customConf ...*cellsSdk.SdkConfig) (*client.PydioCellsRestAPI,
 	if err != nil {
 		return nil, err
 	}
+
+	if currConf.AuthType == cellsSdk.AuthTypeOAuth {
+
+		if currConf.ExpiresAt().Before(time.Now().Add(-60 * time.Second)) {
+			refreshed, err2 := CellsStore().RefreshIfRequired(ctx, currConf)
+			if err2 != nil {
+				return nil, err
+			} else if refreshed {
+
+			}
+		}
+
+	}
+
 	return currentClient, nil
 }
 

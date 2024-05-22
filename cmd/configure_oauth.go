@@ -57,7 +57,7 @@ USAGE
   you can also initialise this configuration by providing an ID token that you have retrieved using an alternative procedure,
   and go through the configuration process in a non-interactive manner by using the provided flags.
 `,
-	Run: func(cm *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, args []string) {
 
 		newConf := rest.DefaultCecConfig()
 		newConf.AuthType = cellsSdk.AuthTypeOAuth
@@ -65,7 +65,7 @@ USAGE
 
 		var err error
 		if serverURL != "" && oauthIDToken != "" {
-			err = oAuthNonInteractive(newConf)
+			err = oAuthNonInteractive(cmd.Context(), newConf)
 		} else {
 			err = oAuthInteractive(newConf)
 		}
@@ -218,7 +218,7 @@ func isPortAvailable(port int, timeout int) bool {
 	return true
 }
 
-func oAuthNonInteractive(conf *rest.CecConfig) error {
+func oAuthNonInteractive(ctx context.Context, conf *rest.CecConfig) error {
 
 	conf.Url = serverURL
 	conf.IdToken = oauthIDToken
@@ -237,7 +237,7 @@ func oAuthNonInteractive(conf *rest.CecConfig) error {
 
 	// Test a simple PING with this config before saving!
 	rest.DefaultConfig = conf
-	if _, e := rest.GetApiClient(); e != nil {
+	if _, e := rest.GetApiClient(ctx); e != nil {
 		return fmt.Errorf("test connection to newly configured server failed")
 	}
 

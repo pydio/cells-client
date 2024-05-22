@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"os"
 	"time"
 
 	"github.com/gosuri/uiprogress"
@@ -56,22 +55,19 @@ func GetFile(ctx context.Context, pathToFile string) (io.Reader, int, error) {
 // PutFile upload a local file to the server without using multipart upload.
 func PutFile(
 	ctx context.Context,
+	s3Client *s3.Client,
+	bucketName string,
 	pathToFile string,
 	content io.ReadSeeker,
 	checkExists bool,
 	errChan ...chan error,
 ) (*s3.PutObjectOutput, error) {
 
-	s3Client, bucketName, e := GetS3Client(ctx)
-	if e != nil {
-		return nil, e
-	}
-
 	key := pathToFile
 	var obj *s3.PutObjectOutput
-	e = RetryCallback(func() error {
-		var err error
-		obj, err = s3Client.PutObject(
+	err := RetryCallback(func() error {
+		var tmpErr error
+		obj, tmpErr = s3Client.PutObject(
 			ctx,
 			&s3.PutObjectInput{
 				Bucket: aws.String(bucketName),
@@ -79,10 +75,10 @@ func PutFile(
 				Body:   content,
 			},
 		)
-		return err
+		return tmpErr
 	}, 5, 2*time.Second)
-	if e != nil {
-		errMsg := fmt.Errorf("could not put object in bucket %s with key %s, \ncause: %s", bucketName, key, e.Error())
+	if err != nil {
+		errMsg := fmt.Errorf("could not put object in bucket %s with key %s, \ncause: %s", bucketName, key, err.Error())
 		if len(errChan) > 0 {
 			errChan[0] <- errMsg
 		}
@@ -92,15 +88,15 @@ func PutFile(
 	if checkExists {
 		fmt.Println(" ## Waiting for file to be indexed...")
 		// Now stat Node to make sure it is indexed
-		e = RetryCallback(func() error {
+		err = RetryCallback(func() error {
 			_, ok := StatNode(ctx, pathToFile)
 			if !ok {
 				return fmt.Errorf("could not stat node after PutFile operation")
 			}
 			return nil
 		}, 5, 3*time.Second)
-		if e != nil {
-			errMsg := fmt.Errorf("existence check failed for %s in bucket %s\ntimeout after 15s, last error: %s", key, bucketName, e.Error())
+		if err != nil {
+			errMsg := fmt.Errorf("existence check failed for %s in bucket %s\ntimeout after 15s, last error: %s", key, bucketName, err.Error())
 			if len(errChan) > 0 {
 				errChan[0] <- errMsg
 			}
@@ -221,60 +217,60 @@ func s3Upload(ctx context.Context, s3Client *s3.Client, bucketName string, path 
 	return nil
 }
 
-func uploadManager(ctx context.Context, stats os.FileInfo, path string, content io.ReadSeeker, verbose bool, errChan ...chan error) error {
-
-	s3Client, bucketName, err := GetS3Client(ctx)
-	if err != nil {
-		return err
-	}
-
-	fSize := stats.Size()
-
-	ps, err := sdkS3.ComputePartSize(fSize, common.UploadDefaultPartSize, common.UploadMaxPartsNumber)
-	if err != nil {
-		if errChan != nil {
-			errChan[0] <- err
-		}
-		return err
-	}
-	if verbose {
-		fmt.Println("## Launching upload for", path)
-		numParts := math.Ceil(float64(fSize) / float64(ps))
-		fmt.Println("    Size:", humanize.Bytes(uint64(fSize)))
-		fmt.Println("    Part Size:", humanize.Bytes(uint64(ps)))
-		fmt.Println("    Number of parts:", numParts)
-	}
-
-	uploader := manager.NewUploader(s3Client,
-		func(u *manager.Uploader) {
-			u.Concurrency = common.UploadPartsConcurrency
-			u.PartSize = ps
-		},
-	)
-
-	// Adds a callback entry point so that we can follow the effective part upload.
-	uploader.BufferProvider = sdkS3.NewCallbackTransferProvider(path, fSize, ps)
-
-	_, err = uploader.Upload(ctx, &s3.PutObjectInput{
-		Bucket: aws.String(bucketName),
-		Key:    aws.String(path),
-		Body:   content,
-	})
-
-	if err != nil {
-		var apiErr smithy.APIError
-		if errors.As(err, &apiErr) {
-			// TODO better error handling
-			if errChan != nil {
-				errChan[0] <- apiErr
-			}
-			return apiErr
-		}
-		if errChan != nil {
-			errChan[0] <- err
-		}
-		return err
-	}
-
-	return nil
-}
+//func uploadManager(ctx context.Context, stats os.FileInfo, path string, content io.ReadSeeker, verbose bool, errChan ...chan error) error {
+//
+//	s3Client, bucketName, err := GetS3Client(ctx)
+//	if err != nil {
+//		return err
+//	}
+//
+//	fSize := stats.Size()
+//
+//	ps, err := sdkS3.ComputePartSize(fSize, common.UploadDefaultPartSize, common.UploadMaxPartsNumber)
+//	if err != nil {
+//		if errChan != nil {
+//			errChan[0] <- err
+//		}
+//		return err
+//	}
+//	if verbose {
+//		fmt.Println("## Launching upload for", path)
+//		numParts := math.Ceil(float64(fSize) / float64(ps))
+//		fmt.Println("    Size:", humanize.Bytes(uint64(fSize)))
+//		fmt.Println("    Part Size:", humanize.Bytes(uint64(ps)))
+//		fmt.Println("    Number of parts:", numParts)
+//	}
+//
+//	uploader := manager.NewUploader(s3Client,
+//		func(u *manager.Uploader) {
+//			u.Concurrency = common.UploadPartsConcurrency
+//			u.PartSize = ps
+//		},
+//	)
+//
+//	// Adds a callback entry point so that we can follow the effective part upload.
+//	uploader.BufferProvider = sdkS3.NewCallbackTransferProvider(path, fSize, ps)
+//
+//	_, err = uploader.Upload(ctx, &s3.PutObjectInput{
+//		Bucket: aws.String(bucketName),
+//		Key:    aws.String(path),
+//		Body:   content,
+//	})
+//
+//	if err != nil {
+//		var apiErr smithy.APIError
+//		if errors.As(err, &apiErr) {
+//			// TODO better error handling
+//			if errChan != nil {
+//				errChan[0] <- apiErr
+//			}
+//			return apiErr
+//		}
+//		if errChan != nil {
+//			errChan[0] <- err
+//		}
+//		return err
+//	}
+//
+//	return nil
+//}

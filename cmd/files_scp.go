@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pydio/cells-sdk-go/v5/models"
+
 	"github.com/spf13/cobra"
 
 	"github.com/pydio/cells-client/v4/common"
@@ -22,7 +24,7 @@ const (
 )
 
 var (
-	scpCurrentPrefix string
+	scpNoProgress    bool
 	scpQuiet         bool
 	scpVerbose       bool
 	scpVeryVerbose   bool
@@ -65,10 +67,12 @@ EXAMPLES
 `,
 	Args: cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-
+		rest.DryRun = false // Debug option
+		ctx := cmd.Context()
 		from := args[0]
 		to := args[1]
-		ctx := cmd.Context()
+		scpCurrentPrefix := ""
+		isSrcLocal := false
 
 		if scpMaxBackoffStr != "" {
 			// Parse and set a specific backoff duration
@@ -88,158 +92,166 @@ EXAMPLES
 			common.CurrentLogLevel = common.Info
 		}
 
-		if strings.HasPrefix(from, prefixA) || strings.HasPrefix(to, prefixA) {
+		// Handle multiple prefix cells:// (standard) and cells// (to enable completion)
+		// Clever exclusive "OR"
+		if strings.HasPrefix(from, prefixA) != strings.HasPrefix(to, prefixA) {
 			scpCurrentPrefix = prefixA
-		} else if strings.HasPrefix(from, prefixB) || strings.HasPrefix(to, prefixB) {
+		} else if strings.HasPrefix(from, prefixB) != strings.HasPrefix(to, prefixB) {
 			scpCurrentPrefix = prefixB
+		} else // Not a valid SCP transfer
+		if strings.HasPrefix(from, prefixA) || strings.HasPrefix(from, prefixB) {
+			log.Fatal("Rather use the cp command to copy one or more file on the server side.")
 		} else {
-			// No prefix found
-			log.Fatal("Source and target are both on the client machine, copy from server to client or the opposite.")
+			log.Fatal("Source and target are both on your client machine, copy from server to client or the opposite.")
+		}
+		// Now it's easy to check if we do upload or download (that is default)
+		if strings.HasPrefix(to, scpCurrentPrefix) {
+			isSrcLocal = true
 		}
 
 		// Prepare paths
-		rest.DryRun = false // Debug option
-		isSrcLocal := true
 		var crawlerPath, targetPath string
 		var rename bool
 		var err error
-		if strings.HasPrefix(from, scpCurrentPrefix) {
-			// Download
-			isSrcLocal = false
-			var isRemote bool
+		if isSrcLocal { // Upload
+			targetPath = strings.TrimPrefix(to, scpCurrentPrefix)
+			crawlerPath, err = filepath.Abs(from)
+			if err != nil {
+				log.Fatalf("%s is not a valid source: %s", from, err)
+			}
+			srcName := filepath.Base(crawlerPath)
+			if rename, err = prepareRemoteTargetPath(ctx, srcName, targetPath); err != nil {
+				log.Fatal(err)
+			}
+			fmt.Printf("Uploading '%s' to '%s'\n", crawlerPath, to)
+		} else { // Download
 			crawlerPath = strings.TrimPrefix(from, scpCurrentPrefix)
-			targetPath, isRemote, rename, err = targetToFullPath(ctx, to)
+			srcName := filepath.Base(crawlerPath)
+			targetPath, err = filepath.Abs(to)
+			if err != nil {
+				log.Fatalf("%s is not a valid destination: %s", to, err)
+			}
+			err = prepareLocalTargetPath(srcName, targetPath)
 			if err != nil {
 				log.Fatal(err)
 			}
-			if isRemote {
-				log.Fatal("Source and target are both remote: you can only copy from client to remote Pydio Server or the opposite.")
-			}
-			fmt.Printf("Downloading %s to %s\n", from, to)
-		} else {
-			// Upload
-			targetPath = strings.TrimPrefix(to, scpCurrentPrefix)
-			// Check target path existence and handle rename corner cases
-			if _, _, rename, err = targetToFullPath(ctx, to); err != nil {
-				log.Fatal(err)
-			}
-			crawlerPath = from
-			fmt.Printf("Uploading %s to %s\n", from, to)
+			fmt.Printf("Downloading '%s' to '%s'\n", from, targetPath)
 		}
 
-		crawler, e := rest.NewCrawler(ctx, crawlerPath, isSrcLocal)
+		// Now create source and target crawlers
+		srcNode, e := rest.NewCrawler(ctx, crawlerPath, isSrcLocal)
 		if e != nil {
 			log.Fatal(e)
 		}
-		nn, e := crawler.Walk(cmd.Context())
+		targetNode, e := rest.NewTarget(cmd.Context(), targetPath, srcNode, rename)
 		if e != nil {
 			log.Fatal(e)
 		}
 
-		targetNode := rest.NewTarget(targetPath, crawler, rename)
+		// Walk the full source tree to prepare a list of node to create
+		nn, e := srcNode.Walk(cmd.Context())
+		if e != nil {
+			log.Fatal(e)
+		}
 
-		if common.CurrentLogLevel == common.Info {
+		var pool *rest.BarsPool = nil
+		//if common.CurrentLogLevel == common.Info {
+		if !scpNoProgress {
 			refreshInterval := time.Millisecond * 10 // this is the default
 			if scpQuiet {
 				refreshInterval = time.Millisecond * 3000
 			}
 			pool := rest.NewBarsPool(len(nn) > 1, len(nn), refreshInterval)
 			pool.Start()
-
-			// CREATE FOLDERS
-			e = targetNode.MkdirAll(ctx, nn, pool)
-			if e != nil {
-				// Force stop of the pool that stays blocked otherwise:
-				// It is launched *before* the MkdirAll but only managed during the CopyAll phase.
-				pool.Stop()
-				log.Fatal(e)
-			}
-
-			// UPLOAD / DOWNLOAD FILES
-			errs := targetNode.CopyAll(ctx, nn, pool)
-			if len(errs) > 0 {
-				log.Fatal(errs)
-			}
-		} else { // Rather display logs than the progress bar
+		} else {
 			fmt.Printf("... After walking the tree, found %d nodes to copy\n", len(nn))
 			fmt.Println("... First creating folders")
-
-			e = targetNode.MkdirAll(ctx, nn, nil)
-			if e != nil {
-				log.Fatal(e)
-			}
-
-			fmt.Println("... Now launching real file transfers")
-			errs := targetNode.CopyAllVerbose(ctx, nn)
-			if len(errs) > 0 {
-				log.Fatal(errs)
-			}
 		}
-		fmt.Println("") // Add a line to reduce glitches in the terminal
+
+		// CREATE FOLDERS
+		e = targetNode.MkdirAll(ctx, nn, pool)
+		if e != nil {
+			if pool != nil { // Force stop of the pool that stays blocked otherwise
+				pool.Stop()
+			}
+			log.Fatal(e)
+		}
+
+		// UPLOAD / DOWNLOAD FILES
+		errs := targetNode.CopyAll(ctx, nn, pool)
+		if len(errs) > 0 {
+			log.Fatal(errs)
+		}
+		if !scpNoProgress {
+			fmt.Println("xxxxx") // Add a line to reduce glitches in the terminal
+		}
 	},
 }
 
-func targetToFullPath(ctx context.Context, to string) (string, bool, bool, error) {
-	var toPath string
-	//var isDir bool
-	var isRemote bool
-	var e error
-	if strings.HasPrefix(to, scpCurrentPrefix) {
-		// This is remote: UPLOAD
-		isRemote = true
-		toPath = strings.TrimPrefix(to, scpCurrentPrefix)
-		_, ok := rest.StatNode(ctx, toPath)
-		if !ok {
-
-			parPath, _ := path.Split(toPath)
-			if parPath == "" {
-				// Non-existing workspace
-				return toPath, true, false, fmt.Errorf("target path %s does not exist on remote server, please double check and correct. ", toPath)
+func prepareRemoteTargetPath(ctx context.Context, srcName string, toPath string) (bool, error) {
+	// FIXME Check target path existence and handle rename corner cases
+	targetParent, ok := rest.StatNode(ctx, toPath)
+	if ok {
+		if *targetParent.Type == models.TreeNodeTypeCOLLECTION {
+			// TODO ensure it is writable
+			_, ok2 := rest.StatNode(ctx, path.Join(toPath, srcName))
+			if ok2 {
+				// return true, nil
+				return false, fmt.Errorf("a file or folder named '%s' already exists on the server at '%s', we cannot proceed", srcName, toPath)
 			}
-
-			// Check if the parent exists. In such case, we rename the file or root folder that has been passed as local source
-			// Typically, `cec scp README.txt cells//common-files/readMe.md` or `cec scp local-folder cells//common-files/remote-folder`
-			if _, ok2 := rest.StatNode(ctx, parPath); !ok2 {
-				// Target parent folder does not exist, we do not create it
-				return toPath, true, false, fmt.Errorf("target parent folder %s does not exist on remote server. ", parPath)
-			}
-
-			// Parent folder exists on remote, we rename src file or folder
-			return toPath, true, true, nil
-		}
-	} else {
-		// This is local: DOWNLOAD
-		toPath, e = filepath.Abs(to)
-		if e != nil {
-			return "", false, false, e
-		}
-		_, e := os.Stat(toPath)
-		if e != nil {
-
-			parPath := filepath.Dir(toPath)
-			if parPath == "." {
-				// this should never happen
-				return toPath, true, false, fmt.Errorf("target path %s does not exist on client machine, please double check and correct. ", toPath)
-			}
-
-			// Check if parent exists. In such case, we rename the file or root folder that has been passed as remote source
-			if ln, err2 := os.Stat(parPath); err2 != nil {
-				// Target parent folder does not exist on client machine, we do not create it
-				return "", true, false, fmt.Errorf("target parent folder %s does not exist in client machine. ", parPath)
-			} else if !ln.IsDir() {
-				// Local parent is not a folder
-				return "", true, false, fmt.Errorf("target parent %s is not a folder, could not download to it. ", parPath)
-			} else {
-				// Parent folder exists on local, we rename src file or folder
-				return toPath, false, true, nil
-			}
+			return false, nil
+		} else {
+			return false, fmt.Errorf("target path %s is not a folder, we cannot proceed", toPath)
 		}
 	}
-	return toPath, isRemote, false, nil
+	parPath, _ := path.Split(toPath)
+	if parPath == "" {
+		// Non-existing workspace
+		return false, fmt.Errorf("Please define at list a workspace on the server, e.g.: cells://common-filestarget parent path %s does not exist on the server, please double check and correct. ", toPath)
+	}
+	// Check if the parent exists
+	parNode, ok2 := rest.StatNode(ctx, parPath)
+	if !ok2 { // Target parent folder does not exist, we do not create it
+		return false, fmt.Errorf("target parent folder %s does not exist on remote server. ", parPath)
+	} else if *parNode.Type != models.TreeNodeTypeCOLLECTION {
+		return false, fmt.Errorf("target parent %s is also not a folder on remote server. ", parPath)
+	} else { // Parent folder exists, we will try to also create the target folder`
+		return false, nil
+	}
+}
+
+func prepareLocalTargetPath(srcName, targetPath string) error {
+	toPath, e := filepath.Abs(targetPath)
+	if e != nil {
+		return e
+	}
+	_, e = os.Stat(toPath)
+	if e != nil { // target does *not* exist on the client machine
+		parPath := filepath.Dir(toPath)
+		if parPath == "." { // this should never happen
+			return fmt.Errorf("target path %s does not exist on client machine, please double check and correct. ", toPath)
+		}
+		// TODO We create the parent if it does not exists in the local machine, do we really want this?
+		if ln, err2 := os.Stat(parPath); err2 != nil { // Target parent folder does not exist on client machine, we do not create it
+			return fmt.Errorf("target parent folder %s does not exist in client machine. ", parPath)
+		} else if !ln.IsDir() { // Local parent is not a folder
+			return fmt.Errorf("target parent %s is not a folder, could not download to it. ", parPath)
+		} else { // Parent folder exists on local
+			return nil
+		}
+	}
+	// target exists on the local machine, we ensure it does not contain an item with the given name
+	_, e = os.Stat(filepath.Join(toPath, srcName))
+	if e == nil {
+		return fmt.Errorf("a file or folder named '%s' already exists on your machine at '%s', we cannot proceed", srcName, toPath)
+	}
+	return nil
+
 }
 
 func init() {
 	flags := scpFiles.PersistentFlags()
+	flags.BoolVarP(&scpNoProgress, "no_progress", "n", false, "Do not show progress bar. You can then fine tune the log level")
 	flags.BoolVarP(&scpVerbose, "verbose", "v", false, "Hide progress bar and rather display more log info during the transfers")
 	flags.BoolVarP(&scpVeryVerbose, "very_verbose", "w", false, "Hide progress bar and rather print out a maximum of log info")
 	flags.BoolVarP(&scpQuiet, "quiet", "q", false, "Reduce refresh frequency of the progress bars, e.g when running cec in a bash script")

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -40,7 +41,7 @@ USAGE
 
 		var err error
 		if notEmpty(serverURL) == nil && notEmpty(login) == nil && notEmpty(password) == nil {
-			err = nonInteractive(newConf)
+			err = nonInteractive(cm.Context(), newConf)
 		} else {
 			err = interactive(newConf)
 		}
@@ -103,7 +104,7 @@ func interactive(newConf *rest.CecConfig) error {
 	return nil
 }
 
-func nonInteractive(conf *rest.CecConfig) error {
+func nonInteractive(ctx context.Context, conf *rest.CecConfig) error {
 
 	conf.Url = serverURL
 	conf.User = login
@@ -117,7 +118,7 @@ func nonInteractive(conf *rest.CecConfig) error {
 
 	// Test a simple ping with this config before saving
 	rest.DefaultConfig = conf
-	if _, e := rest.GetApiClient(); e != nil {
+	if _, e := rest.GetApiClient(ctx); e != nil {
 		return fmt.Errorf("could not connect to newly configured server: %s", e.Error())
 	}
 

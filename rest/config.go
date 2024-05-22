@@ -189,8 +189,6 @@ func (list *ConfigList) SaveConfigFile() error {
 	return nil
 }
 
-var mu sync.Mutex
-
 // CellsConfigStore implements a Cells Client specific ConfigRefresher, that also securely stores credentials:
 // It wraps a keyring if such a tool is correctly configured and can be reached by the client.
 type CellsConfigStore struct {
@@ -222,7 +220,7 @@ func (store *CellsConfigStore) RefreshIfRequired(ctx context.Context, sdkConfig 
 	if err != nil {
 		return false, fmt.Errorf("could not refresh JWT token for %s, cause: %s", configId, err.Error())
 	}
-	// Update values in the passed struct (we have a pointer)
+	// Update values in the given struct (we have a pointer)
 	sdkConfig.IdToken = storedConf.IdToken
 	sdkConfig.User = storedConf.User
 	sdkConfig.TokenExpiresAt = storedConf.TokenExpiresAt
@@ -237,8 +235,8 @@ func (store *CellsConfigStore) RefreshIfRequired(ctx context.Context, sdkConfig 
 	if newId != configId {
 		// // Set new active config
 		// list.SetActiveConfig(newId)
-		// Delete old config
-		list.Remove(configId)
+		// Delete old config (ignoring any error while deleting)
+		_ = list.Remove(configId)
 	}
 
 	err = UpdateConfig(storedConf)

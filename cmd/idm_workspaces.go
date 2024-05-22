@@ -21,13 +21,13 @@ DESCRIPTION
   List all workspaces on which the current logged in user has *at least* Read Access.
 
 `,
-	Run: func(cm *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, args []string) {
 
-		apiClient, err := rest.GetApiClient()
+		apiClient, err := rest.GetApiClient(cmd.Context())
 		if err != nil {
 			log.Fatal(err)
 		}
-		ctx := cm.Context()
+		ctx := cmd.Context()
 
 		//retrieves the users using the searchWorkspacesParams function
 		params := &workspace_service.SearchWorkspacesParams{
