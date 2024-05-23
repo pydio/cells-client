@@ -121,12 +121,11 @@ Found 4 nodes at test:
 				}
 			}
 		}
-
 	},
 }
 
 func init() {
 	listAcls.Flags().StringSliceVarP(&listAclsByNodeIds, "uuid", "n", []string{}, "Search by node UUID, can be used multiple times")
-	listAcls.Flags().BoolVarP(&listAclsDeleteResult, "delete", "", false, "Delete all found ACLs")
+	listAcls.Flags().BoolVar(&listAclsDeleteResult, "delete", false, "Delete all found ACLs")
 	idmCmd.AddCommand(listAcls)
 }

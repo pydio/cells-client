@@ -28,10 +28,11 @@ DESCRIPTION
 	
   Delete specified files or folders. 
 	
-  In fact, it only moves specified files or folders to the recycle bin 
-  that is at the root of the corresponding workspace, the trashed objects 
-  can be restored (from the web UI, this feature is not yet implemented 
-  in the Cells Client) 
+  By default, we only move specified files or folders to the recycle bin 
+  that is at the root of the corresponding workspace. The trashed items 
+  can be then restored from the web UI (this feature is not yet implemented 
+  in the Cells Client). Use the 'permanently' flag to skip the recycle and 
+  definitively remove the corresponding items.
 
 EXAMPLES
 
@@ -52,6 +53,13 @@ EXAMPLES
 
   # You can force the deletion with the '--force' flag (to avoid the Yes or No)
   ` + os.Args[0] + ` rm -f common-files/file-1.txt
+
+  # Skip the recycle and permanently remove a file
+  ` + os.Args[0] + ` rm -p common-files/file-1.txt
+
+  # DANGER: directly and permanently remove a folder and all its children
+  ` + os.Args[0] + ` rm -pf common-files/folder
+
 `,
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -115,7 +123,11 @@ EXAMPLES
 		}
 		wg.Wait()
 
-		fmt.Println("Nodes have been moved to the Recycle Bin")
+		if rmPermanently {
+			fmt.Println("Nodes have been permanently removed")
+		} else {
+			fmt.Println("Nodes have been moved to the Recycle Bin")
+		}
 	},
 }
 

@@ -13,7 +13,7 @@ DESCRIPTION
   Various additional useful helper commands.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Help()
+		_ = cmd.Usage()
 	},
 }
 

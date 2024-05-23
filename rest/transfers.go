@@ -175,11 +175,11 @@ func s3Upload(ctx context.Context, s3Client *s3.Client, bucketName string, path 
 		return err
 	}
 	if verbose {
-		fmt.Println("## Launching upload for", path)
+		fmt.Println("... Launching upload for", path)
 		numParts := math.Ceil(float64(fSize) / float64(ps))
-		fmt.Println("    Size:", humanize.Bytes(uint64(fSize)))
-		fmt.Println("    Part Size:", humanize.Bytes(uint64(ps)))
-		fmt.Println("    Number of parts:", numParts)
+		fmt.Println("\tSize:", humanize.Bytes(uint64(fSize)))
+		fmt.Println("\tPart Size:", humanize.Bytes(uint64(ps)))
+		fmt.Println("\tNumber of parts:", numParts)
 	}
 
 	uploader := manager.NewUploader(s3Client,

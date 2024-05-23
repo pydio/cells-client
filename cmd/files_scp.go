@@ -43,11 +43,9 @@ DESCRIPTION
   For the time being, copy can only be performed from the client machine to the server or the other way round:
   it is not yet possible to directly transfer files from one Cells instance to another.
 
-SYNTAX
-
-  Note that you can rename the file or base folder that you upload/download if:  
-   - last part of the target path is a new name that *does not exist*,  
-   - parent path exists and is a folder at target location.
+  Note:
+   - We do not yet support over-writing strategies: trying to move an item to a folder that already contains an item with the same name fails.
+   - If the target folder doesn't exist (but its parent does), it gets create.
 
 EXAMPLES
 
@@ -110,40 +108,40 @@ EXAMPLES
 		}
 
 		// Prepare paths
-		var crawlerPath, targetPath string
-		var rename bool
+		var srcPath, targetPath string
 		var err error
 		if isSrcLocal { // Upload
-			targetPath = strings.TrimPrefix(to, scpCurrentPrefix)
-			crawlerPath, err = filepath.Abs(from)
+			srcPath, err = filepath.Abs(from)
 			if err != nil {
 				log.Fatalf("%s is not a valid source: %s", from, err)
 			}
-			srcName := filepath.Base(crawlerPath)
-			if rename, err = prepareRemoteTargetPath(ctx, srcName, targetPath); err != nil {
-				log.Fatal(err)
+			srcName := filepath.Base(srcPath)
+			targetPath = strings.TrimPrefix(to, scpCurrentPrefix)
+			if err2 := prepareRemoteTargetPath(ctx, srcName, targetPath); err2 != nil {
+				log.Fatal(err2)
 			}
-			fmt.Printf("Uploading '%s' to '%s'\n", crawlerPath, to)
+			fmt.Printf("Uploading '%s' to '%s'\n", srcPath, to)
 		} else { // Download
-			crawlerPath = strings.TrimPrefix(from, scpCurrentPrefix)
-			srcName := filepath.Base(crawlerPath)
+
+			srcPath = strings.TrimPrefix(from, scpCurrentPrefix)
+			srcName := filepath.Base(srcPath)
+
 			targetPath, err = filepath.Abs(to)
 			if err != nil {
 				log.Fatalf("%s is not a valid destination: %s", to, err)
 			}
-			err = prepareLocalTargetPath(srcName, targetPath)
-			if err != nil {
-				log.Fatal(err)
+			if err2 := prepareLocalTargetPath(srcName, targetPath); err2 != nil {
+				log.Fatal(err2)
 			}
 			fmt.Printf("Downloading '%s' to '%s'\n", from, targetPath)
 		}
 
 		// Now create source and target crawlers
-		srcNode, e := rest.NewCrawler(ctx, crawlerPath, isSrcLocal)
+		srcNode, e := rest.NewCrawler(ctx, srcPath, isSrcLocal)
 		if e != nil {
 			log.Fatal(e)
 		}
-		targetNode, e := rest.NewTarget(cmd.Context(), targetPath, srcNode, rename)
+		targetNode, e := rest.NewTarget(cmd.Context(), targetPath, srcNode)
 		if e != nil {
 			log.Fatal(e)
 		}
@@ -194,35 +192,49 @@ EXAMPLES
 	},
 }
 
-func prepareRemoteTargetPath(ctx context.Context, srcName string, toPath string) (bool, error) {
-	// FIXME Check target path existence and handle rename corner cases
+func init() {
+	flags := scpFiles.PersistentFlags()
+	flags.BoolVarP(&scpNoProgress, "no_progress", "n", false, "Do not show progress bar. You can then fine tune the log level")
+	flags.BoolVarP(&scpVerbose, "verbose", "v", false, "Hide progress bar and rather display more log info during the transfers")
+	flags.BoolVarP(&scpVeryVerbose, "very_verbose", "w", false, "Hide progress bar and rather print out a maximum of log info")
+	flags.BoolVarP(&scpQuiet, "quiet", "q", false, "Reduce refresh frequency of the progress bars, e.g when running cec in a bash script")
+	flags.Int64Var(&common.UploadMaxPartsNumber, "max_parts_number", int64(5000), "Maximum number of parts, S3 supports 10000 but some storage require less parts.")
+	flags.Int64Var(&common.UploadDefaultPartSize, "part_size", int64(50), "Default part size (MB), must always be a multiple of 10MB. It will be recalculated based on the max-parts-number value.")
+	flags.IntVar(&common.UploadPartsConcurrency, "parts_concurrency", 3, "Number of concurrent part uploads.")
+	flags.BoolVar(&common.UploadSkipMD5, "skip_md5", false, "Do not compute md5 (for files bigger than 5GB, it is not computed by default for smaller files).")
+	flags.Int64Var(&common.UploadSwitchMultipart, "multipart_threshold", int64(100), "Files bigger than this size (in MB) will be uploaded using Multipart Upload.")
+	flags.IntVar(&common.TransferRetryMaxAttempts, "retry_max_attempts", common.TransferRetryMaxAttemptsDefault, "Limit the number of attempts before aborting. '0' allows the SDK to retry all retryable errors until the request succeeds, or a non-retryable error is thrown.")
+	flags.StringVar(&scpMaxBackoffStr, "retry_max_backoff", common.TransferRetryMaxBackoffDefault.String(), "Maximum duration to wait after a part transfer fails, before trying again, expressed in Go duration format, e.g., '20s' or '3m'.")
+	RootCmd.AddCommand(scpFiles)
+}
+
+func prepareRemoteTargetPath(ctx context.Context, srcName string, toPath string) error {
 	targetParent, ok := rest.StatNode(ctx, toPath)
 	if ok {
 		if *targetParent.Type == models.TreeNodeTypeCOLLECTION {
 			// TODO ensure it is writable
 			_, ok2 := rest.StatNode(ctx, path.Join(toPath, srcName))
 			if ok2 {
-				// return true, nil
-				return false, fmt.Errorf("a file or folder named '%s' already exists on the server at '%s', we cannot proceed", srcName, toPath)
+				return fmt.Errorf("a file or folder named '%s' already exists on the server at '%s', we cannot proceed", srcName, toPath)
 			}
-			return false, nil
+			return nil
 		} else {
-			return false, fmt.Errorf("target path %s is not a folder, we cannot proceed", toPath)
+			return fmt.Errorf("target path %s is not a folder, we cannot proceed", toPath)
 		}
 	}
 	parPath, _ := path.Split(toPath)
 	if parPath == "" {
 		// Non-existing workspace
-		return false, fmt.Errorf("Please define at list a workspace on the server, e.g.: cells://common-filestarget parent path %s does not exist on the server, please double check and correct. ", toPath)
+		return fmt.Errorf("Please define at list a workspace on the server, e.g.: cells://common-filestarget parent path %s does not exist on the server, please double check and correct. ", toPath)
 	}
 	// Check if the parent exists
 	parNode, ok2 := rest.StatNode(ctx, parPath)
 	if !ok2 { // Target parent folder does not exist, we do not create it
-		return false, fmt.Errorf("target parent folder %s does not exist on remote server. ", parPath)
+		return fmt.Errorf("target parent folder %s does not exist on remote server. ", parPath)
 	} else if *parNode.Type != models.TreeNodeTypeCOLLECTION {
-		return false, fmt.Errorf("target parent %s is also not a folder on remote server. ", parPath)
+		return fmt.Errorf("target parent %s is also not a folder on remote server. ", parPath)
 	} else { // Parent folder exists, we will try to also create the target folder`
-		return false, nil
+		return nil
 	}
 }
 
@@ -253,20 +265,4 @@ func prepareLocalTargetPath(srcName, targetPath string) error {
 	}
 	return nil
 
-}
-
-func init() {
-	flags := scpFiles.PersistentFlags()
-	flags.BoolVarP(&scpNoProgress, "no_progress", "n", false, "Do not show progress bar. You can then fine tune the log level")
-	flags.BoolVarP(&scpVerbose, "verbose", "v", false, "Hide progress bar and rather display more log info during the transfers")
-	flags.BoolVarP(&scpVeryVerbose, "very_verbose", "w", false, "Hide progress bar and rather print out a maximum of log info")
-	flags.BoolVarP(&scpQuiet, "quiet", "q", false, "Reduce refresh frequency of the progress bars, e.g when running cec in a bash script")
-	flags.Int64Var(&common.UploadMaxPartsNumber, "max_parts_number", int64(5000), "Maximum number of parts, S3 supports 10000 but some storage require less parts.")
-	flags.Int64Var(&common.UploadDefaultPartSize, "part_size", int64(50), "Default part size (MB), must always be a multiple of 10MB. It will be recalculated based on the max-parts-number value.")
-	flags.IntVar(&common.UploadPartsConcurrency, "parts_concurrency", 3, "Number of concurrent part uploads.")
-	flags.BoolVar(&common.UploadSkipMD5, "skip_md5", false, "Do not compute md5 (for files bigger than 5GB, it is not computed by default for smaller files).")
-	flags.Int64Var(&common.UploadSwitchMultipart, "multipart_threshold", int64(100), "Files bigger than this size (in MB) will be uploaded using Multipart Upload.")
-	flags.IntVar(&common.TransferRetryMaxAttempts, "retry_max_attempts", common.TransferRetryMaxAttemptsDefault, "Limit the number of attempts before aborting. '0' allows the SDK to retry all retryable errors until the request succeeds, or a non-retryable error is thrown.")
-	flags.StringVar(&scpMaxBackoffStr, "retry_max_backoff", common.TransferRetryMaxBackoffDefault.String(), "Maximum duration to wait after a part transfer fails, before trying again, expressed in Go duration format, e.g., '20s' or '3m'.")
-	RootCmd.AddCommand(scpFiles)
 }

@@ -87,7 +87,7 @@ func NewRemoteNode(t *models.TreeNode) *CrawlNode {
 	return n
 }
 
-func NewTarget(ctx context.Context, target string, source *CrawlNode, rename bool) (*CrawlNode, error) {
+func NewTarget(ctx context.Context, target string, source *CrawlNode) (*CrawlNode, error) {
 	c := &CrawlNode{
 		IsLocal:  !source.IsLocal,
 		IsDir:    source.IsDir,
@@ -103,19 +103,6 @@ func NewTarget(ctx context.Context, target string, source *CrawlNode, rename boo
 	c.s3Client = s3Client
 	c.bucketName = bucketName
 
-	//// For dirs, add source directory name, if we are not in the rename case:
-	//// in such case, target is already the full target path.
-	//if source.IsDir && !rename {
-	//	c.FullPath = c.Join(c.FullPath, source.Base())
-	//}
-
-	// TODO handle rename corner case for files:
-	//if rename && !source.IsDir {
-	//	// We must compute NewFileName first because it relies on the FullPath that is then impacted
-	//	c.NewFileName = c.Base()
-	//	c.FullPath = c.Dir()
-	//}
-
 	return c, nil
 }
 
@@ -129,7 +116,7 @@ func (c *CrawlNode) Walk(ctx context.Context, givenRelPath ...string) (toCreateN
 			toCreateNodes = append(toCreateNodes, c)
 			return
 		} else {
-			if !c.IsLocal { // base node is appended by the default walk
+			if !c.IsLocal { // base node is appended by the default walk when isLocal
 				toCreateNodes = append(toCreateNodes, c)
 			}
 			relPath = c.RelPath
@@ -137,11 +124,6 @@ func (c *CrawlNode) Walk(ctx context.Context, givenRelPath ...string) (toCreateN
 	} else {
 		relPath = givenRelPath[0]
 	}
-
-	//if c.IsDir && !c.IsLocal {
-	//	c.RelPath = c.Base()
-	//	toCreateNodes = append(toCreateNodes, c)
-	//}
 
 	if c.IsLocal {
 		rootPath := filepath.Join(c.FullPath)
@@ -241,7 +223,7 @@ func (c *CrawlNode) MkdirAll(ctx context.Context, dd []*CrawlNode, pool *BarsPoo
 	return nil
 }
 
-// CopyAll performs the real parallel transfers of file, after they have been prepared during the Walk step.
+// CopyAll performs the real parallel transfer of files, after they have been prepared during the Walk step.
 func (c *CrawlNode) CopyAll(ctx context.Context, dd []*CrawlNode, pool *BarsPool) (errs []error) {
 
 	idx := -1
