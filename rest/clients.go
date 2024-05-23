@@ -80,7 +80,6 @@ func GetApiClient(ctx context.Context, customConf ...*cellsSdk.SdkConfig) (*clie
 	}
 
 	if currConf.AuthType == cellsSdk.AuthTypeOAuth {
-
 		if currConf.ExpiresAt().Before(time.Now().Add(-60 * time.Second)) {
 			refreshed, err2 := CellsStore().RefreshIfRequired(ctx, currConf)
 			if err2 != nil {
@@ -89,9 +88,7 @@ func GetApiClient(ctx context.Context, customConf ...*cellsSdk.SdkConfig) (*clie
 
 			}
 		}
-
 	}
-
 	return currentClient, nil
 }
 

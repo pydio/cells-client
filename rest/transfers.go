@@ -8,13 +8,12 @@ import (
 	"math"
 	"time"
 
-	"github.com/gosuri/uiprogress"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/smithy-go"
 	"github.com/dustin/go-humanize"
+	"github.com/gosuri/uiprogress"
 
 	sdkS3 "github.com/pydio/cells-sdk-go/v5/transport/s3"
 
@@ -27,11 +26,6 @@ func GetFile(ctx context.Context,
 	bucketName string,
 	pathToFile string,
 ) (io.Reader, int, error) {
-
-	//s3Client, bucketName, e := GetS3Client(ctx)
-	//if e != nil {
-	//	return nil, 0, e
-	//}
 	hO, err := s3Client.HeadObject(
 		ctx,
 		&s3.HeadObjectInput{
@@ -220,61 +214,3 @@ func s3Upload(ctx context.Context, s3Client *s3.Client, bucketName string, path 
 	}
 	return nil
 }
-
-//func uploadManager(ctx context.Context, stats os.FileInfo, path string, content io.ReadSeeker, verbose bool, errChan ...chan error) error {
-//
-//	s3Client, bucketName, err := GetS3Client(ctx)
-//	if err != nil {
-//		return err
-//	}
-//
-//	fSize := stats.Size()
-//
-//	ps, err := sdkS3.ComputePartSize(fSize, common.UploadDefaultPartSize, common.UploadMaxPartsNumber)
-//	if err != nil {
-//		if errChan != nil {
-//			errChan[0] <- err
-//		}
-//		return err
-//	}
-//	if verbose {
-//		fmt.Println("## Launching upload for", path)
-//		numParts := math.Ceil(float64(fSize) / float64(ps))
-//		fmt.Println("    Size:", humanize.Bytes(uint64(fSize)))
-//		fmt.Println("    Part Size:", humanize.Bytes(uint64(ps)))
-//		fmt.Println("    Number of parts:", numParts)
-//	}
-//
-//	uploader := manager.NewUploader(s3Client,
-//		func(u *manager.Uploader) {
-//			u.Concurrency = common.UploadPartsConcurrency
-//			u.PartSize = ps
-//		},
-//	)
-//
-//	// Adds a callback entry point so that we can follow the effective part upload.
-//	uploader.BufferProvider = sdkS3.NewCallbackTransferProvider(path, fSize, ps)
-//
-//	_, err = uploader.Upload(ctx, &s3.PutObjectInput{
-//		Bucket: aws.String(bucketName),
-//		Key:    aws.String(path),
-//		Body:   content,
-//	})
-//
-//	if err != nil {
-//		var apiErr smithy.APIError
-//		if errors.As(err, &apiErr) {
-//			// TODO better error handling
-//			if errChan != nil {
-//				errChan[0] <- apiErr
-//			}
-//			return apiErr
-//		}
-//		if errChan != nil {
-//			errChan[0] <- err
-//		}
-//		return err
-//	}
-//
-//	return nil
-//}
