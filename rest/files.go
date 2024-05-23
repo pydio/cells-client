@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+
 	"github.com/pydio/cells-sdk-go/v5/client/tree_service"
 	"github.com/pydio/cells-sdk-go/v5/models"
 )
@@ -13,73 +14,36 @@ import (
 const pageSize = 100
 
 func StatNode(ctx context.Context, pathToFile string) (*models.TreeNode, bool) {
-	client, e := GetApiClient(ctx)
-	if e != nil {
-		return nil, false
-	}
-	params := &tree_service.HeadNodeParams{}
-	params.SetNode(pathToFile)
-	params.SetContext(ctx)
-	resp, err := client.TreeService.HeadNode(params)
-	if err != nil {
-		//if errors.As(err, &tree_service.HeadNodeNotFound{}) {
-		//	return nil, false
-		//}
-		switch err.(type) {
-		case *tree_service.HeadNodeNotFound:
-			return nil, false
+	exists := false
+	var node *models.TreeNode
+	e := RetryCallback(func() error {
+		client, e2 := GetApiClient(ctx)
+		if e2 != nil {
+			return e2
 		}
-		fmt.Println("#############")
-		fmt.Println("#############")
-		fmt.Printf("Could not stat %s: %s\n", pathToFile, err.Error())
-		fmt.Printf("Could not stat %s: %s\n", pathToFile, err.Error())
-		// sleep and retry
-		time.Sleep(2000 * time.Millisecond)
-		resp, err = client.TreeService.HeadNode(params)
+		params := &tree_service.HeadNodeParams{}
+		params.SetNode(pathToFile)
+		params.SetContext(ctx)
+		resp, err := client.TreeService.HeadNode(params)
 		if err != nil {
-			//if errors.As(err, &tree_service.HeadNodeNotFound{}) {
-			//	return nil, false
-			//}
 			switch err.(type) {
 			case *tree_service.HeadNodeNotFound:
-				return nil, false
+				return nil
 			}
-			// Try to refresh
-			refreshed, err2 := CellsStore().RefreshIfRequired(ctx, DefaultConfig.SdkConfig)
-			if err2 != nil {
-				fmt.Println("#############")
-				fmt.Println("#############")
-				fmt.Println("Could not refresh:", err.Error())
-				return nil, false
-			} else if refreshed {
-				fmt.Println("#############")
-				fmt.Println("#############")
-				fmt.Println("#############")
-				fmt.Println("Node: Token has been refreshed")
-				fmt.Println("Node: Token has been refreshed")
-			}
-			client, err2 = GetApiClient(ctx)
-			if err2 != nil {
-				fmt.Println("#################")
-				fmt.Println("[Error] Could not retrieve client after token refresh")
-				return nil, false
-			}
-			resp, err = client.TreeService.HeadNode(params)
-			if err != nil {
-				switch err.(type) {
-				case *tree_service.HeadNodeNotFound:
-					return nil, false
-				}
-				fmt.Println("#############")
-				fmt.Println("Abort the mission:", err.Error())
-			}
+			return err
 		}
-	}
-	if err == nil && resp.Payload.Node != nil {
-		return resp.Payload.Node, true
-	} else {
+		if resp.IsSuccess() {
+			exists = true
+			node = resp.Payload.Node
+		}
+		return nil
+	}, 5, 2*time.Second)
+
+	if e != nil {
+		fmt.Println("Could not stat node", pathToFile)
 		return nil, false
 	}
+	return node, exists
 }
 
 func ListNodesPath(ctx context.Context, path string) ([]string, error) {
