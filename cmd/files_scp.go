@@ -161,11 +161,13 @@ EXAMPLES
 			if scpQuiet {
 				refreshInterval = time.Millisecond * 3000
 			}
-			pool := rest.NewBarsPool(len(nn) > 1, len(nn), refreshInterval)
+			pool = rest.NewBarsPool(len(nn) > 1, len(nn), refreshInterval)
 			pool.Start()
 		} else {
-			fmt.Printf("... After walking the tree, found %d nodes to copy\n", len(nn))
-			fmt.Println("... First creating folders")
+			fmt.Printf("... After walking the tree, found %d nodes to transfer\n", len(nn))
+			if len(nn) > 1 {
+				fmt.Println("... First creating folders")
+			}
 		}
 
 		// CREATE FOLDERS
@@ -178,12 +180,16 @@ EXAMPLES
 		}
 
 		// UPLOAD / DOWNLOAD FILES
+		if scpNoProgress {
+			fmt.Println("... Now transferring files")
+		}
+
 		errs := targetNode.CopyAll(ctx, nn, pool)
 		if len(errs) > 0 {
 			log.Fatal(errs)
 		}
 		if !scpNoProgress {
-			fmt.Println("xxxxx") // Add a line to reduce glitches in the terminal
+			fmt.Println("") // Add a line to reduce glitches in the terminal
 		}
 	},
 }

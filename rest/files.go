@@ -205,7 +205,7 @@ func createRemoteFolders(ctx context.Context, mm []*models.TreeNode, pool *BarsP
 				pool.Done()
 			}
 		} else { // verbose mode
-			fmt.Printf("... Creating folders on remote server: %d / %d\n", end, len(mm))
+			fmt.Printf("... Created %d folders on remote server\n", end)
 		}
 	}
 	return nil

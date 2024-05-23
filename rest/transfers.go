@@ -22,12 +22,16 @@ import (
 )
 
 // GetFile retrieves a file from the server in one big download (**no** multipart download for the time being).
-func GetFile(ctx context.Context, pathToFile string) (io.Reader, int, error) {
+func GetFile(ctx context.Context,
+	s3Client *s3.Client,
+	bucketName string,
+	pathToFile string,
+) (io.Reader, int, error) {
 
-	s3Client, bucketName, e := GetS3Client(ctx)
-	if e != nil {
-		return nil, 0, e
-	}
+	//s3Client, bucketName, e := GetS3Client(ctx)
+	//if e != nil {
+	//	return nil, 0, e
+	//}
 	hO, err := s3Client.HeadObject(
 		ctx,
 		&s3.HeadObjectInput{

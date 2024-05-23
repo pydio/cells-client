@@ -125,10 +125,13 @@ func (c *CrawlNode) Walk(ctx context.Context, givenRelPath ...string) (toCreateN
 
 	if len(givenRelPath) == 0 {
 		c.RelPath = c.Base()
-		toCreateNodes = append(toCreateNodes, c)
 		if !c.IsDir { // Source is a single file
+			toCreateNodes = append(toCreateNodes, c)
 			return
 		} else {
+			if !c.IsLocal { // base node is appended by the default walk
+				toCreateNodes = append(toCreateNodes, c)
+			}
 			relPath = c.RelPath
 		}
 	} else {
@@ -226,11 +229,13 @@ func (c *CrawlNode) MkdirAll(ctx context.Context, dd []*CrawlNode, pool *BarsPoo
 			mm = append(mm, &models.TreeNode{Path: newFolder, Type: models.NewTreeNodeType(models.TreeNodeTypeCOLLECTION)})
 		}
 	}
-	if !DryRun && len(mm) > 0 {
+	if !DryRun {
 		if !c.IsLocal {
-			return createRemoteFolders(ctx, mm, pool)
+			if len(mm) > 0 {
+				return createRemoteFolders(ctx, mm, pool)
+			}
 		} else if pool == nil {
-			fmt.Printf("... Created %d folders under %s\n", len(mm), c.FullPath)
+			fmt.Printf("... Folders created under %s\n", c.FullPath)
 		}
 	}
 	return nil
@@ -345,7 +350,7 @@ func (c *CrawlNode) upload(ctx context.Context, src *CrawlNode, bar *uiprogress.
 			upErr = fmt.Errorf("could not upload single part file %s: %s", fullPath, e.Error())
 		}
 		if bar == nil { // TODO this must be a debug level msg
-			fmt.Printf("%s: OK\n", fullPath)
+			fmt.Printf("\t%s: uploaded\n", fullPath)
 		}
 	} else {
 		upErr = s3Upload(ctx, c.s3Client, c.bucketName, fullPath, content, stats.Size(), bar == nil, errChan)
@@ -355,7 +360,7 @@ func (c *CrawlNode) upload(ctx context.Context, src *CrawlNode, bar *uiprogress.
 }
 
 func (c *CrawlNode) download(ctx context.Context, src *CrawlNode, bar *uiprogress.Bar) error {
-	reader, length, e := GetFile(ctx, src.FullPath)
+	reader, length, e := GetFile(ctx, c.s3Client, c.bucketName, src.FullPath)
 	if e != nil {
 		return e
 	}
