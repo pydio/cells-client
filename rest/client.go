@@ -2,6 +2,10 @@ package rest
 
 import (
 	"context"
+	"fmt"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"log"
+	"runtime"
 	"sync"
 	"time"
 
@@ -32,9 +36,16 @@ func cellsStore() cellsSdk.ConfigRefresher {
 	return defaultCellsStore
 }
 
+func UserAgent() string {
+	osVersion := fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
+	goVersion := runtime.Version()
+	appVersion := fmt.Sprintf("github.com/pydio/%s@v%s", common.AppName, common.Version)
+	return fmt.Sprintf("%s %s %s", osVersion, goVersion, appVersion)
+}
+
 // SdkClient wraps the APi Client and exposes convenient methods to be called by implementing layers.
 type SdkClient struct {
-	currentConfig *cellsSdk.SdkConfig
+	currentConfig *CecConfig
 	configStore   cellsSdk.ConfigRefresher
 	apiClient     *client.PydioCellsRestAPI
 	s3Client      *s3.Client
@@ -42,22 +53,22 @@ type SdkClient struct {
 
 // NewSdkClient creates a new client based on the given config.
 // TODO It has the responsibility to do the token refresh procedure when needed in case of OAuth credentials.
-func NewSdkClient(ctx context.Context, sdkConfig *cellsSdk.SdkConfig) (*SdkClient, error) {
+func NewSdkClient(ctx context.Context, config *CecConfig) (*SdkClient, error) {
 
-	t, err := sdkRest.GetApiTransport(sdkConfig, false)
+	t, err := sdkRest.GetApiTransport(config.SdkConfig, false)
 	if err != nil {
 		return nil, err
 	}
 
 	store := cellsStore()
 	apiClient := client.New(t, strfmt.Default)
-	s3Client, err := doGetS3Client(ctx, store, sdkConfig)
+	s3Client, err := doGetS3Client(ctx, store, config.SdkConfig)
 	if err != nil {
 		return nil, err
 	}
 
 	return &SdkClient{
-		currentConfig: sdkConfig,
+		currentConfig: config,
 		configStore:   store,
 		apiClient:     apiClient,
 		s3Client:      s3Client,
@@ -66,7 +77,7 @@ func NewSdkClient(ctx context.Context, sdkConfig *cellsSdk.SdkConfig) (*SdkClien
 
 // GetConfig simply exposes the current SdkConfig
 func (fx *SdkClient) GetConfig() *cellsSdk.SdkConfig {
-	return fx.currentConfig
+	return fx.currentConfig.SdkConfig
 }
 
 // GetStore simply exposes the store that centralize credentials (and performs OAuth refresh).
@@ -124,24 +135,30 @@ func doGetS3Client(ctx context.Context, configStore cellsSdk.ConfigRefresher, co
 	return sdkS3.NewClientFromConfig(cfg, conf.Url), nil
 }
 
-//// GetS3Client creates a new default S3 client based on current active config
-//// to transfer files to/from a distant Cells server.
-//func (fx *SdkClient) GetS3Client(ctx context.Context) *s3.Client {
-//
-//	var err error
-//	fx.initApiClientLock.Do(func() {
-//		currentClient, err = fx.doGetS3Client(ctx, DefaultConfig.SdkConfig)
-//	})
-//	if err != nil {
-//		fmt.Println("Unexpected error:", err.Error())
-//		fmt.Println(" -> Could not initialise s3 client, aborting.")
-//		os.Exit(1)
-//	}
-//
-//	// For the time being, we assume that the bucket used is always the same
-//	return s3Client, cellsSdk.DefaultS3Bucket, e
-//}
-//
-//
-//s3Client *s3.Client,
-//bucketName string,
+// TODO Work in progress: finalize and clean
+func configureLogMode() cellsSdk.AwsConfigOption {
+	switch common.CurrentLogLevel {
+	case common.Info:
+		return nil
+	case common.Debug:
+		logMode := aws.LogSigning | aws.LogRetries
+		return sdkS3.WithLogger(printLnWriter{}, logMode)
+	case common.Trace:
+		logMode := aws.LogSigning | aws.LogRetries | aws.LogRequest | aws.LogResponse | aws.LogDeprecatedUsage | aws.LogRequestEventMessage | aws.LogResponseEventMessage
+		return sdkS3.WithLogger(printLnWriter{}, logMode)
+	default:
+		log.Fatal("unsupported log level:", common.CurrentLogLevel)
+	}
+	return nil
+}
+
+type printLnWriter struct{}
+
+func (p printLnWriter) Write(data []byte) (n int, err error) {
+	fmt.Println(string(data))
+	return len(data), nil
+}
+
+func (p printLnWriter) Println(msg string) {
+	fmt.Println(msg)
+}

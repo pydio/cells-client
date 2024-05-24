@@ -215,7 +215,7 @@ func setUpEnvironment(ctx context.Context) error {
 
 	// Initialize an SDK Client
 	var err error
-	sdkClient, err = rest.NewSdkClient(ctx, c.SdkConfig)
+	sdkClient, err = rest.NewSdkClient(ctx, c)
 	if err != nil {
 		log.Fatal(err)
 	}

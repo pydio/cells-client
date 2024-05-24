@@ -19,18 +19,15 @@ import (
 )
 
 var (
+	// TODO this must be defined and managed by the SdkClient
 	DryRun   bool
 	PoolSize = 3
 )
 
 // CrawlNode enables processing the scp command step by step.
 type CrawlNode struct {
+	IsLocal   bool
 	sdkClient *SdkClient
-	// fixme
-	//s3Client   *s3.Client
-	//bucketName string
-
-	IsLocal bool
 
 	IsDir       bool
 	FullPath    string
@@ -373,6 +370,8 @@ func (c *CrawlNode) download(ctx context.Context, src *CrawlNode, bar *uiprogres
 	_, e = io.Copy(writer, content)
 	return e
 }
+
+// Local path helpers for the crawler.
 
 func (c *CrawlNode) join(p ...string) string {
 	if os.PathSeparator != '/' {

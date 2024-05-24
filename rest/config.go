@@ -5,8 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/pydio/cells-sdk-go/v5/transport"
+	sdkHttp "github.com/pydio/cells-sdk-go/v5/transport/http"
+	"github.com/shibukawa/configdir"
+	"log"
+	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
+	"runtime"
 	"sync"
 
 	"github.com/manifoldco/promptui"
@@ -16,6 +23,110 @@ import (
 
 	"github.com/pydio/cells-client/v4/common"
 )
+
+var (
+	configFilePath string
+)
+
+// CecConfig extends the default SdkConfig with custom parameters.
+type CecConfig struct {
+	*cellsSdk.SdkConfig
+	Label            string `json:"label"`
+	SkipKeyring      bool   `json:"skipKeyring"`
+	CreatedAtVersion string `json:"createdAtVersion"`
+}
+
+// DefaultCecConfig simply creates a new configuration struct.
+func DefaultCecConfig() *CecConfig {
+	return &CecConfig{
+		SdkConfig: &cellsSdk.SdkConfig{
+			UseTokenCache: true,
+			AuthType:      cellsSdk.AuthTypePat,
+		},
+		SkipKeyring: false,
+	}
+}
+
+func GetConfigFilePath() string {
+	if configFilePath != "" {
+		return configFilePath
+	}
+	return DefaultConfigFilePath()
+}
+
+func SetConfigFilePath(confPath string) {
+	configFilePath = confPath
+}
+
+func DefaultConfigDirPath() string {
+	vendor := "Pydio"
+	if runtime.GOOS == "linux" {
+		vendor = "pydio"
+	}
+	configDirs := configdir.New(vendor, common.AppName)
+	folders := configDirs.QueryFolders(configdir.Global)
+	if len(folders) == 0 {
+		folders = configDirs.QueryFolders(configdir.Local)
+	}
+	return folders[0].Path
+}
+
+func DefaultConfigFilePath() string {
+	f := DefaultConfigDirPath()
+	if err := os.MkdirAll(f, 0755); err != nil {
+		log.Fatal("Could not create local data dir - please check that you have the correct permissions for the folder -", f)
+	}
+	return filepath.Join(f, common.DefaultConfigFileName)
+}
+
+func CloneConfig(from *CecConfig) *CecConfig {
+	sdkClone := *from.SdkConfig
+	conClone := *from
+	conClone.SdkConfig = &sdkClone
+	return &conClone
+}
+
+// getFrom performs an authenticated GET request for the passed URI (that must start with a '/').
+func getFrom(config *CecConfig, uri string) (*http.Response, error) {
+	currURL := config.Url + uri
+	req, err := http.NewRequest("GET", currURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	return authenticatedRequest(req, config.SdkConfig)
+}
+
+// authenticatedGet performs an authenticated GET request for the passed URI (that must start with a '/').
+func authenticatedGet(sdkConfig *cellsSdk.SdkConfig, uri string) (*http.Response, error) {
+	currURL := sdkConfig.Url + uri
+	req, err := http.NewRequest("GET", currURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	return authenticatedRequest(req, sdkConfig)
+}
+
+// authenticatedRequest performs the passed request after adding an authorization Header.
+func authenticatedRequest(req *http.Request, sdkConfig *cellsSdk.SdkConfig) (*http.Response, error) {
+
+	tp, e := transport.TokenProviderFromConfig(sdkConfig)
+	if e != nil {
+		return nil, e
+	}
+
+	httpClient := &http.Client{Transport: transport.New(
+		sdkHttp.WithCustomHeaders(sdkConfig.CustomHeaders),
+		sdkHttp.WithBearer(tp),
+		sdkHttp.WithSkipVerify(sdkConfig.SkipVerify),
+	)}
+
+	resp, e := httpClient.Do(req)
+	if e != nil {
+		log.Println("... Authenticated request failed, cause:", e)
+		return nil, e
+	}
+	return resp, nil
+}
 
 type ConfigList struct {
 	ActiveConfigID string
@@ -67,58 +178,6 @@ func GetConfigList() (*ConfigList, error) {
 	}
 
 	return configList, nil
-}
-
-// tryToGetLegacyConfig is best-effort to retrieve and migrate cec v2 configuration to the latest format at first use.
-func tryToGetLegacyConfig(data []byte) (*ConfigList, error) {
-
-	var oldConf *CecConfig
-	if err := json.Unmarshal(data, &oldConf); err != nil {
-		return nil, fmt.Errorf("unknown config format: %s", err)
-	}
-	id := createID(oldConf)
-	oldConf.Label = createLabel(oldConf)
-	oldConf.CreatedAtVersion = common.Version
-	configs := make(map[string]*CecConfig)
-	configs[id] = oldConf
-
-	configList := &ConfigList{
-		Configs:        configs,
-		ActiveConfigID: id,
-	}
-	_, err := migrateAuthTypes(configList)
-	if err != nil {
-		return nil, err
-	}
-	err = configList.SaveConfigFile()
-	if err != nil {
-		return nil, fmt.Errorf("could not save after config migration: %s", err.Error())
-	}
-	return configList, nil
-}
-
-// migrateAuthTypes simply replaces AuthType values in the given structure to use SDK v5 standard values.
-// The resulting config is **not** saved to disk / keyring
-func migrateAuthTypes(configList *ConfigList) (bool, error) {
-
-	hasChanged := false
-	for _, v := range configList.Configs {
-		switch v.AuthType {
-		case common.LegacyCecConfigAuthTypeBasic:
-			v.AuthType = cellsSdk.AuthTypeClientAuth
-			v.CreatedAtVersion = common.Version
-			hasChanged = true
-		case common.LegacyCecConfigAuthTypePat:
-			v.AuthType = cellsSdk.AuthTypePat
-			v.CreatedAtVersion = common.Version
-			hasChanged = true
-		case common.LegacyCecConfigAuthTypeOAuth:
-			v.AuthType = cellsSdk.AuthTypeOAuth
-			v.CreatedAtVersion = common.Version
-			hasChanged = true
-		}
-	}
-	return hasChanged, nil
 }
 
 // Remove unregisters a config from the list of available configurations by its ID.
@@ -174,6 +233,58 @@ func (list *ConfigList) SaveConfigFile() error {
 		return fmt.Errorf("could not save the config file, cause: %s", err)
 	}
 	return nil
+}
+
+// tryToGetLegacyConfig is best-effort to retrieve and migrate cec v2 configuration to the latest format at first use.
+func tryToGetLegacyConfig(data []byte) (*ConfigList, error) {
+
+	var oldConf *CecConfig
+	if err := json.Unmarshal(data, &oldConf); err != nil {
+		return nil, fmt.Errorf("unknown config format: %s", err)
+	}
+	id := createID(oldConf)
+	oldConf.Label = createLabel(oldConf)
+	oldConf.CreatedAtVersion = common.Version
+	configs := make(map[string]*CecConfig)
+	configs[id] = oldConf
+
+	configList := &ConfigList{
+		Configs:        configs,
+		ActiveConfigID: id,
+	}
+	_, err := migrateAuthTypes(configList)
+	if err != nil {
+		return nil, err
+	}
+	err = configList.SaveConfigFile()
+	if err != nil {
+		return nil, fmt.Errorf("could not save after config migration: %s", err.Error())
+	}
+	return configList, nil
+}
+
+// migrateAuthTypes simply replaces AuthType values in the given structure to use SDK v5 standard values.
+// The resulting config is **not** saved to disk / keyring
+func migrateAuthTypes(configList *ConfigList) (bool, error) {
+
+	hasChanged := false
+	for _, v := range configList.Configs {
+		switch v.AuthType {
+		case common.LegacyCecConfigAuthTypeBasic:
+			v.AuthType = cellsSdk.AuthTypeClientAuth
+			v.CreatedAtVersion = common.Version
+			hasChanged = true
+		case common.LegacyCecConfigAuthTypePat:
+			v.AuthType = cellsSdk.AuthTypePat
+			v.CreatedAtVersion = common.Version
+			hasChanged = true
+		case common.LegacyCecConfigAuthTypeOAuth:
+			v.AuthType = cellsSdk.AuthTypeOAuth
+			v.CreatedAtVersion = common.Version
+			hasChanged = true
+		}
+	}
+	return hasChanged, nil
 }
 
 // CellsConfigStore implements a Cells Client specific ConfigRefresher, that also securely stores credentials:
