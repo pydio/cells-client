@@ -24,6 +24,7 @@ const (
 )
 
 var (
+	scpForce         bool
 	scpNoProgress    bool
 	scpQuiet         bool
 	scpVerbose       bool
@@ -43,10 +44,16 @@ DESCRIPTION
   For the time being, copy can only be performed from the client machine to the server or the other way round:
   it is not yet possible to directly transfer files from one Cells instance to another.
 
-  Note:
-   - We do not yet support over-writing strategies: trying to move an item to a folder that already contains an item with the same name fails.
-   - If the target folder doesn't exist (but its parent does), it gets create.
+  For convenience, if the *target* folder does not exist (but its parent does), we create it.
 
+  On the other hand, we check if an item with the same name already exists on the target side and abort the transfer with an error in such case. 
+  You might want to enable the "force" mode. 
+  Then, when 'old' (existing) and 'new' item have the same name, if:    
+    - 'old' and 'new' are both files: 'new' replaces 'old'
+    - 'old' and 'new' are of a different type: we first erase 'old' in the target and then copy (recursively) 'new'
+    - both folder: for each child of 'new' we try to copy in 'old'. If an item with same name already exists on the target side, we apply the rules recursively.
+  WARNING: this could lead to erasing data on the target side. Only use with extra care.
+  
 EXAMPLES
 
   1/ Uploading a file to the server:
@@ -117,7 +124,7 @@ EXAMPLES
 			}
 			srcName := filepath.Base(srcPath)
 			targetPath = strings.TrimPrefix(to, scpCurrentPrefix)
-			if err2 := prepareRemoteTargetPath(ctx, sdkClient, srcName, targetPath); err2 != nil {
+			if err2 := prepareRemoteTargetPath(ctx, sdkClient, srcName, targetPath, scpForce); err2 != nil {
 				log.Fatal(err2)
 			}
 			fmt.Printf("Uploading '%s' to '%s'\n", srcPath, to)
@@ -130,7 +137,7 @@ EXAMPLES
 			if err != nil {
 				log.Fatalf("%s is not a valid destination: %s", to, err)
 			}
-			if err2 := prepareLocalTargetPath(srcName, targetPath); err2 != nil {
+			if err2 := prepareLocalTargetPath(srcName, targetPath, scpForce); err2 != nil {
 				log.Fatal(err2)
 			}
 			fmt.Printf("Downloading '%s' to '%s'\n", from, targetPath)
@@ -141,7 +148,7 @@ EXAMPLES
 		if e != nil {
 			log.Fatal(e)
 		}
-		targetNode := rest.NewTarget(sdkClient, targetPath, srcNode)
+		targetNode := rest.NewTarget(sdkClient, targetPath, srcNode, scpForce)
 		if e != nil {
 			log.Fatal(e)
 		}
@@ -182,7 +189,7 @@ EXAMPLES
 			fmt.Println("... Now transferring files")
 		}
 
-		errs := targetNode.CopyAll(ctx, nn, pool)
+		errs := targetNode.TransferAll(ctx, nn, pool)
 		if len(errs) > 0 {
 			log.Fatal(errs)
 		}
@@ -194,6 +201,7 @@ EXAMPLES
 
 func init() {
 	flags := scpFiles.PersistentFlags()
+	flags.BoolVarP(&scpForce, "force", "f", false, "*DANGER* turns overwrite mode on: for a given item in the source tree, if a file or folder with same name already exists on the target side, it is merged or replaced.")
 	flags.BoolVarP(&scpNoProgress, "no_progress", "n", false, "Do not show progress bar. You can then fine tune the log level")
 	flags.BoolVarP(&scpVerbose, "verbose", "v", false, "Hide progress bar and rather display more log info during the transfers")
 	flags.BoolVarP(&scpVeryVerbose, "very_verbose", "w", false, "Hide progress bar and rather print out a maximum of log info")
@@ -208,13 +216,13 @@ func init() {
 	RootCmd.AddCommand(scpFiles)
 }
 
-func prepareRemoteTargetPath(ctx context.Context, sdkClient *rest.SdkClient, srcName string, toPath string) error {
+func prepareRemoteTargetPath(ctx context.Context, sdkClient *rest.SdkClient, srcName string, toPath string, force bool) error {
 	targetParent, ok := sdkClient.StatNode(ctx, toPath)
 	if ok {
 		if *targetParent.Type == models.TreeNodeTypeCOLLECTION {
 			// TODO ensure it is writable
 			_, ok2 := sdkClient.StatNode(ctx, path.Join(toPath, srcName))
-			if ok2 {
+			if ok2 && !force {
 				return fmt.Errorf("a file or folder named '%s' already exists on the server at '%s', we cannot proceed", srcName, toPath)
 			}
 			return nil
@@ -238,7 +246,7 @@ func prepareRemoteTargetPath(ctx context.Context, sdkClient *rest.SdkClient, src
 	}
 }
 
-func prepareLocalTargetPath(srcName, targetPath string) error {
+func prepareLocalTargetPath(srcName, targetPath string, force bool) error {
 	toPath, e := filepath.Abs(targetPath)
 	if e != nil {
 		return e
@@ -249,20 +257,18 @@ func prepareLocalTargetPath(srcName, targetPath string) error {
 		if parPath == "." { // this should never happen
 			return fmt.Errorf("target path %s does not exist on client machine, please double check and correct. ", toPath)
 		}
-		// TODO We create the parent if it does not exists in the local machine, do we really want this?
 		if ln, err2 := os.Stat(parPath); err2 != nil { // Target parent folder does not exist on client machine, we do not create it
 			return fmt.Errorf("target parent folder %s does not exist in client machine. ", parPath)
 		} else if !ln.IsDir() { // Local parent is not a folder
 			return fmt.Errorf("target parent %s is not a folder, could not download to it. ", parPath)
-		} else { // Parent folder exists on local
+		} else { // Parent folder exists on local -> we rely on the following step to create the target folder.
 			return nil
 		}
 	}
 	// target exists on the local machine, we ensure it does not contain an item with the given name
 	_, e = os.Stat(filepath.Join(toPath, srcName))
-	if e == nil {
+	if e == nil && !force {
 		return fmt.Errorf("a file or folder named '%s' already exists on your machine at '%s', we cannot proceed", srcName, toPath)
 	}
 	return nil
-
 }

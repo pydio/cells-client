@@ -117,7 +117,7 @@ func nonInteractive(ctx context.Context, conf *rest.CecConfig) error {
 	}
 
 	// Ensure we can create a client without issue with this config before saving
-	if _, err := rest.NewSdkClient(ctx, conf.SdkConfig); err != nil {
+	if _, err := rest.NewSdkClient(ctx, conf); err != nil {
 		return fmt.Errorf("could not connect to newly configured server: %s", err.Error())
 	}
 

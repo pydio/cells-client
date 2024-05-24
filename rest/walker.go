@@ -36,6 +36,8 @@ type CrawlNode struct {
 	Size        int64
 	NewFileName string
 
+	force bool
+
 	os.FileInfo
 	models.TreeNode
 }
@@ -86,9 +88,10 @@ func NewRemoteNode(sdkClient *SdkClient, t *models.TreeNode) *CrawlNode {
 	return n
 }
 
-func NewTarget(sdkClient *SdkClient, target string, source *CrawlNode) *CrawlNode {
+func NewTarget(sdkClient *SdkClient, target string, source *CrawlNode, force bool) *CrawlNode {
 	return &CrawlNode{
 		sdkClient: sdkClient,
+		force:     force,
 		IsLocal:   !source.IsLocal,
 		IsDir:     source.IsDir,
 		FullPath:  target,
@@ -213,8 +216,8 @@ func (c *CrawlNode) MkdirAll(ctx context.Context, dd []*CrawlNode, pool *BarsPoo
 	return nil
 }
 
-// CopyAll performs the real parallel transfer of files, after they have been prepared during the Walk step.
-func (c *CrawlNode) CopyAll(ctx context.Context, dd []*CrawlNode, pool *BarsPool) (errs []error) {
+// TransferAll performs the real parallel transfer of files, after they have been prepared during the Walk step.
+func (c *CrawlNode) TransferAll(ctx context.Context, dd []*CrawlNode, pool *BarsPool) (errs []error) {
 
 	idx := -1
 	buf := make(chan struct{}, PoolSize)
