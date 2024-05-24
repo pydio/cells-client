@@ -10,8 +10,6 @@ import (
 
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
-
-	"github.com/pydio/cells-client/v4/rest"
 )
 
 var (
@@ -75,14 +73,14 @@ EXAMPLES
 		ctx := cmd.Context()
 		targetNodes := make([]string, 0)
 		for _, arg := range args {
-			_, exists := rest.StatNode(ctx, strings.TrimRight(arg, rmWildcardChar))
+			_, exists := sdkClient.StatNode(ctx, strings.TrimRight(arg, rmWildcardChar))
 			if !exists {
 				log.Printf("Node not found %v, could not delete\n", arg)
 			}
 			if path.Base(arg) == rmWildcardChar {
 				dir, _ := path.Split(arg)
 				newArg := path.Join(dir, "*")
-				nodes, err := rest.ListNodesPath(ctx, newArg)
+				nodes, err := sdkClient.ListNodesPath(ctx, newArg)
 
 				// Remove recycle_bin from targetedNodes
 				for i, c := range nodes {
@@ -105,7 +103,7 @@ EXAMPLES
 			return
 		}
 
-		jobUUID, err := rest.DeleteNode(ctx, targetNodes, rmPermanently)
+		jobUUID, err := sdkClient.DeleteNode(ctx, targetNodes, rmPermanently)
 		if err != nil {
 			log.Fatalf("could not delete nodes, cause: %s\n", err)
 		}
@@ -114,7 +112,7 @@ EXAMPLES
 		for _, id := range jobUUID {
 			wg.Add(1)
 			go func(id string) {
-				err := rest.MonitorJob(ctx, id)
+				err := sdkClient.MonitorJob(ctx, id)
 				defer wg.Done()
 				if err != nil {
 					log.Printf("could not monitor job, %s\n", id)

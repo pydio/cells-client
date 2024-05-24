@@ -12,7 +12,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/gosuri/uiprogress"
 
 	"github.com/pydio/cells-client/v4/common"
@@ -26,6 +25,11 @@ var (
 
 // CrawlNode enables processing the scp command step by step.
 type CrawlNode struct {
+	sdkClient *SdkClient
+	// fixme
+	//s3Client   *s3.Client
+	//bucketName string
+
 	IsLocal bool
 
 	IsDir       bool
@@ -37,48 +41,46 @@ type CrawlNode struct {
 
 	os.FileInfo
 	models.TreeNode
-
-	// fixme
-	s3Client   *s3.Client
-	bucketName string
 }
 
-func NewCrawler(ctx context.Context, basePath string, isLocal bool) (*CrawlNode, error) {
+func NewCrawler(ctx context.Context, sdkClient *SdkClient, basePath string, isLocal bool) (*CrawlNode, error) {
 	if isLocal {
 		// We expect a clean absolute path to an existing file or folder on the local machine at this point
 		fileInfo, e := os.Stat(basePath)
 		if e != nil {
 			return nil, e
 		}
-		return NewLocalNode(basePath, fileInfo), nil
+		return NewLocalNode(sdkClient, basePath, fileInfo), nil
 	} else {
-		n, b := StatNode(ctx, basePath)
+		n, b := sdkClient.StatNode(ctx, basePath)
 		if !b {
 			return nil, fmt.Errorf("no node found at %s", basePath)
 		}
-		return NewRemoteNode(n), nil
+		return NewRemoteNode(sdkClient, n), nil
 	}
 }
 
 // NewLocalNode creates the base node for crawling in case of an upload.
-func NewLocalNode(absPath string, i os.FileInfo) *CrawlNode {
+func NewLocalNode(sdkClient *SdkClient, absPath string, i os.FileInfo) *CrawlNode {
 	n := &CrawlNode{
-		IsLocal:  true,
-		IsDir:    i.IsDir(),
-		FullPath: absPath,
-		RelPath:  filepath.Base(absPath),
-		MTime:    i.ModTime(),
-		Size:     i.Size(),
+		sdkClient: sdkClient,
+		IsLocal:   true,
+		IsDir:     i.IsDir(),
+		FullPath:  absPath,
+		RelPath:   filepath.Base(absPath),
+		MTime:     i.ModTime(),
+		Size:      i.Size(),
 	}
 	n.FileInfo = i
 	return n
 }
 
 // NewRemoteNode creates the base node for crawling in case of a download.
-func NewRemoteNode(t *models.TreeNode) *CrawlNode {
+func NewRemoteNode(sdkClient *SdkClient, t *models.TreeNode) *CrawlNode {
 	n := &CrawlNode{
-		IsDir:    t.Type != nil && *t.Type == models.TreeNodeTypeCOLLECTION,
-		FullPath: strings.Trim(t.Path, "/"),
+		sdkClient: sdkClient,
+		IsDir:     t.Type != nil && *t.Type == models.TreeNodeTypeCOLLECTION,
+		FullPath:  strings.Trim(t.Path, "/"),
 	}
 	n.Size, _ = strconv.ParseInt(t.Size, 10, 64)
 	unixTime, _ := strconv.ParseInt(t.MTime, 10, 32)
@@ -87,23 +89,14 @@ func NewRemoteNode(t *models.TreeNode) *CrawlNode {
 	return n
 }
 
-func NewTarget(ctx context.Context, target string, source *CrawlNode) (*CrawlNode, error) {
-	c := &CrawlNode{
-		IsLocal:  !source.IsLocal,
-		IsDir:    source.IsDir,
-		FullPath: target,
-		RelPath:  "",
+func NewTarget(sdkClient *SdkClient, target string, source *CrawlNode) *CrawlNode {
+	return &CrawlNode{
+		sdkClient: sdkClient,
+		IsLocal:   !source.IsLocal,
+		IsDir:     source.IsDir,
+		FullPath:  target,
+		RelPath:   "",
 	}
-
-	// We kind of cache the client in the crawler as a quick and dirty way to ensure it is unique.
-	s3Client, bucketName, e := GetS3Client(ctx)
-	if e != nil {
-		return nil, e
-	}
-	c.s3Client = s3Client
-	c.bucketName = bucketName
-
-	return c, nil
 }
 
 // Walk prepares the list of single upload/download nodes that we process in a second time.
@@ -111,7 +104,7 @@ func (c *CrawlNode) Walk(ctx context.Context, givenRelPath ...string) (toCreateN
 	relPath := ""
 
 	if len(givenRelPath) == 0 {
-		c.RelPath = c.Base()
+		c.RelPath = c.base()
 		if !c.IsDir { // Source is a single file
 			toCreateNodes = append(toCreateNodes, c)
 			return
@@ -136,19 +129,19 @@ func (c *CrawlNode) Walk(ctx context.Context, givenRelPath ...string) (toCreateN
 			if strings.HasPrefix(filepath.Base(p), ".") {
 				return nil
 			}
-			n := NewLocalNode(p, info)
+			n := NewLocalNode(c.sdkClient, p, info)
 			n.RelPath = strings.TrimPrefix(p, parentPath+"/")
 			toCreateNodes = append(toCreateNodes, n)
 			return nil
 		})
 	} else {
-		nn, er := GetAllBulkMeta(ctx, path.Join(c.FullPath, "*"))
+		nn, er := c.sdkClient.GetAllBulkMeta(ctx, path.Join(c.FullPath, "*"))
 		if er != nil {
 			e = er
 			return
 		}
 		for _, n := range nn {
-			remote := NewRemoteNode(n)
+			remote := NewRemoteNode(c.sdkClient, n)
 			remote.RelPath = path.Join(relPath, filepath.Base(n.Path))
 			toCreateNodes = append(toCreateNodes, remote)
 			if *n.Type == models.TreeNodeTypeCOLLECTION {
@@ -180,7 +173,7 @@ func (c *CrawlNode) MkdirAll(ctx context.Context, dd []*CrawlNode, pool *BarsPoo
 			}
 		}
 	} else { //  Remote
-		if tn, b := StatNode(ctx, c.FullPath); !b { // Also create remote parent if required
+		if tn, b := c.sdkClient.StatNode(ctx, c.FullPath); !b { // Also create remote parent if required
 			mm = append(mm, &models.TreeNode{Path: c.FullPath, Type: models.NewTreeNodeType(models.TreeNodeTypeCOLLECTION)})
 			createParent = true
 		} else if *tn.Type != models.TreeNodeTypeCOLLECTION { // Sanity check
@@ -196,7 +189,7 @@ func (c *CrawlNode) MkdirAll(ctx context.Context, dd []*CrawlNode, pool *BarsPoo
 		if d.RelPath == "" && createParent {
 			//continue
 		}
-		newFolder := c.Join(c.FullPath, d.RelPath)
+		newFolder := c.join(c.FullPath, d.RelPath)
 		if DryRun {
 			fmt.Println("MkDir: \t", newFolder)
 			continue
@@ -214,7 +207,7 @@ func (c *CrawlNode) MkdirAll(ctx context.Context, dd []*CrawlNode, pool *BarsPoo
 	if !DryRun {
 		if !c.IsLocal {
 			if len(mm) > 0 {
-				return createRemoteFolders(ctx, mm, pool)
+				return c.sdkClient.createRemoteFolders(ctx, mm, pool)
 			}
 		} else if pool == nil {
 			fmt.Printf("... Folders created under %s\n", c.FullPath)
@@ -244,7 +237,7 @@ func (c *CrawlNode) CopyAll(ctx context.Context, dd []*CrawlNode, pool *BarsPool
 		wg.Add(1)
 		var bar *uiprogress.Bar
 		if pool != nil {
-			bar = pool.Get(idx, int(barSize), d.Base())
+			bar = pool.Get(idx, int(barSize), d.base())
 		}
 		go func(src *CrawlNode, barId int) {
 			defer func() {
@@ -314,11 +307,11 @@ func (c *CrawlNode) upload(ctx context.Context, src *CrawlNode, bar *uiprogress.
 
 	bName := src.RelPath
 	// TODO re-handle new name
-	//bName := filepath.Base(src.RelPath)
+	//bName := filepath.base(src.RelPath)
 	//if c.NewFileName != "" {
 	//	bName = c.NewFileName
 	//}
-	fullPath := c.Join(c.FullPath, bName)
+	fullPath := c.join(c.FullPath, bName)
 
 	//// TODO Handle corner case when trying to upload a file and *folder* with same name already exists at target path
 	//if tn, b := StatNode(ctx, fullPath); b && *tn.Type == models.TreeNodeTypeCOLLECTION {
@@ -328,21 +321,21 @@ func (c *CrawlNode) upload(ctx context.Context, src *CrawlNode, bar *uiprogress.
 
 	var upErr error
 	if stats.Size() <= common.UploadSwitchMultipart*(1024*1024) {
-		if _, e = PutFile(ctx, c.s3Client, c.bucketName, fullPath, file, false); e != nil {
+		if _, e = c.sdkClient.PutFile(ctx, fullPath, file, false); e != nil {
 			upErr = fmt.Errorf("could not upload single part file %s: %s", fullPath, e.Error())
 		}
 		if bar == nil { // TODO this must be a debug level msg
 			fmt.Printf("\t%s: uploaded\n", fullPath)
 		}
 	} else {
-		upErr = s3Upload(ctx, c.s3Client, c.bucketName, fullPath, content, stats.Size(), bar == nil, errChan)
+		upErr = c.sdkClient.s3Upload(ctx, fullPath, content, stats.Size(), bar == nil, errChan)
 	}
 
 	return upErr
 }
 
 func (c *CrawlNode) download(ctx context.Context, src *CrawlNode, bar *uiprogress.Bar) error {
-	reader, length, e := GetFile(ctx, c.s3Client, c.bucketName, src.FullPath)
+	reader, length, e := c.sdkClient.GetFile(ctx, src.FullPath)
 	if e != nil {
 		return e
 	}
@@ -359,10 +352,10 @@ func (c *CrawlNode) download(ctx context.Context, src *CrawlNode, bar *uiprogres
 	}
 	targetName := src.RelPath
 	//if c.NewFileName != "" {
-	//	// TODO check if NewFileName is a Base Name or really a rel path at it is implied here
+	//	// TODO check if NewFileName is a base Name or really a rel path at it is implied here
 	//	targetName = c.NewFileName
 	//}
-	localTargetPath := c.Join(c.FullPath, targetName)
+	localTargetPath := c.join(c.FullPath, targetName)
 	writer, e := os.OpenFile(localTargetPath, os.O_CREATE|os.O_WRONLY, 0644)
 	if e != nil {
 		return e
@@ -381,7 +374,7 @@ func (c *CrawlNode) download(ctx context.Context, src *CrawlNode, bar *uiprogres
 	return e
 }
 
-func (c *CrawlNode) Join(p ...string) string {
+func (c *CrawlNode) join(p ...string) string {
 	if os.PathSeparator != '/' {
 		for i, pa := range p {
 			if c.IsLocal {
@@ -398,7 +391,7 @@ func (c *CrawlNode) Join(p ...string) string {
 	}
 }
 
-func (c *CrawlNode) Base() string {
+func (c *CrawlNode) base() string {
 	if c.IsLocal {
 		return filepath.Base(c.FullPath)
 	} else {
@@ -406,163 +399,10 @@ func (c *CrawlNode) Base() string {
 	}
 }
 
-func (c *CrawlNode) Dir() string {
+func (c *CrawlNode) dir() string {
 	if c.IsLocal {
 		return filepath.Dir(c.FullPath)
 	} else {
 		return path.Dir(c.FullPath)
 	}
 }
-
-type ReaderWithProgress struct {
-	io.Reader
-	io.Seeker
-	bar   *uiprogress.Bar
-	total int
-	read  int
-
-	double bool
-	first  bool
-
-	errChan chan error
-}
-
-func (r *ReaderWithProgress) CreateErrorChan() (chan error, chan struct{}) {
-	done := make(chan struct{}, 1)
-	r.errChan = make(chan error)
-	go func() {
-		for {
-			select {
-			case e := <-r.errChan:
-				r.sendErr(e)
-			case <-done:
-				close(r.errChan)
-				return
-			}
-		}
-	}()
-	return r.errChan, done
-}
-
-func (r *ReaderWithProgress) Read(p []byte) (n int, err error) {
-	n, err = r.Reader.Read(p)
-	if err == nil {
-		if r.double {
-			r.read += n / 2
-		} else {
-			r.read += n
-		}
-		r.bar.Set(r.read)
-	} else if err == io.EOF {
-		if r.double && !r.first {
-			r.first = true
-			r.bar.Set(r.total / 2)
-		} else {
-			r.bar.Set(r.total)
-		}
-	}
-	return
-}
-
-func (r *ReaderWithProgress) Seek(offset int64, whence int) (int64, error) {
-	if r.double && r.first {
-		r.read = r.total/2 + int(offset)/2
-	} else {
-		r.read = int(offset)
-	}
-	r.bar.Set(r.read)
-	return r.Seeker.Seek(offset, whence)
-}
-
-func (r *ReaderWithProgress) sendErr(err error) {
-	r.bar.AppendFunc(func(b *uiprogress.Bar) string {
-		return err.Error()
-	})
-}
-
-//func (c *CrawlNode) uploadVerbose(ctx context.Context, src *CrawlNode) error {
-//	file, e := os.Open(src.FullPath)
-//	if e != nil {
-//		return e
-//	}
-//	stats, e := file.Stat()
-//	if e != nil {
-//		fmt.Printf("[Error] could not stat file at %s, cause: %s", src.FullPath, e.Error())
-//		return e
-//	}
-//	bName := src.RelPath
-//	if c.NewFileName != "" {
-//		bName = c.NewFileName
-//	}
-//
-//	fullPath := c.Join(c.FullPath, bName)
-//	// Handle corner case when trying to upload a file and *folder* with same name already exists at target path
-//	if tn, b := StatNode(ctx, fullPath); b && *tn.Type == models.TreeNodeTypeCOLLECTION {
-//		// target root is not a folder, fail fast.
-//		return fmt.Errorf("cannot upload file to %s, a folder with same name already exists at target path", fullPath)
-//	}
-//	if stats.Size() <= common.UploadSwitchMultipart*(1024*1024) {
-//		if _, err := PutFile(ctx, fullPath, file, false); err != nil {
-//			return err
-//		}
-//	} else if err := uploadManager(ctx, stats, fullPath, file, true); err != nil {
-//		return err
-//	}
-//	return nil
-//}
-
-//// CopyAllVerbose performs the real transfer of files in parallel.
-//// It relies on the list that has been prepared during the Walk step,
-//// uses no progress bar and rather adds more logs.
-//func (c *CrawlNode) CopyAllVerbose(ctx context.Context, dd []*CrawlNode) (errs []error) {
-//	idx := -1
-//	buf := make(chan struct{}, PoolSize)
-//	wg := &sync.WaitGroup{}
-//	for _, d := range dd {
-//		if d.IsDir {
-//			continue
-//		}
-//		buf <- struct{}{}
-//		idx++
-//		wg.Add(1)
-//		go func(src *CrawlNode) {
-//			defer func() {
-//				wg.Done()
-//				<-buf
-//			}()
-//			if !c.IsLocal {
-//				if e := c.uploadVerbose(ctx, src); e != nil {
-//					errs = append(errs, e)
-//				}
-//			} else {
-//				if e := c.downloadVerbose(ctx, src); e != nil {
-//					errs = append(errs, e)
-//				}
-//			}
-//		}(d)
-//	}
-//	wg.Wait()
-//	return
-//}
-//
-//func (c *CrawlNode) downloadVerbose(ctx context.Context, src *CrawlNode) error {
-//	reader, length, e := GetFile(ctx, src.FullPath)
-//	if e != nil {
-//		return e
-//	}
-//	bName := src.RelPath
-//	if c.NewFileName != "" {
-//		bName = c.NewFileName
-//	}
-//	downloadToLocation := c.Join(c.FullPath, bName)
-//	writer, e := os.OpenFile(downloadToLocation, os.O_CREATE|os.O_WRONLY, 0644)
-//	if e != nil {
-//		return e
-//	}
-//	defer writer.Close()
-//	written, e := io.Copy(writer, reader)
-//	if length != int(written) {
-//		fmt.Printf("[Warning] written size (%d) differs from expected length (%d) for %s\n", written, length, downloadToLocation)
-//	}
-//	return e
-//}

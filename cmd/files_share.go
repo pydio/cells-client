@@ -31,7 +31,7 @@ EXAMPLES
 
 		p := args[0]
 		ctx := cmd.Context()
-		node, exists := rest.StatNode(ctx, p)
+		node, exists := sdkClient.StatNode(ctx, p)
 
 		if !exists {
 			// Avoid 404 errors
@@ -39,12 +39,12 @@ EXAMPLES
 			return
 		}
 
-		l, err := rest.CreateSimpleFolderLink(ctx, node.UUID, path.Base(p))
+		l, err := sdkClient.CreateSimpleFolderLink(ctx, node.UUID, path.Base(p))
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		cmd.Println("Public link created at " + rest.StandardizeLink(l.LinkURL))
+		cmd.Println("Public link created at " + rest.StandardizeLink(sdkClient.GetConfig(), l.LinkURL))
 		fmt.Println("") // Add a line to reduce glitches in the terminal
 	},
 }

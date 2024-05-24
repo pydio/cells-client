@@ -117,7 +117,7 @@ EXAMPLES
 			}
 			srcName := filepath.Base(srcPath)
 			targetPath = strings.TrimPrefix(to, scpCurrentPrefix)
-			if err2 := prepareRemoteTargetPath(ctx, srcName, targetPath); err2 != nil {
+			if err2 := prepareRemoteTargetPath(ctx, sdkClient, srcName, targetPath); err2 != nil {
 				log.Fatal(err2)
 			}
 			fmt.Printf("Uploading '%s' to '%s'\n", srcPath, to)
@@ -137,11 +137,11 @@ EXAMPLES
 		}
 
 		// Now create source and target crawlers
-		srcNode, e := rest.NewCrawler(ctx, srcPath, isSrcLocal)
+		srcNode, e := rest.NewCrawler(ctx, sdkClient, srcPath, isSrcLocal)
 		if e != nil {
 			log.Fatal(e)
 		}
-		targetNode, e := rest.NewTarget(cmd.Context(), targetPath, srcNode)
+		targetNode := rest.NewTarget(sdkClient, targetPath, srcNode)
 		if e != nil {
 			log.Fatal(e)
 		}
@@ -208,12 +208,12 @@ func init() {
 	RootCmd.AddCommand(scpFiles)
 }
 
-func prepareRemoteTargetPath(ctx context.Context, srcName string, toPath string) error {
-	targetParent, ok := rest.StatNode(ctx, toPath)
+func prepareRemoteTargetPath(ctx context.Context, sdkClient *rest.SdkClient, srcName string, toPath string) error {
+	targetParent, ok := sdkClient.StatNode(ctx, toPath)
 	if ok {
 		if *targetParent.Type == models.TreeNodeTypeCOLLECTION {
 			// TODO ensure it is writable
-			_, ok2 := rest.StatNode(ctx, path.Join(toPath, srcName))
+			_, ok2 := sdkClient.StatNode(ctx, path.Join(toPath, srcName))
 			if ok2 {
 				return fmt.Errorf("a file or folder named '%s' already exists on the server at '%s', we cannot proceed", srcName, toPath)
 			}
@@ -228,7 +228,7 @@ func prepareRemoteTargetPath(ctx context.Context, srcName string, toPath string)
 		return fmt.Errorf("Please define at list a workspace on the server, e.g.: cells://common-filestarget parent path %s does not exist on the server, please double check and correct. ", toPath)
 	}
 	// Check if the parent exists
-	parNode, ok2 := rest.StatNode(ctx, parPath)
+	parNode, ok2 := sdkClient.StatNode(ctx, parPath)
 	if !ok2 { // Target parent folder does not exist, we do not create it
 		return fmt.Errorf("target parent folder %s does not exist on remote server. ", parPath)
 	} else if *parNode.Type != models.TreeNodeTypeCOLLECTION {

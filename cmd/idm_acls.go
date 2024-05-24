@@ -12,8 +12,6 @@ import (
 
 	"github.com/pydio/cells-sdk-go/v5/client/acl_service"
 	"github.com/pydio/cells-sdk-go/v5/models"
-
-	"github.com/pydio/cells-client/v4/rest"
 )
 
 var (
@@ -57,11 +55,8 @@ Found 4 nodes at test:
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		apiClient, err := rest.GetApiClient(cmd.Context())
-		if err != nil {
-			log.Fatal(err)
-		}
 		ctx := cmd.Context()
+		apiClient := sdkClient.GetApiClient()
 
 		if len(listAclsByNodeIds) == 0 {
 			log.Fatal("Cannot list ACLs. Please precise *at least* one node UUID.")

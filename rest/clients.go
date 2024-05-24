@@ -1,39 +1,29 @@
 package rest
 
 import (
-	"context"
 	"fmt"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	cellsSdk "github.com/pydio/cells-sdk-go/v5"
+	"github.com/pydio/cells-sdk-go/v5/transport"
+	sdkHttp "github.com/pydio/cells-sdk-go/v5/transport/http"
+	sdkS3 "github.com/pydio/cells-sdk-go/v5/transport/s3"
+	"github.com/shibukawa/configdir"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
-	"sync"
-	"time"
-
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/go-openapi/strfmt"
-	"github.com/shibukawa/configdir"
-
-	cellsSdk "github.com/pydio/cells-sdk-go/v5"
-	"github.com/pydio/cells-sdk-go/v5/client"
-	"github.com/pydio/cells-sdk-go/v5/transport"
-	sdkHttp "github.com/pydio/cells-sdk-go/v5/transport/http"
-	sdkRest "github.com/pydio/cells-sdk-go/v5/transport/rest"
-	sdkS3 "github.com/pydio/cells-sdk-go/v5/transport/s3"
 
 	"github.com/pydio/cells-client/v4/common"
 )
 
 var (
 	// DefaultConfig  stores the current active config, we must initialise it to avoid nil panic dereference
-	DefaultConfig *CecConfig
+	// DefaultConfig *CecConfig
 
 	configFilePath string
 
-	currentClient *client.PydioCellsRestAPI
-	once          = &sync.Once{}
+	// once = &sync.Once{}
 )
 
 // CecConfig extends the default SdkConfig with custom parameters.
@@ -62,36 +52,6 @@ func UserAgent() string {
 	return fmt.Sprintf("%s %s %s", osVersion, goVersion, appVersion)
 }
 
-// GetApiClient returns a client to directly communicate with the Pydio Cells REST API.
-// Requests are anonymous when corresponding flag is set. Otherwise, the authentication is managed
-// by the client, using the current active SDKConfig to provide valid credentials.
-// Warning: we only create the client *once* so we do not yet support multiple conf in a single process.
-func GetApiClient(ctx context.Context, customConf ...*cellsSdk.SdkConfig) (*client.PydioCellsRestAPI, error) {
-	currConf := DefaultConfig.SdkConfig
-	if len(customConf) == 1 {
-		currConf = customConf[0]
-	}
-	var err error
-	once.Do(func() {
-		currentClient, err = doGetApiClient(currConf, false)
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if currConf.AuthType == cellsSdk.AuthTypeOAuth {
-		if currConf.ExpiresAt().Before(time.Now().Add(-60 * time.Second)) {
-			refreshed, err2 := CellsStore().RefreshIfRequired(ctx, currConf)
-			if err2 != nil {
-				return nil, err
-			} else if refreshed {
-
-			}
-		}
-	}
-	return currentClient, nil
-}
-
 //func GetAnonymousApiClient(customConf ...*cellsSdk.SdkConfig) (*client.PydioCellsRestAPI, error) {
 //	currConf := DefaultConfig.SdkConfig
 //	if len(customConf) == 1 {
@@ -99,46 +59,6 @@ func GetApiClient(ctx context.Context, customConf ...*cellsSdk.SdkConfig) (*clie
 //	}
 //	return doGetApiClient(currConf, true)
 //}
-
-// GetS3Client creates a new default S3 client based on current active config
-// to transfer files to/from a distant Cells server.
-func GetS3Client(ctx context.Context) (*s3.Client, string, error) {
-
-	var options []interface{}
-	options = append(options, sdkS3.WithCellsConfigStore(CellsStore()))
-
-	if int(common.S3RequestTimeout) > 0 {
-		to := time.Duration(int(common.S3RequestTimeout)) * time.Second
-		options = append(options, sdkHttp.WithTimout(to))
-	}
-
-	if logOption := configureLogMode(); logOption != nil {
-		options = append(options, logOption)
-	}
-
-	if common.TransferRetryMaxBackoff != common.TransferRetryMaxBackoffDefault ||
-		common.TransferRetryMaxAttempts != common.TransferRetryMaxAttemptsDefault {
-		// TODO finalize addition of extra error codes that must be seen as "retry-able"
-		options = append(
-			options,
-			sdkS3.WithCustomRetry(
-				common.TransferRetryMaxAttempts,
-				common.TransferRetryMaxBackoff,
-				"ClientDisconnected",
-			),
-		)
-	}
-
-	cfg, e := sdkS3.LoadConfig(ctx, DefaultConfig.SdkConfig, options...)
-	if e != nil {
-		return nil, "", e
-	}
-
-	s3Client := sdkS3.NewClientFromConfig(cfg, DefaultConfig.Url)
-
-	// For the time being, we assume that the bucket used is always the same
-	return s3Client, cellsSdk.DefaultS3Bucket, e
-}
 
 func GetConfigFilePath() string {
 	if configFilePath != "" {
@@ -179,15 +99,6 @@ func CloneConfig(from *CecConfig) *CecConfig {
 	return &conClone
 }
 
-// doGetApiClient performs the real request to retrieve a valid API client.
-func doGetApiClient(conf *cellsSdk.SdkConfig, anonymous bool) (*client.PydioCellsRestAPI, error) {
-	t, err := sdkRest.GetApiTransport(conf, anonymous)
-	if err != nil {
-		return nil, err
-	}
-	return client.New(t, strfmt.Default), nil
-}
-
 // getFrom performs an authenticated GET request for the passed URI (that must start with a '/').
 func getFrom(config *CecConfig, uri string) (*http.Response, error) {
 	currURL := config.Url + uri
@@ -198,14 +109,14 @@ func getFrom(config *CecConfig, uri string) (*http.Response, error) {
 	return authenticatedRequest(req, config.SdkConfig)
 }
 
-// authenticatedGet performs an authenticated GET request for the passed URI (that must start with a '/').
-func authenticatedGet(uri string) (*http.Response, error) {
-	currURL := DefaultConfig.Url + uri
+// // authenticatedGet performs an authenticated GET request for the passed URI (that must start with a '/').
+func authenticatedGet(sdkConfig *cellsSdk.SdkConfig, uri string) (*http.Response, error) {
+	currURL := sdkConfig.Url + uri
 	req, err := http.NewRequest("GET", currURL, nil)
 	if err != nil {
 		return nil, err
 	}
-	return authenticatedRequest(req, DefaultConfig.SdkConfig)
+	return authenticatedRequest(req, sdkConfig)
 }
 
 // authenticatedRequest performs the passed request after adding an authorization Header.

@@ -30,6 +30,8 @@ var (
 		"configure",
 	}
 
+	sdkClient *rest.SdkClient
+
 	configFilePath string
 
 	serverURL string
@@ -211,11 +213,17 @@ func setUpEnvironment(ctx context.Context) error {
 		c.CustomHeaders[cellsSdk.UserAgentKey] = rest.UserAgent()
 	}
 
-	// Expose active configuration (with credentials) as a static singleton
-	rest.DefaultConfig = c
+	// Initialize an SDK Client
+	var err error
+	sdkClient, err = rest.NewSdkClient(ctx, c.SdkConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Also refresh token if required
-	if _, err := rest.CellsStore().RefreshIfRequired(ctx, c.SdkConfig); err != nil {
+	// FIXME
+	// TODO rather launch a clever background thread that will call the refresh if necessary as long as the command runs.
+	if _, err := sdkClient.GetStore().RefreshIfRequired(ctx, c.SdkConfig); err != nil {
 		log.Fatal("SetUp env: could not refresh authentication token:", err)
 	}
 	return nil

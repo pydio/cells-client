@@ -7,8 +7,8 @@ import (
 var storageCmd = &cobra.Command{
 	Use:   "storage",
 	Short: "Datasource commands",
-	Run: func(cm *cobra.Command, args []string) {
-		cm.Usage()
+	Run: func(cmd *cobra.Command, args []string) {
+		cmd.Usage()
 	},
 }
 

@@ -17,19 +17,6 @@ import (
 	"github.com/pydio/cells-client/v4/common"
 )
 
-var (
-	defaultCellsStore cellsSdk.ConfigRefresher
-
-	cellsStoreInit = &sync.Once{}
-)
-
-func CellsStore() cellsSdk.ConfigRefresher {
-	cellsStoreInit.Do(func() {
-		defaultCellsStore = &CellsConfigStore{}
-	})
-	return defaultCellsStore
-}
-
 type ConfigList struct {
 	ActiveConfigID string
 	Configs        map[string]*CecConfig
@@ -250,15 +237,15 @@ func UpdateConfig(newConf *CecConfig) error {
 
 	var err error
 
-	// Failsafe if an error is thrown at save time
-	if DefaultConfig != nil && DefaultConfig.SdkConfig != nil {
-		oldConfig := CloneConfig(DefaultConfig)
-		defer func() {
-			if err != nil {
-				DefaultConfig = CloneConfig(oldConfig)
-			}
-		}()
-	}
+	//// Failsafe if an error is thrown at save time
+	//if DefaultConfig != nil && DefaultConfig.SdkConfig != nil {
+	//	oldConfig := CloneConfig(DefaultConfig)
+	//	defer func() {
+	//		if err != nil {
+	//			DefaultConfig = CloneConfig(oldConfig)
+	//		}
+	//	}()
+	//}
 
 	uname, e := RetrieveSessionLogin(newConf)
 	if e != nil {
@@ -268,7 +255,7 @@ func UpdateConfig(newConf *CecConfig) error {
 	id := createID(newConf)
 	newConf.Label = createLabel(newConf)
 	newConf.CreatedAtVersion = common.Version
-	DefaultConfig = newConf
+	// DefaultConfig = newConf
 
 	// We create a clone that will be persisted without sensitive info
 	persistedConf := CloneConfig(newConf)

@@ -8,11 +8,16 @@ import (
 	"github.com/zalando/go-keyring"
 
 	"github.com/pydio/cells-client/v4/common"
-	cells_sdk "github.com/pydio/cells-sdk-go/v5"
+	cellsSdk "github.com/pydio/cells-sdk-go/v5"
 )
 
-// NoKeyringMsg warns end user when no keyring is found
-const NoKeyringMsg = "Could not access local keyring: sensitive information like token or password will end up stored in clear text in the client machine."
+const (
+	// NoKeyringMsg warns end user when no keyring is found
+	NoKeyringMsg = "Could not access local keyring: sensitive information like token or password will end up stored in clear text in the client machine."
+
+	keySep   = "::"
+	valueSep = "__//__"
+)
 
 func getKeyringServiceName() string {
 	return "com.pydio." + common.AppName
@@ -23,19 +28,19 @@ func ConfigToKeyring(conf *CecConfig) error {
 
 	currKey := key(conf.Url, conf.User)
 	switch conf.AuthType {
-	case cells_sdk.AuthTypePat:
+	case cellsSdk.AuthTypePat:
 		if e := keyring.Set(getKeyringServiceName(), currKey, conf.IdToken); e != nil {
 			return e
 		}
 		conf.IdToken = ""
-	case cells_sdk.AuthTypeOAuth:
+	case cellsSdk.AuthTypeOAuth:
 		value := value(conf.IdToken, conf.RefreshToken)
 		if e := keyring.Set(getKeyringServiceName(), currKey, value); e != nil {
 			return e
 		}
 		conf.IdToken = ""
 		conf.RefreshToken = ""
-	case cells_sdk.AuthTypeClientAuth:
+	case cellsSdk.AuthTypeClientAuth:
 		if e := keyring.Set(getKeyringServiceName(), currKey, conf.Password); e != nil {
 			return e
 		}
@@ -60,13 +65,13 @@ func ConfigFromKeyring(ctx context.Context, conf *CecConfig) error {
 	}
 
 	switch conf.AuthType {
-	case cells_sdk.AuthTypeOAuth:
+	case cellsSdk.AuthTypeOAuth:
 		parts := splitValue(value)
 		conf.IdToken = parts[0]
 		conf.RefreshToken = parts[1]
-	case cells_sdk.AuthTypeClientAuth, common.LegacyCecConfigAuthTypeBasic:
+	case cellsSdk.AuthTypeClientAuth, common.LegacyCecConfigAuthTypeBasic:
 		conf.Password = value
-	case cells_sdk.AuthTypePat, common.LegacyCecConfigAuthTypePat:
+	case cellsSdk.AuthTypePat, common.LegacyCecConfigAuthTypePat:
 		conf.IdToken = value
 	}
 	return nil
@@ -102,11 +107,6 @@ func CheckKeyring() error {
 	return nil
 }
 
-const (
-	keySep   = "::"
-	valueSep = "__//__"
-)
-
 func key(prefix, suffix string) string {
 	return fmt.Sprintf("%s%s%s", prefix, keySep, suffix)
 }
@@ -136,7 +136,7 @@ func retrieveLegacyKey(ctx context.Context, conf *CecConfig) error {
 			parts := splitValue(value)
 			//conf.ClientSecret = parts[0]
 			conf.Password = parts[1]
-			conf.AuthType = cells_sdk.AuthTypeClientAuth
+			conf.AuthType = cellsSdk.AuthTypeClientAuth
 			// Leave the keyring in a clean state
 			_ = keyring.Delete(getKeyringServiceName(), key(conf.Url, "ClientCredentials"))
 		} else {
@@ -147,8 +147,10 @@ func retrieveLegacyKey(ctx context.Context, conf *CecConfig) error {
 			parts := splitValue(value)
 			conf.IdToken = parts[0]
 			conf.RefreshToken = parts[1]
-			conf.AuthType = cells_sdk.AuthTypeOAuth
-			CellsStore().RefreshIfRequired(ctx, conf.SdkConfig)
+			conf.AuthType = cellsSdk.AuthTypeOAuth
+			//if _, err2 := CellsStore().RefreshIfRequired(ctx, conf.SdkConfig); err2 != nil {
+			//	return err2
+			//}
 			_ = keyring.Delete(getKeyringServiceName(), key(conf.Url, "IdToken"))
 		} else {
 			return e

@@ -8,8 +8,6 @@ import (
 
 	"github.com/pydio/cells-sdk-go/v5/client/workspace_service"
 	"github.com/pydio/cells-sdk-go/v5/models"
-
-	"github.com/pydio/cells-client/v4/rest"
 )
 
 var listWorkspaces = &cobra.Command{
@@ -22,12 +20,8 @@ DESCRIPTION
 
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-
-		apiClient, err := rest.GetApiClient(cmd.Context())
-		if err != nil {
-			log.Fatal(err)
-		}
 		ctx := cmd.Context()
+		apiClient := sdkClient.GetApiClient()
 
 		//retrieves the users using the searchWorkspacesParams function
 		params := &workspace_service.SearchWorkspacesParams{

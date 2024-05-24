@@ -13,18 +13,14 @@ import (
 
 const pageSize = 100
 
-func StatNode(ctx context.Context, pathToFile string) (*models.TreeNode, bool) {
+func (fx *SdkClient) StatNode(ctx context.Context, pathToFile string) (*models.TreeNode, bool) {
 	exists := false
 	var node *models.TreeNode
 	e := RetryCallback(func() error {
-		client, e2 := GetApiClient(ctx)
-		if e2 != nil {
-			return e2
-		}
 		params := &tree_service.HeadNodeParams{}
 		params.SetNode(pathToFile)
 		params.SetContext(ctx)
-		resp, err := client.TreeService.HeadNode(params)
+		resp, err := fx.GetApiClient().TreeService.HeadNode(params)
 		if err != nil {
 			switch err.(type) {
 			case *tree_service.HeadNodeNotFound:
@@ -46,17 +42,13 @@ func StatNode(ctx context.Context, pathToFile string) (*models.TreeNode, bool) {
 	return node, exists
 }
 
-func ListNodesPath(ctx context.Context, path string) ([]string, error) {
-	client, err := GetApiClient(ctx)
-	if err != nil {
-		return nil, err
-	}
+func (fx *SdkClient) ListNodesPath(ctx context.Context, path string) ([]string, error) {
 	params := tree_service.NewBulkStatNodesParamsWithContext(ctx)
 	params.Body = &models.RestGetBulkMetaRequest{
 		Limit:     100,
 		NodePaths: []string{path},
 	}
-	res, e := client.TreeService.BulkStatNodes(params)
+	res, e := fx.GetApiClient().TreeService.BulkStatNodes(params)
 	if e != nil {
 		return nil, e
 	}
@@ -70,14 +62,9 @@ func ListNodesPath(ctx context.Context, path string) ([]string, error) {
 	return nodes, nil
 }
 
-func DeleteNode(ctx context.Context, paths []string, permanently ...bool) (jobUUIDs []string, e error) {
+func (fx *SdkClient) DeleteNode(ctx context.Context, paths []string, permanently ...bool) (jobUUIDs []string, e error) {
 	if len(paths) == 0 {
 		e = fmt.Errorf("no paths found to delete")
-		return
-	}
-	client, err := GetApiClient(ctx)
-	if err != nil {
-		e = err
 		return
 	}
 	var nn []*models.TreeNode
@@ -95,7 +82,7 @@ func DeleteNode(ctx context.Context, paths []string, permanently ...bool) (jobUU
 		Nodes:             nn,
 		RemovePermanently: perm,
 	}
-	res, err := client.TreeService.DeleteNodes(params)
+	res, err := fx.GetApiClient().TreeService.DeleteNodes(params)
 	if err != nil {
 		e = err
 		return
@@ -107,17 +94,13 @@ func DeleteNode(ctx context.Context, paths []string, permanently ...bool) (jobUU
 	return
 }
 
-func GetAllBulkMeta(ctx context.Context, path string) (nodes []*models.TreeNode, err error) {
-	client, err := GetApiClient(ctx)
-	if err != nil {
-		return nil, err
-	}
+func (fx *SdkClient) GetAllBulkMeta(ctx context.Context, path string) (nodes []*models.TreeNode, err error) {
 	params := tree_service.NewBulkStatNodesParamsWithContext(ctx)
 	params.Body = &models.RestGetBulkMetaRequest{
 		Limit:     pageSize,
 		NodePaths: []string{path},
 	}
-	res, e := client.TreeService.BulkStatNodes(params)
+	res, e := fx.GetApiClient().TreeService.BulkStatNodes(params)
 	if e != nil {
 		return nil, e
 	}
@@ -128,7 +111,7 @@ func GetAllBulkMeta(ctx context.Context, path string) (nodes []*models.TreeNode,
 		pg := res.Payload.Pagination
 		for i := pageSize; i <= int(pg.Total); i += pageSize {
 			params.Body.Offset = int32(i)
-			res, err = client.TreeService.BulkStatNodes(params)
+			res, err = fx.GetApiClient().TreeService.BulkStatNodes(params)
 			if err != nil {
 				return
 			}
@@ -140,12 +123,7 @@ func GetAllBulkMeta(ctx context.Context, path string) (nodes []*models.TreeNode,
 }
 
 // createRemoteFolders creates necessary folders on the distant server.
-func createRemoteFolders(ctx context.Context, mm []*models.TreeNode, pool *BarsPool) error {
-
-	client, err := GetApiClient(ctx)
-	if err != nil {
-		return err
-	}
+func (fx *SdkClient) createRemoteFolders(ctx context.Context, mm []*models.TreeNode, pool *BarsPool) error {
 
 	for i := 0; i < len(mm); i += pageSize {
 		end := i + pageSize
@@ -159,7 +137,7 @@ func createRemoteFolders(ctx context.Context, mm []*models.TreeNode, pool *BarsP
 			Nodes:     subArray,
 			Recursive: false,
 		}
-		_, err := client.TreeService.CreateNodes(params)
+		_, err := fx.GetApiClient().TreeService.CreateNodes(params)
 		if err != nil {
 			return errors.Errorf("could not create folders: %s", err.Error())
 		}

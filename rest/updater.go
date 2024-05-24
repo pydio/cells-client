@@ -240,7 +240,7 @@ func ApplyUpdate(ctx context.Context, p *UpdatePackage, dryRun bool, pgChan chan
 		// Now try to move previous version to the service folder. Do not break on error, just Warn in the logs.
 		// dataDir, _ := config.ServiceDataDir(common.SERVICE_GRPC_NAMESPACE_ + common.SERVICE_UPDATE)
 
-		// backupPath := filepath.Join("dataDir", filepath.Base(backupFile))
+		// backupPath := filepath.join("dataDir", filepath.base(backupFile))
 		// if err := filesystem.SafeRenameFile(backupFile, backupPath); err != nil {
 		// 	// log.Logger(ctx).Warn("Update successfully applied but previous binary could not be moved to backup folder", zap.Error(err))
 		// 	log.Println("Update successfully applied but previous binary could not be moved to backup folder")

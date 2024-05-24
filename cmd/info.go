@@ -5,7 +5,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/pydio/cells-client/v4/common"
-	"github.com/pydio/cells-client/v4/rest"
 )
 
 var infoCmd = &cobra.Command{
@@ -13,7 +12,7 @@ var infoCmd = &cobra.Command{
 	Short: "Display the active connection's info: user, server and authentication type",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		dc := rest.DefaultConfig
+		dc := sdkClient.GetConfig()
 
 		t := tablewriter.NewWriter(cmd.OutOrStdout())
 		t.SetHeader([]string{"Username", "Server URL", "Auth Type"})

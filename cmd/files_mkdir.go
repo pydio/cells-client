@@ -53,10 +53,8 @@ EXAMPLES
 		}
 
 		// Connect to the Pydio API via the sdkConfig
-		apiClient, err := rest.GetApiClient(cmd.Context())
-		if err != nil {
-			log.Fatal(err)
-		}
+		apiClient := sdkClient.GetApiClient()
+
 		var dirs []*models.TreeNode
 		var paths []string
 		var crt = parts[0]
@@ -89,7 +87,7 @@ EXAMPLES
 			return
 		}
 		fmt.Printf("Creating folder(s) %s\n", strings.Join(paths, ", "))
-		_, err = apiClient.TreeService.CreateNodes(&tree_service.CreateNodesParams{
+		_, err := apiClient.TreeService.CreateNodes(&tree_service.CreateNodesParams{
 			Body: &models.RestCreateNodesRequest{
 				Nodes: dirs,
 			},
@@ -110,7 +108,7 @@ EXAMPLES
 		if e != nil {
 			log.Fatal(e)
 		}
-		fmt.Printf("SUCCESS: Dir %s created and indexed\n", dir)
+		fmt.Printf("SUCCESS: dir %s created and indexed\n", dir)
 
 	},
 }

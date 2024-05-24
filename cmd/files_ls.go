@@ -16,8 +16,6 @@ import (
 
 	"github.com/pydio/cells-sdk-go/v5/client/meta_service"
 	"github.com/pydio/cells-sdk-go/v5/models"
-
-	"github.com/pydio/cells-client/v4/rest"
 )
 
 var lsCmdExample = ` 1/ Listing the content of the personal-files workspace
@@ -150,15 +148,11 @@ EXAMPLES
 		p := strings.Trim(lsPath, "/")
 
 		// Connect to the Cells API
-		apiClient, err := rest.GetApiClient(cmd.Context())
-		if err != nil {
-			log.Fatal(err)
-		}
-
 		ctx := cmd.Context()
+		apiClient := sdkClient.GetApiClient()
 		var exists bool
 		if p != "" {
-			_, exists = rest.StatNode(ctx, p)
+			_, exists = sdkClient.StatNode(ctx, p)
 		}
 
 		if lsExists {

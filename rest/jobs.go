@@ -11,56 +11,21 @@ import (
 	"github.com/pydio/cells-sdk-go/v5/models"
 )
 
-func MoveParams(source []string, targetFolder string) string {
-	if !strings.HasSuffix(targetFolder, "/") {
-		return BuildParams(source, targetFolder, false)
-	}
-	return BuildParams(source, targetFolder, true)
+func (fx *SdkClient) CopyJob(ctx context.Context, jsonParams string) (string, error) {
+	return fx.RunJob(ctx, "copy", jsonParams)
 }
 
-func RenameParams(source []string, targetFolder string) string {
-	return BuildParams(source, targetFolder, false)
-}
-
-func CopyParams(source []string, targetFolder string) string {
-	return BuildParams(source, targetFolder, true)
-}
-
-func BuildParams(source []string, targetFolder string, targetParent bool) string {
-	type p struct {
-		Target       string   `json:"target"`
-		Nodes        []string `json:"nodes"`
-		TargetParent bool     `json:"targetParent"`
-	}
-	i := &p{
-		Nodes:        source,
-		Target:       targetFolder,
-		TargetParent: targetParent,
-	}
-	data, _ := json.Marshal(i)
-	return string(data)
-}
-
-func CopyJob(ctx context.Context, jsonParams string) (string, error) {
-	return RunJob(ctx, "copy", jsonParams)
-}
-
-func MoveJob(ctx context.Context, jsonParams string) (string, error) {
-	return RunJob(ctx, "move", jsonParams)
+func (fx *SdkClient) MoveJob(ctx context.Context, jsonParams string) (string, error) {
+	return fx.RunJob(ctx, "move", jsonParams)
 }
 
 // RunJob runs a job.
-func RunJob(ctx context.Context, jobName string, jsonParams string) (string, error) {
-
-	client, err := GetApiClient(ctx)
-	if err != nil {
-		return "", err
-	}
+func (fx *SdkClient) RunJob(ctx context.Context, jobName string, jsonParams string) (string, error) {
 	param := jobs_service.NewUserCreateJobParamsWithContext(ctx)
 	param.Body = jobs_service.UserCreateJobBody{JSONParameters: jsonParams}
 	param.JobName = jobName
 
-	job, err := client.JobsService.UserCreateJob(param)
+	job, err := fx.GetApiClient().JobsService.UserCreateJob(param)
 	if err != nil {
 		return "", err
 	}
@@ -68,19 +33,14 @@ func RunJob(ctx context.Context, jobName string, jsonParams string) (string, err
 }
 
 // GetTaskStatusForJob retrieves the task status, progress and message.
-func GetTaskStatusForJob(ctx context.Context, jobID string) (status models.JobsTaskStatus, msg string, pg float32, e error) {
-	client, err := GetApiClient(ctx)
-	if err != nil {
-		e = err
-		return
-	}
+func (fx *SdkClient) GetTaskStatusForJob(ctx context.Context, jobID string) (status models.JobsTaskStatus, msg string, pg float32, e error) {
 	body := &models.JobsListJobsRequest{
 		JobIDs:    []string{jobID},
 		LoadTasks: models.NewJobsTaskStatus(models.JobsTaskStatusAny),
 	}
 	params := jobs_service.NewUserListJobsParamsWithContext(ctx)
 	params.Body = body
-	jobs, err := client.JobsService.UserListJobs(params)
+	jobs, err := fx.GetApiClient().JobsService.UserListJobs(params)
 	if err != nil {
 		e = err
 		return
@@ -102,9 +62,9 @@ func GetTaskStatusForJob(ctx context.Context, jobID string) (status models.JobsT
 }
 
 // MonitorJob monitors a job status every second.
-func MonitorJob(ctx context.Context, JobID string) (err error) {
+func (fx *SdkClient) MonitorJob(ctx context.Context, JobID string) (err error) {
 	for {
-		status, _, _, e := GetTaskStatusForJob(ctx, JobID)
+		status, _, _, e := fx.GetTaskStatusForJob(ctx, JobID)
 		if err != nil {
 			err = e
 			return
@@ -135,4 +95,35 @@ func MonitorJob(ctx context.Context, JobID string) (err error) {
 			return
 		}
 	}
+}
+
+// Various Helpers
+
+func BuildParams(source []string, targetFolder string, targetParent bool) string {
+	type p struct {
+		Target       string   `json:"target"`
+		Nodes        []string `json:"nodes"`
+		TargetParent bool     `json:"targetParent"`
+	}
+	i := &p{
+		Nodes:        source,
+		Target:       targetFolder,
+		TargetParent: targetParent,
+	}
+	data, _ := json.Marshal(i)
+	return string(data)
+}
+func MoveParams(source []string, targetFolder string) string {
+	if !strings.HasSuffix(targetFolder, "/") {
+		return BuildParams(source, targetFolder, false)
+	}
+	return BuildParams(source, targetFolder, true)
+}
+
+func RenameParams(source []string, targetFolder string) string {
+	return BuildParams(source, targetFolder, false)
+}
+
+func CopyParams(source []string, targetFolder string) string {
+	return BuildParams(source, targetFolder, true)
 }

@@ -7,6 +7,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	cellsSdk "github.com/pydio/cells-sdk-go/v5"
 	"math"
 	"math/rand"
 	"net/url"
@@ -62,10 +63,10 @@ func RetrieveSessionLogin(currConf *CecConfig) (string, error) {
 
 // RetrieveRemoteServerVersion gets the version info from the distant server.
 // User must be authenticated (and admin ?).
-func RetrieveRemoteServerVersion() (*common.ServerVersion, error) {
+func RetrieveRemoteServerVersion(sdkConfig *cellsSdk.SdkConfig) (*common.ServerVersion, error) {
 
 	uri := "/a/frontend/bootconf"
-	resp, err := authenticatedGet(uri)
+	resp, err := authenticatedGet(sdkConfig, uri)
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve bootconf: %s", err.Error())
 	}
@@ -106,9 +107,9 @@ func IsForbiddenError(err error) bool {
 	return false
 }
 
-func StandardizeLink(old string) string {
+func StandardizeLink(sdkConfig *cellsSdk.SdkConfig, old string) string {
 	if strings.HasPrefix(old, "/") && !strings.HasPrefix(old, "http") {
-		return DefaultConfig.Url + old
+		return sdkConfig.Url + old
 	}
 	return old
 }

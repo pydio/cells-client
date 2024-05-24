@@ -28,11 +28,8 @@ DESCRIPTION
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		apiClient, err := rest.GetApiClient(cmd.Context())
-		if err != nil {
-			log.Fatal(err.Error())
-		}
 		ctx := cmd.Context()
+		apiClient := sdkClient.GetApiClient()
 
 		/*ListDataSourcesParams contains all the parameters to send to the API endpoint
 		for the list data sources operation typically these are written to a http.Request */
@@ -42,9 +39,9 @@ DESCRIPTION
 		result, err := apiClient.ConfigService.ListDataSources(params)
 		if err != nil {
 			if rest.IsForbiddenError(err) {
-				log.Fatalf("[Forbidden access] You do not have necessary permission to list the datasources at %s", rest.DefaultConfig.Url)
+				log.Fatalf("[Forbidden access] You do not have necessary permission to list the datasources at %s", sdkClient.GetConfig().Url)
 			}
-			log.Fatalf("Could not list data sources of %s, cause: %s", rest.DefaultConfig.Url, err.Error())
+			log.Fatalf("Could not list data sources of %s, cause: %s", sdkClient.GetConfig().Url, err.Error())
 		}
 
 		//prints the name of the datasources retrieved previously
@@ -78,16 +75,11 @@ var resyncDs = &cobra.Command{
 		}
 		dsName := args[0]
 
-		client, err := rest.GetApiClient(cmd.Context())
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-
 		jsonParam := fmt.Sprintf("{\"dsName\":\"%s\"}", dsName)
 		body := jobs_service.UserCreateJobBody{JSONParameters: jsonParam}
 		params := &jobs_service.UserCreateJobParams{JobName: "datasource-resync", Body: body, Context: cmd.Context()}
 
-		_, err = client.JobsService.UserCreateJob(params)
+		_, err := sdkClient.GetApiClient().JobsService.UserCreateJob(params)
 		if err != nil {
 			log.Fatalf(fmt.Sprintf("could not start the sync job for ds %s, cause: %s", dsName, err.Error()))
 		}

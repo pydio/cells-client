@@ -235,10 +235,11 @@ func oAuthNonInteractive(ctx context.Context, conf *rest.CecConfig) error {
 		return err
 	}
 
-	// Test a simple PING with this config before saving!
-	rest.DefaultConfig = conf
-	if _, e := rest.GetApiClient(ctx); e != nil {
-		return fmt.Errorf("test connection to newly configured server failed")
+	// rest.DefaultConfig = conf
+
+	// Ensure we can create a client without issue with this config before saving
+	if _, err = rest.NewSdkClient(ctx, conf.SdkConfig); err != nil {
+		return fmt.Errorf("could not connect to newly configured server: %s", err.Error())
 	}
 
 	return nil

@@ -116,10 +116,9 @@ func nonInteractive(ctx context.Context, conf *rest.CecConfig) error {
 		return fmt.Errorf("URL %s is not valid: %s", conf.Url, err.Error())
 	}
 
-	// Test a simple ping with this config before saving
-	rest.DefaultConfig = conf
-	if _, e := rest.GetApiClient(ctx); e != nil {
-		return fmt.Errorf("could not connect to newly configured server: %s", e.Error())
+	// Ensure we can create a client without issue with this config before saving
+	if _, err := rest.NewSdkClient(ctx, conf.SdkConfig); err != nil {
+		return fmt.Errorf("could not connect to newly configured server: %s", err.Error())
 	}
 
 	return nil
