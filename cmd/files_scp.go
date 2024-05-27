@@ -116,6 +116,7 @@ EXAMPLES
 
 		// Prepare paths
 		var srcPath, targetPath string
+		var needMerge bool
 		var err error
 		if isSrcLocal { // Upload
 			srcPath, err = filepath.Abs(from)
@@ -124,8 +125,8 @@ EXAMPLES
 			}
 			srcName := filepath.Base(srcPath)
 			targetPath = strings.TrimPrefix(to, scpCurrentPrefix)
-			if err2 := prepareRemoteTargetPath(ctx, sdkClient, srcName, targetPath, scpForce); err2 != nil {
-				log.Fatal(err2)
+			if needMerge, err = prepareRemoteTargetPath(ctx, sdkClient, srcName, targetPath, scpForce); err != nil {
+				log.Fatal(err)
 			}
 			fmt.Printf("Uploading '%s' to '%s'\n", srcPath, to)
 		} else { // Download
@@ -137,8 +138,8 @@ EXAMPLES
 			if err != nil {
 				log.Fatalf("%s is not a valid destination: %s", to, err)
 			}
-			if err2 := prepareLocalTargetPath(srcName, targetPath, scpForce); err2 != nil {
-				log.Fatal(err2)
+			if needMerge, err = prepareLocalTargetPath(srcName, targetPath, scpForce); err != nil {
+				log.Fatal(err)
 			}
 			fmt.Printf("Downloading '%s' to '%s'\n", from, targetPath)
 		}
@@ -148,13 +149,18 @@ EXAMPLES
 		if e != nil {
 			log.Fatal(e)
 		}
-		targetNode := rest.NewTarget(sdkClient, targetPath, srcNode, scpForce)
+
+		targetNode := rest.NewTarget(sdkClient, targetPath, !isSrcLocal, srcNode.IsDir, scpForce)
 		if e != nil {
 			log.Fatal(e)
 		}
 
 		// Walk the full source tree to prepare a list of node to create
-		nn, e := srcNode.Walk(cmd.Context())
+		var tf *rest.CrawlNode
+		if needMerge {
+			tf = targetNode
+		}
+		t, c, d, e := srcNode.Walk(cmd.Context(), tf)
 		if e != nil {
 			log.Fatal(e)
 		}
@@ -166,17 +172,26 @@ EXAMPLES
 			if scpQuiet {
 				refreshInterval = time.Millisecond * 3000
 			}
-			pool = rest.NewBarsPool(len(nn) > 1, len(nn), refreshInterval)
+			pool = rest.NewBarsPool(len(t)+len(c)+len(d) > 1, len(t)+len(c)+len(d), refreshInterval)
 			pool.Start()
 		} else {
-			fmt.Printf("... After walking the tree, found %d nodes to transfer\n", len(nn))
-			if len(nn) > 1 {
-				fmt.Println("... First creating folders")
+			fmt.Printf("... After walking the tree, found %d nodes to delete, %d to create and %d transfer \n", len(d), len(c), len(t))
+			//if len(nn) > 1 {
+			//	fmt.Println("... First creating folders")
+			//}
+		}
+
+		// Delete necessary items
+		e = targetNode.DeleteForMerge(ctx, d, pool)
+		if e != nil {
+			if pool != nil { // Force stop of the pool that stays blocked otherwise
+				pool.Stop()
 			}
+			log.Fatal(e)
 		}
 
 		// CREATE FOLDERS
-		e = targetNode.MkdirAll(ctx, nn, pool)
+		e = targetNode.CreateFolders(ctx, c, pool)
 		if e != nil {
 			if pool != nil { // Force stop of the pool that stays blocked otherwise
 				pool.Stop()
@@ -189,7 +204,7 @@ EXAMPLES
 			fmt.Println("... Now transferring files")
 		}
 
-		errs := targetNode.TransferAll(ctx, nn, pool)
+		errs := targetNode.TransferAll(ctx, t, pool)
 		if len(errs) > 0 {
 			log.Fatal(errs)
 		}
@@ -216,59 +231,66 @@ func init() {
 	RootCmd.AddCommand(scpFiles)
 }
 
-func prepareRemoteTargetPath(ctx context.Context, sdkClient *rest.SdkClient, srcName string, toPath string, force bool) error {
+func prepareRemoteTargetPath(ctx context.Context, sdkClient *rest.SdkClient, srcName string, toPath string, force bool) (bool, error) {
 	targetParent, ok := sdkClient.StatNode(ctx, toPath)
 	if ok {
 		if *targetParent.Type == models.TreeNodeTypeCOLLECTION {
 			// TODO ensure it is writable
 			_, ok2 := sdkClient.StatNode(ctx, path.Join(toPath, srcName))
-			if ok2 && !force {
-				return fmt.Errorf("a file or folder named '%s' already exists on the server at '%s', we cannot proceed", srcName, toPath)
+			if ok2 { // an item with same name exists at target location
+				if force {
+					return true, nil
+				} else {
+					return false, fmt.Errorf("a file or folder named '%s' already exists on the server at '%s', we cannot proceed", srcName, toPath)
+				}
 			}
-			return nil
+			return false, nil // Happy path
 		} else {
-			return fmt.Errorf("target path %s is not a folder, we cannot proceed", toPath)
+			return false, fmt.Errorf("target path %s is not a folder, we cannot proceed", toPath)
 		}
 	}
 	parPath, _ := path.Split(toPath)
 	if parPath == "" {
 		// Non-existing workspace
-		return fmt.Errorf("Please define at list a workspace on the server, e.g.: cells://common-filestarget parent path %s does not exist on the server, please double check and correct. ", toPath)
+		return false, fmt.Errorf("Please define at list a workspace on the server, e.g.: cells://common-filestarget parent path %s does not exist on the server, please double check and correct. ", toPath)
 	}
 	// Check if the parent exists
 	parNode, ok2 := sdkClient.StatNode(ctx, parPath)
 	if !ok2 { // Target parent folder does not exist, we do not create it
-		return fmt.Errorf("target parent folder %s does not exist on remote server. ", parPath)
+		return false, fmt.Errorf("target parent folder %s does not exist on remote server. ", parPath)
 	} else if *parNode.Type != models.TreeNodeTypeCOLLECTION {
-		return fmt.Errorf("target parent %s is also not a folder on remote server. ", parPath)
+		return false, fmt.Errorf("target parent %s is also not a folder on remote server. ", parPath)
 	} else { // Parent folder exists, we will try to also create the target folder`
-		return nil
+		return false, nil
 	}
 }
 
-func prepareLocalTargetPath(srcName, targetPath string, force bool) error {
+func prepareLocalTargetPath(srcName, targetPath string, force bool) (bool, error) {
 	toPath, e := filepath.Abs(targetPath)
 	if e != nil {
-		return e
+		return false, e
 	}
 	_, e = os.Stat(toPath)
 	if e != nil { // target does *not* exist on the client machine
 		parPath := filepath.Dir(toPath)
 		if parPath == "." { // this should never happen
-			return fmt.Errorf("target path %s does not exist on client machine, please double check and correct. ", toPath)
+			return false, fmt.Errorf("target path %s does not exist on client machine, please double check and correct. ", toPath)
 		}
 		if ln, err2 := os.Stat(parPath); err2 != nil { // Target parent folder does not exist on client machine, we do not create it
-			return fmt.Errorf("target parent folder %s does not exist in client machine. ", parPath)
+			return false, fmt.Errorf("target parent folder %s does not exist in client machine. ", parPath)
 		} else if !ln.IsDir() { // Local parent is not a folder
-			return fmt.Errorf("target parent %s is not a folder, could not download to it. ", parPath)
+			return false, fmt.Errorf("target parent %s is not a folder, could not download to it. ", parPath)
 		} else { // Parent folder exists on local -> we rely on the following step to create the target folder.
-			return nil
+			return false, nil
 		}
 	}
-	// target exists on the local machine, we ensure it does not contain an item with the given name
+	// Target folder exists locally, check if an item with srcName exists
 	_, e = os.Stat(filepath.Join(toPath, srcName))
-	if e == nil && !force {
-		return fmt.Errorf("a file or folder named '%s' already exists on your machine at '%s', we cannot proceed", srcName, toPath)
+	if e != nil { // nope -> Happy path
+		return false, nil
+	} else if force { // Exists but who cares, yolo!
+		return true, nil
+	} else {
+		return false, fmt.Errorf("a file or folder named '%s' already exists on your machine at '%s', we cannot proceed", srcName, toPath)
 	}
-	return nil
 }

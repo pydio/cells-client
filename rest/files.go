@@ -62,7 +62,7 @@ func (fx *SdkClient) ListNodesPath(ctx context.Context, path string) ([]string, 
 	return nodes, nil
 }
 
-func (fx *SdkClient) DeleteNode(ctx context.Context, paths []string, permanently ...bool) (jobUUIDs []string, e error) {
+func (fx *SdkClient) DeleteNodes(ctx context.Context, paths []string, permanently ...bool) (jobUUIDs []string, e error) {
 	if len(paths) == 0 {
 		e = fmt.Errorf("no paths found to delete")
 		return

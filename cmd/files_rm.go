@@ -103,7 +103,7 @@ EXAMPLES
 			return
 		}
 
-		jobUUID, err := sdkClient.DeleteNode(ctx, targetNodes, rmPermanently)
+		jobUUID, err := sdkClient.DeleteNodes(ctx, targetNodes, rmPermanently)
 		if err != nil {
 			log.Fatalf("could not delete nodes, cause: %s\n", err)
 		}
