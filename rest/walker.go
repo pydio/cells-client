@@ -417,6 +417,7 @@ func (c *CrawlNode) TransferAll(ctx context.Context, dd []*CrawlNode, pool *Bars
 		}
 		go func(src *CrawlNode, barId int) {
 			defer func() {
+				fmt.Println("...[debug] Done for", src.FullPath)
 				wg.Done()
 				if pool != nil {
 					pool.Done()
@@ -478,6 +479,8 @@ func (c *CrawlNode) upload(ctx context.Context, src *CrawlNode, bar *uiprogress.
 		wrapper.double = false
 		content = wrapper
 	} else {
+		// FIXME we must also initialise the error chan in no-progress mode
+
 		content = file
 	}
 

@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/smithy-go"
 	"github.com/dustin/go-humanize"
+
 	sdkS3 "github.com/pydio/cells-sdk-go/v5/transport/s3"
 
 	"github.com/pydio/cells-client/v4/common"
