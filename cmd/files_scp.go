@@ -57,18 +57,20 @@ DESCRIPTION
 EXAMPLES
 
   1/ Uploading a file to the server:
-  $ ` + os.Args[0] + ` scp ./README.md cells://common-files/
-  Copying ./README.md to cells://common-files/
+  $ ` + os.Args[0] + ` scp ./README.md cells://common-files
+  Copying ./README.md to cells://common-files
   Waiting for file to be indexed...
   File correctly indexed
 
   2/ Download a file from server:
   $ ` + os.Args[0] + ` scp cells://personal-files/funnyCat.jpg ./
-  Copying cells://personal-files/funnyCat.jpg to /home/pydio/downloads/
+  Copying cells://personal-files/funnyCat.jpg to /home/pydio/downloads
 
-  3/ Download a file changing its name - remember: this will fail if a 'cat2.jpg' file already exists: 
-  $ ` + os.Args[0] + ` scp cells://personal-files/funnyCat.jpg ./cat2.jpg
-  Copying cells://personal-files/funnyCat.jpg to /home/pydio/downloads/	
+  3/ Download a folder to an existing target, using existing folders when they are already here but re-downloading files: 
+  $ ` + os.Args[0] + ` scp --force cells//common-files/my-folder ./tests
+  Downloading cells://common-files/my-folder to /home/pydio/downloads/tests
+
+  Copying cells//common-files/my-folder to /home/pydio/tests	
 `,
 	Args: cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -128,7 +130,7 @@ EXAMPLES
 			if needMerge, err = prepareRemoteTargetPath(ctx, sdkClient, srcName, targetPath, scpForce); err != nil {
 				log.Fatal(err)
 			}
-			fmt.Printf("Uploading '%s' to '%s'\n", srcPath, to)
+			fmt.Printf("Uploading %s to %s\n", srcPath, prefixA+targetPath)
 		} else { // Download
 
 			srcPath = strings.TrimPrefix(from, scpCurrentPrefix)
@@ -141,7 +143,7 @@ EXAMPLES
 			if needMerge, err = prepareLocalTargetPath(srcName, targetPath, scpForce); err != nil {
 				log.Fatal(err)
 			}
-			fmt.Printf("Downloading '%s' to '%s'\n", from, targetPath)
+			fmt.Printf("Downloading %s to %s\n", prefixA+srcPath, targetPath)
 		}
 
 		// Now create source and target crawlers
