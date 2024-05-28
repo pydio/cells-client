@@ -249,7 +249,7 @@ func (c *CrawlNode) remoteWalk(ctx context.Context, targetFolder *CrawlNode,
 		}
 		// walk recursively
 		if remote.IsDir {
-			err = c.remoteWalk(ctx, targetChild, tt, tc, td, remote.RelPath)
+			err = remote.remoteWalk(ctx, targetChild, tt, tc, td, remote.RelPath)
 			if err != nil { // fail fast
 				return
 			}
@@ -433,7 +433,7 @@ func (c *CrawlNode) TransferAll(ctx context.Context, dd []*CrawlNode, pool *Bars
 				}
 			} else {
 				if e := c.download(ctx, src, bar); e != nil {
-					contextualizedErr := fmt.Errorf("could not dowload '%s' to '%s': %s", src.FullPath, c.FullPath, e.Error())
+					contextualizedErr := fmt.Errorf("could not download '%s' to '%s': %s", src.FullPath, c.FullPath, e.Error())
 					errs = append(errs, contextualizedErr)
 				}
 				if emptyFile && bar != nil {
