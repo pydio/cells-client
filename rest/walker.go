@@ -3,8 +3,6 @@ package rest
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
-	"github.com/pydio/cells-sdk-go/v5/client/tree_service"
 	"io"
 	"os"
 	"path"
@@ -15,13 +13,16 @@ import (
 	"time"
 
 	"github.com/gosuri/uiprogress"
+	"github.com/pkg/errors"
 
 	"github.com/pydio/cells-client/v4/common"
+	"github.com/pydio/cells-sdk-go/v5/client/tree_service"
 	"github.com/pydio/cells-sdk-go/v5/models"
 )
 
 var (
 	// TODO this must be defined and managed by the SdkClient
+
 	DryRun   bool
 	PoolSize = 3
 )
@@ -77,13 +78,13 @@ func NewLocalBaseNode(sdkClient *SdkClient, absPath string, i os.FileInfo) *Craw
 }
 
 // NewLocalNode creates while crawling local tree before transfer.
-func NewLocalNode(sdkClient *SdkClient, absPath, relpath string, i os.FileInfo) *CrawlNode {
+func NewLocalNode(sdkClient *SdkClient, absPath, relPath string, i os.FileInfo) *CrawlNode {
 	n := &CrawlNode{
 		sdkClient: sdkClient,
 		IsLocal:   true,
 		IsDir:     i.IsDir(),
 		FullPath:  absPath,
-		RelPath:   relpath,
+		RelPath:   relPath,
 		MTime:     i.ModTime(),
 		Size:      i.Size(),
 	}
@@ -116,6 +117,30 @@ func NewTarget(sdkClient *SdkClient, target string, isLocal, isDir, merge bool) 
 	}
 }
 
+// Walk prepares the list of single upload/download nodes that we process in a second time.
+func (c *CrawlNode) Walk(ctx context.Context, target *CrawlNode) (
+	toTransfer, toCreate, toDelete []*CrawlNode, err error) {
+	var tt, tc, td []*CrawlNode
+	if c.IsLocal {
+		err = c.localWalk(ctx, target, &tt, &tc, &td)
+	} else {
+		err = c.remoteWalk(ctx, target, &tt, &tc, &td)
+	}
+	return tt, tc, td, err
+}
+
+// DeleteForMerge first explicitly delete problematic targets before creating folders and transferring files.
+func (c *CrawlNode) DeleteForMerge(ctx context.Context, dd []*CrawlNode, pool *BarsPool) error {
+	if DryRun {
+		c.dryRunDelete(dd)
+		return nil
+	} else if c.IsLocal {
+		return c.deleteLocalItems(dd, pool)
+	} else {
+		return c.deleteRemoteItems(ctx, dd, pool)
+	}
+}
+
 func (c *CrawlNode) targetChild(name string, isDir bool) *CrawlNode {
 
 	return &CrawlNode{
@@ -128,28 +153,17 @@ func (c *CrawlNode) targetChild(name string, isDir bool) *CrawlNode {
 	}
 }
 
-// Walk prepares the list of single upload/download nodes that we process in a second time.
-func (c *CrawlNode) Walk(ctx context.Context, target *CrawlNode) (
-	toTransfer, toCreate, toDelete []*CrawlNode, e error) {
-	if c.IsLocal {
-		return c.localWalk(ctx, target)
-	} else {
-		return c.remoteWalk(ctx, target)
-	}
-}
-
 // localWalk prepares the list of single upload nodes that we process in a second time.
 // we cannot use the native walk method to be able to merge more efficiently (we skip merge check on descendants as soon as a folder must not be merged)
-func (c *CrawlNode) localWalk(ctx context.Context, targetFolder *CrawlNode, givenRelPath ...string) (
-	toTransfer, toCreate, toDelete []*CrawlNode, err error) {
+func (c *CrawlNode) localWalk(ctx context.Context, targetFolder *CrawlNode,
+	tt, tc, td *[]*CrawlNode, givenRelPath ...string) (err error) {
 
 	relPath := ""
-
 	currTargetFolder := targetFolder
 
 	if len(givenRelPath) == 0 {
 		c.RelPath = c.base()
-		toTransfer, toCreate, toDelete, currTargetFolder, err = c.checkRemoteTarget(ctx, c, targetFolder)
+		currTargetFolder, err = c.checkRemoteTarget(ctx, c, targetFolder, tt, tc, td)
 		if err != nil {
 			return
 		}
@@ -168,11 +182,7 @@ func (c *CrawlNode) localWalk(ctx context.Context, targetFolder *CrawlNode, give
 		return
 	}
 	defer func(dir *os.File) {
-		_ = dir.Close()
-		// TODO check this?
-		//if err != nil {
-		//
-		//}
+		_ = dir.Close() // TODO Check if ignoring this has side effects
 	}(dir)
 	files, err2 := dir.Readdir(-1) // -1 means to read all the files
 	if err2 != nil {
@@ -181,92 +191,40 @@ func (c *CrawlNode) localWalk(ctx context.Context, targetFolder *CrawlNode, give
 	}
 
 	// Iterate over the files
-	for _, fileinfo := range files {
-		fullPath := filepath.Join(c.FullPath, fileinfo.Name())
-		relpath := path.Join(relPath, fileinfo.Name())
-		currLocal := NewLocalNode(c.sdkClient, fullPath, relpath, fileinfo)
+	for _, fileInfo := range files {
+		fullPath := filepath.Join(c.FullPath, fileInfo.Name())
+		relPath := path.Join(relPath, fileInfo.Name())
+		currLocal := NewLocalNode(c.sdkClient, fullPath, relPath, fileInfo)
 
 		// Check current node and append where necessary
-		var targetChild *CrawlNode
-		t, c, d, targetChild, err2 := c.checkLocalTarget(currLocal, currTargetFolder)
-		if err2 != nil {
-			err = err2 // fail fast
+		targetChild, err3 := c.checkLocalTarget(currLocal, currTargetFolder, tt, tc, td)
+		if err3 != nil {
+			err = err3
 			return
 		}
 
-		if len(t) > 0 {
-			toTransfer = append(toTransfer, t...)
-		}
-		if len(c) > 0 {
-			toCreate = append(toCreate, c...)
-		}
-		if len(d) > 0 {
-			toDelete = append(toDelete, d...)
-		}
-
-		if fileinfo.IsDir() {
+		if fileInfo.IsDir() {
 			// walk recursively
-			t2, c2, d2, err2 := currLocal.localWalk(ctx, targetChild, relpath)
-			if err2 != nil { // fail fast
+			err4 := currLocal.localWalk(ctx, targetChild, tt, tc, td, relPath)
+			if err4 != nil { // fail fast
 				return
-			}
-			if len(t2) > 0 {
-				toTransfer = append(toTransfer, t2...)
-			}
-			if len(c2) > 0 {
-				toCreate = append(toCreate, c2...)
-			}
-			if len(d2) > 0 {
-				toDelete = append(toDelete, d2...)
 			}
 		}
 	}
-
 	return
-
-	/*
-
-
-		if !c.IsDir { // Source is a single file
-			c.RelPath = c.base()
-			toCreateNodes = append(toCreateNodes, c)
-		}
-
-		rootPath := filepath.Join(c.FullPath)
-		parentPath := filepath.Dir(rootPath)
-		e = filepath.WalkDir(rootPath, func(p string, d fs.DirEntry, err error) error {
-			if err != nil {
-				return err
-			}
-			info, err := d.Info()
-			if err != nil {
-				return err
-			}
-
-			// Skip hidden file TODO make this OS independent
-			if strings.HasPrefix(filepath.Base(p), ".") {
-				return nil
-			}
-			n := NewLocalBaseNode(c.sdkClient, p, info)
-			n.RelPath = strings.TrimPrefix(p, parentPath+"/")
-			toCreateNodes = append(toCreateNodes, n)
-			return nil
-		})
-		return
-
-	*/
 }
 
-// remoteWalk prepares recursively the list of single download nodes that we process in a second time.
-func (c *CrawlNode) remoteWalk(ctx context.Context, targetFolder *CrawlNode, givenRelPath ...string) (
-	toTransfer, toCreate, toDelete []*CrawlNode, err error) {
+// remoteWalk prepares recursively the lists of nodes that we process in a second time.
+// If we are in a merging process and when c is a directory, we also ensure that child folders also need check and merge.
+func (c *CrawlNode) remoteWalk(ctx context.Context, targetFolder *CrawlNode,
+	tt, tc, td *[]*CrawlNode, givenRelPath ...string) (err error) {
 	relPath := ""
 
 	currTargetFolder := targetFolder
 
 	if len(givenRelPath) == 0 {
 		c.RelPath = c.base()
-		toTransfer, toCreate, toDelete, currTargetFolder, err = c.checkLocalTarget(c, targetFolder)
+		currTargetFolder, err = c.checkLocalTarget(c, targetFolder, tt, tc, td)
 		if !c.IsDir { // Source is a single file
 			return
 		}
@@ -281,18 +239,17 @@ func (c *CrawlNode) remoteWalk(ctx context.Context, targetFolder *CrawlNode, giv
 		return
 	}
 	for _, n := range nn {
+		// Prepare current node
 		remote := NewRemoteNode(c.sdkClient, n)
 		remote.RelPath = path.Join(relPath, filepath.Base(n.Path))
-
-		// Check current node and append where necessary
-		var targetChild *CrawlNode
-		toTransfer, toCreate, toDelete, targetChild, err = c.checkLocalTarget(remote, currTargetFolder)
-		if err != nil { // fail fast
+		// Check and append where necessary
+		targetChild, err3 := c.checkLocalTarget(remote, currTargetFolder, tt, tc, td)
+		if err3 != nil { // fail fast
 			return
 		}
-
-		if remote.IsDir { // walk recursively
-			toTransfer, toCreate, toDelete, err = c.remoteWalk(ctx, targetChild, remote.RelPath)
+		// walk recursively
+		if remote.IsDir {
+			err = c.remoteWalk(ctx, targetChild, tt, tc, td, remote.RelPath)
 			if err != nil { // fail fast
 				return
 			}
@@ -301,90 +258,82 @@ func (c *CrawlNode) remoteWalk(ctx context.Context, targetFolder *CrawlNode, giv
 	return
 }
 
-func (c *CrawlNode) checkLocalTarget(src *CrawlNode, targetFolder *CrawlNode) (
-	toTransfer, toCreate, toDelete []*CrawlNode, targetChild *CrawlNode, err error) {
+// checkLocalTarget compares a remote node to the local target where it should be downloaded and append
+// necessary nodes to the array for process on the second pass.
+// If we are in a merging process and when c is a directory, we also ensure that child folders
+// also need checking and merge, otherwise, we return a nil targetChild that will prevent further checks down the tree.
+func (c *CrawlNode) checkLocalTarget(src *CrawlNode, targetFolder *CrawlNode, tt, tc, td *[]*CrawlNode) (
+	targetChild *CrawlNode, err error) {
 	if !src.IsDir { // want to download a file
 		if targetFolder == nil { // no need to merge
-			toTransfer = append(toTransfer, src)
+			*tt = append(*tt, src)
 		} else {
 			targetChild = targetFolder.targetChild(src.base(), false)
 			info, err2 := os.Stat(targetChild.FullPath)
 			if err2 != nil { // Nothing found at this path => we can DL
-				toTransfer = append(toTransfer, src)
+				*tt = append(*tt, src)
 			} else if info.IsDir() { // Got a directory, must be removed before trying to force DL
-				toDelete = append(toTransfer, targetChild)
-				toTransfer = append(toTransfer, src)
+				*td = append(*td, targetChild)
+				*tt = append(*tt, src)
 			} else { // We erase the local file
-				toTransfer = append(toTransfer, src)
+				*tt = append(*tt, src)
 			}
 		}
 		return
 	}
 	if targetFolder == nil { // no need to merge
-		toCreate = append(toCreate, src)
+		*tc = append(*tc, src)
 	} else {
 		targetChild = targetFolder.targetChild(src.base(), true)
 		info, err2 := os.Stat(targetChild.FullPath)
 		if err2 != nil { // Nothing found at this path => we can create folder
-			toCreate = append(toCreate, src)
+			*tc = append(*tc, src)
 			targetChild = nil // after this point, no need to check for merging: we are in a new subtree
 		} else if info.IsDir() {
 			// Got a directory, and we are already merging: nothing to do.
 		} else { // We erase the local file
-			toDelete = append(toDelete, targetChild)
-			toCreate = append(toCreate, targetChild)
+			*td = append(*td, targetChild)
+			*tc = append(*tc, src)
 		}
 	}
 	return
 }
 
-func (c *CrawlNode) checkRemoteTarget(ctx context.Context, src *CrawlNode, targetFolder *CrawlNode) (
-	toTransfer, toCreate, toDelete []*CrawlNode, targetChild *CrawlNode, err error) {
+func (c *CrawlNode) checkRemoteTarget(ctx context.Context, src *CrawlNode, targetFolder *CrawlNode,
+	toTransfer, toCreate, toDelete *[]*CrawlNode) (targetChild *CrawlNode, err error) {
 	if !src.IsDir { // want to Upload a file
 		if targetFolder == nil { // no need to merge
-			toTransfer = append(toTransfer, src)
+			*toTransfer = append(*toTransfer, src)
 		} else {
 			targetChild = targetFolder.targetChild(src.base(), false)
 			treeNode, found := c.sdkClient.StatNode(ctx, targetChild.FullPath)
 			if !found { // Nothing found at this path => we can DL
-				toTransfer = append(toTransfer, src)
+				*toTransfer = append(*toTransfer, src)
 			} else if treeNode.Type != nil && *treeNode.Type == models.TreeNodeTypeCOLLECTION { // Got a directory, must be removed before trying to force DL
-				toDelete = append(toTransfer, targetChild)
-				toTransfer = append(toTransfer, src)
+				*toDelete = append(*toTransfer, targetChild)
+				*toTransfer = append(*toTransfer, src)
 			} else { // We overwrite the remote file
-				toTransfer = append(toTransfer, src)
+				*toTransfer = append(*toTransfer, src)
 			}
 		}
 		return
 	}
 	if targetFolder == nil { // no need to merge
-		toCreate = append(toCreate, src)
+		*toCreate = append(*toCreate, src)
 	} else {
 		targetChild = targetFolder.targetChild(src.base(), true)
 		treeNode, found := c.sdkClient.StatNode(ctx, targetChild.FullPath)
 		if !found { // Nothing found at this path => we can create folder
-			toCreate = append(toCreate, src)
+			*toCreate = append(*toCreate, src)
 			targetChild = nil // after this point, no need to check for merging: we are in a new subtree
 		} else if treeNode.Type != nil && *treeNode.Type == models.TreeNodeTypeCOLLECTION {
 			// Got a directory, and we are already merging: nothing to do.
 		} else { // We erase the remote file
-			toDelete = append(toDelete, targetChild)
-			toCreate = append(toCreate, targetChild)
+			*toDelete = append(*toTransfer, targetChild)
+			*toTransfer = append(*toTransfer, src)
 		}
 	}
 	return
-}
-
-// DeleteForMerge first explicitly delete problematic targets before creating folders and transferring files.
-func (c *CrawlNode) DeleteForMerge(ctx context.Context, dd []*CrawlNode, pool *BarsPool) error {
-	if DryRun {
-		c.dryRunDelete(dd)
-		return nil
-	} else if c.IsLocal {
-		return c.deleteLocalItems(dd, pool)
-	} else {
-		return c.deleteRemoteItems(ctx, dd, pool)
-	}
 }
 
 func (c *CrawlNode) deleteLocalItems(dd []*CrawlNode, pool *BarsPool) error {
@@ -432,37 +381,14 @@ func (c *CrawlNode) deleteRemoteItems(ctx context.Context, dd []*CrawlNode, pool
 }
 
 // CreateFolders prepares a recursive scp by first creating all necessary folders under the target root folder.
-func (c *CrawlNode) CreateFolders(ctx context.Context, dd []*CrawlNode, pool *BarsPool) error {
-
-	//var createParent bool
-	//var mm []*models.TreeNode
-	//// Manage current folder
-	//if c.IsLocal {
-	//	if _, e := os.Stat(c.FullPath); e != nil {
-	//		// Create base folder if necessary
-	//		if DryRun {
-	//			fmt.Println("MkDir: \t", c.FullPath)
-	//		} else if e1 := os.MkdirAll(c.FullPath, 0755); e1 != nil {
-	//			return e1
-	//		}
-	//	}
-	//} else { //  Remote
-	//	if tn, b := c.sdkClient.StatNode(ctx, c.FullPath); !b { // Also create remote parent if required
-	//		mm = append(mm, &models.TreeNode{Path: c.FullPath, Type: models.NewTreeNodeType(models.TreeNodeTypeCOLLECTION)})
-	//		createParent = true
-	//	} else if *tn.Type != models.TreeNodeTypeCOLLECTION { // Sanity check
-	//		// Target root is not a folder: failing fast
-	//		return fmt.Errorf("%s exists on the server and is not a folder, cannot upload there", c.FullPath)
-	//	}
-	//}
-
+func (c *CrawlNode) CreateFolders(_ context.Context, dd []*CrawlNode, pool *BarsPool) error {
 	if DryRun {
 		c.dryRunCreate(dd)
 		return nil
 	} else if c.IsLocal {
 		return c.createLocalFolders(dd, pool)
 	} else {
-		return c.createRemoteFolders(ctx, dd, pool)
+		return c.createRemoteFolders(dd, pool)
 	}
 }
 
@@ -556,18 +482,7 @@ func (c *CrawlNode) upload(ctx context.Context, src *CrawlNode, bar *uiprogress.
 	}
 
 	bName := src.RelPath
-	// TODO re-handle new name
-	//bName := filepath.base(src.RelPath)
-	//if c.NewFileName != "" {
-	//	bName = c.NewFileName
-	//}
 	fullPath := c.join(c.FullPath, bName)
-
-	//// TODO Handle corner case when trying to upload a file and *folder* with same name already exists at target path
-	//if tn, b := StatNode(ctx, fullPath); b && *tn.Type == models.TreeNodeTypeCOLLECTION {
-	//	// target root is not a folder, fail fast.
-	//	return fmt.Errorf("cannot upload *file* to %s, a *folder* with same name already exists at the target path", fullPath)
-	//}
 
 	var upErr error
 	if stats.Size() <= common.UploadSwitchMultipart*(1024*1024) {
@@ -601,10 +516,7 @@ func (c *CrawlNode) download(ctx context.Context, src *CrawlNode, bar *uiprogres
 		content = reader
 	}
 	targetName := src.RelPath
-	//if c.NewFileName != "" {
-	//	// TODO check if NewFileName is a base Name or really a rel path at it is implied here
-	//	targetName = c.NewFileName
-	//}
+
 	localTargetPath := c.join(c.FullPath, targetName)
 	writer, e := os.OpenFile(localTargetPath, os.O_CREATE|os.O_WRONLY, 0644)
 	if e != nil {
@@ -639,7 +551,7 @@ func (c *CrawlNode) createLocalFolders(toCreateDirs []*CrawlNode, pool *BarsPool
 }
 
 // createRemoteFolders creates necessary folders on the distant server.
-func (c *CrawlNode) createRemoteFolders(ctx context.Context, toCreateDirs []*CrawlNode, pool *BarsPool) error {
+func (c *CrawlNode) createRemoteFolders(toCreateDirs []*CrawlNode, pool *BarsPool) error {
 
 	for i := 0; i < len(toCreateDirs); i += pageSize {
 		end := i + pageSize
@@ -675,6 +587,8 @@ func (c *CrawlNode) createRemoteFolders(ctx context.Context, toCreateDirs []*Cra
 	}
 	return nil
 }
+
+/* Local Helpers */
 
 // dryRunCreate simply list the folders that should be created.
 func (c *CrawlNode) dryRunCreate(toCreateDirs []*CrawlNode) {
