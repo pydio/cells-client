@@ -10,17 +10,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pydio/cells-sdk-go/v5/models"
-
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+
+	"github.com/pydio/cells-sdk-go/v5/models"
 
 	"github.com/pydio/cells-client/v4/common"
 	"github.com/pydio/cells-client/v4/rest"
 )
 
 const (
-	prefixA = "cells://"
-	prefixB = "cells//"
+	standardPrefix   = "cells://"
+	completionPrefix = "cells//"
 )
 
 var (
@@ -81,35 +83,45 @@ EXAMPLES
 		scpCurrentPrefix := ""
 		isSrcLocal := false
 
+		// Handle aliases
+		if scpVeryVerbose {
+			scpNoProgress = true
+			common.CurrentLogLevel = common.Trace
+			logger := rest.SetLogger(zapcore.DebugLevel)
+			defer func(logger *zap.Logger) {
+				_ = logger.Sync()
+			}(logger)
+		} else if scpVerbose {
+			scpNoProgress = true
+			common.CurrentLogLevel = common.Debug
+			logger := rest.SetLogger(zapcore.InfoLevel)
+			defer func(logger *zap.Logger) {
+				_ = logger.Sync()
+			}(logger)
+		} else {
+			common.CurrentLogLevel = common.Info
+		}
+
 		if scpMaxBackoffStr != "" {
 			// Parse and set a specific backoff duration
 			var e error
 			common.TransferRetryMaxBackoff, e = time.ParseDuration(scpMaxBackoffStr)
 			if e != nil {
-				log.Fatal("could not parse backoff duration:", e)
-				return
+				rest.Log.Fatalln("could not parse backoff duration:", e)
 			}
-		}
-
-		if scpVeryVerbose {
-			common.CurrentLogLevel = common.Trace
-		} else if scpVerbose {
-			common.CurrentLogLevel = common.Debug
-		} else {
-			common.CurrentLogLevel = common.Info
 		}
 
 		// Handle multiple prefix cells:// (standard) and cells// (to enable completion)
 		// Clever exclusive "OR"
-		if strings.HasPrefix(from, prefixA) != strings.HasPrefix(to, prefixA) {
-			scpCurrentPrefix = prefixA
-		} else if strings.HasPrefix(from, prefixB) != strings.HasPrefix(to, prefixB) {
-			scpCurrentPrefix = prefixB
+		if strings.HasPrefix(from, standardPrefix) != strings.HasPrefix(to, standardPrefix) {
+			scpCurrentPrefix = standardPrefix
+		} else if strings.HasPrefix(from, completionPrefix) != strings.HasPrefix(to, completionPrefix) {
+			scpCurrentPrefix = completionPrefix
 		} else // Not a valid SCP transfer
-		if strings.HasPrefix(from, prefixA) || strings.HasPrefix(from, prefixB) {
-			log.Fatal("Rather use the cp command to copy one or more file on the server side.")
+		if strings.HasPrefix(from, standardPrefix) || strings.HasPrefix(from, completionPrefix) {
+			rest.Log.Fatalln("Rather use the cp command to copy one or more file on the server side")
 		} else {
-			log.Fatal("Source and target are both on your client machine, copy from server to client or the opposite.")
+			rest.Log.Fatalln("Source and target are both on your client machine, copy from server to client or the opposite")
 		}
 		// Now it's easy to check if we do upload or download (that is default)
 		if strings.HasPrefix(to, scpCurrentPrefix) {
@@ -123,14 +135,14 @@ EXAMPLES
 		if isSrcLocal { // Upload
 			srcPath, err = filepath.Abs(from)
 			if err != nil {
-				log.Fatalf("%s is not a valid source: %s", from, err)
+				rest.Log.Fatalf("%s is not a valid source: %s", from, err)
 			}
 			srcName := filepath.Base(srcPath)
 			targetPath = strings.TrimPrefix(to, scpCurrentPrefix)
-			if needMerge, err = prepareRemoteTargetPath(ctx, sdkClient, srcName, targetPath, scpForce); err != nil {
-				log.Fatal(err)
+			if needMerge, err = preProcessRemoteTarget(ctx, sdkClient, srcName, targetPath, scpForce); err != nil {
+				rest.Log.Fatalln(err)
 			}
-			fmt.Printf("Uploading %s to %s\n", srcPath, prefixA+targetPath)
+			rest.Log.Infof("Uploading %s to %s", srcPath, standardPrefix+targetPath)
 		} else { // Download
 
 			srcPath = strings.TrimPrefix(from, scpCurrentPrefix)
@@ -138,23 +150,23 @@ EXAMPLES
 
 			targetPath, err = filepath.Abs(to)
 			if err != nil {
-				log.Fatalf("%s is not a valid destination: %s", to, err)
+				rest.Log.Fatalf("%s is not a valid destination: %s", to, err)
 			}
-			if needMerge, err = prepareLocalTargetPath(srcName, targetPath, scpForce); err != nil {
-				log.Fatal(err)
+			if needMerge, err = preProcessLocalTarget(srcName, targetPath, scpForce); err != nil {
+				rest.Log.Fatalln(err)
 			}
-			fmt.Printf("Downloading %s to %s\n", prefixA+srcPath, targetPath)
+			rest.Log.Infof("Downloading %s to %s", standardPrefix+srcPath, targetPath)
 		}
 
 		// Now create source and target crawlers
 		srcNode, e := rest.NewCrawler(ctx, sdkClient, srcPath, isSrcLocal)
 		if e != nil {
-			log.Fatal(e)
+			rest.Log.Fatalln(e)
 		}
 
 		targetNode := rest.NewTarget(sdkClient, targetPath, !isSrcLocal, srcNode.IsDir, scpForce)
 		if e != nil {
-			log.Fatal(e)
+			rest.Log.Fatalln(e)
 		}
 
 		// Walk the full source tree to prepare a list of node to create
@@ -164,11 +176,10 @@ EXAMPLES
 		}
 		t, c, d, e := srcNode.Walk(cmd.Context(), tf)
 		if e != nil {
-			log.Fatal(e)
+			rest.Log.Fatal(e)
 		}
 
 		var pool *rest.BarsPool = nil
-		//if common.CurrentLogLevel == common.Info {
 		if !scpNoProgress {
 			refreshInterval := time.Millisecond * 10 // this is the default
 			if scpQuiet {
@@ -177,10 +188,7 @@ EXAMPLES
 			pool = rest.NewBarsPool(len(t)+len(c)+len(d) > 1, len(t)+len(c)+len(d), refreshInterval)
 			pool.Start()
 		} else {
-			fmt.Printf("... After walking the tree, found %d nodes to delete, %d to create and %d transfer \n", len(d), len(c), len(t))
-			//if len(nn) > 1 {
-			//	fmt.Println("... First creating folders")
-			//}
+			rest.Log.Infof("... After walking the tree, found %d nodes to delete, %d to create and %d transfer \n", len(d), len(c), len(t))
 		}
 
 		// Delete necessary items
@@ -203,16 +211,26 @@ EXAMPLES
 
 		// UPLOAD / DOWNLOAD FILES
 		if scpNoProgress {
-			fmt.Println("... Now transferring files")
+			rest.Log.Infof("... Now transferring files")
 		}
 
 		errs := targetNode.TransferAll(ctx, t, pool)
 		if len(errs) > 0 {
-			log.Fatal(errs)
+			//if pool != nil { // Force stop of the pool that stays blocked otherwise
+			//	pool.Stop()
+			//}
+			rest.Log.Infof("... Transfer has terminated with %d errors:\n", len(errs))
+			for i, currErr := range errs {
+				rest.Log.Infof("\t#%d: %s\n", i+1, currErr)
+			}
+			rest.Log.Infoln("... End of error list")
+			os.Exit(1)
+		} else {
+			rest.Log.Infoln("... Transfer terminated")
 		}
-		if !scpNoProgress {
-			fmt.Println("") // Add a line to reduce glitches in the terminal
-		}
+		//if !scpNoProgress {
+		//	fmt.Println("") // Add a line to reduce glitches in the terminal
+		//}
 	},
 }
 
@@ -233,7 +251,7 @@ func init() {
 	RootCmd.AddCommand(scpFiles)
 }
 
-func prepareRemoteTargetPath(ctx context.Context, sdkClient *rest.SdkClient, srcName string, toPath string, force bool) (bool, error) {
+func preProcessRemoteTarget(ctx context.Context, sdkClient *rest.SdkClient, srcName string, toPath string, force bool) (bool, error) {
 	targetParent, ok := sdkClient.StatNode(ctx, toPath)
 	if ok {
 		if *targetParent.Type == models.TreeNodeTypeCOLLECTION {
@@ -267,7 +285,7 @@ func prepareRemoteTargetPath(ctx context.Context, sdkClient *rest.SdkClient, src
 	}
 }
 
-func prepareLocalTargetPath(srcName, targetPath string, force bool) (bool, error) {
+func preProcessLocalTarget(srcName, targetPath string, force bool) (bool, error) {
 	toPath, e := filepath.Abs(targetPath)
 	if e != nil {
 		return false, e

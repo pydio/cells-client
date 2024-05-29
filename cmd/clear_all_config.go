@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/manifoldco/promptui"
@@ -39,7 +38,7 @@ DESCRIPTION
 		}
 
 		if err := ClearConfig(); err != nil {
-			log.Fatal(err)
+			rest.Log.Fatalln(err)
 		}
 
 		fmt.Println(promptui.IconGood + " All defined accounts have been erased.")

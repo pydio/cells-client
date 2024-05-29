@@ -417,7 +417,10 @@ func (c *CrawlNode) TransferAll(ctx context.Context, dd []*CrawlNode, pool *Bars
 		}
 		go func(src *CrawlNode, barId int) {
 			defer func() {
-				fmt.Println("...[debug] Done for", src.FullPath)
+				// TODO this could be a debug msg
+				// if len(errs) > 0 {
+				// 	fmt.Printf("... Transfer for %s aborted with error: %s\n", src.FullPath, errs[0].Error())
+				// }
 				wg.Done()
 				if pool != nil {
 					pool.Done()
@@ -446,8 +449,6 @@ func (c *CrawlNode) TransferAll(ctx context.Context, dd []*CrawlNode, pool *Bars
 	wg.Wait()
 	if pool != nil {
 		pool.Stop()
-	} else {
-		fmt.Printf("... Transfer has terminated successfully\n")
 	}
 	return
 }
@@ -482,8 +483,8 @@ func (c *CrawlNode) upload(ctx context.Context, src *CrawlNode, bar *uiprogress.
 		// also initialise the error chan in no-progress mode
 		var done chan struct{}
 		handleError := func(e error) {
-			// fixme
-			fmt.Println("Error:", e)
+			// TODO we still handle the errors at another level
+			// fmt.Println("Error:", e)
 		}
 		errChan, done = newErrorChan(handleError)
 		defer close(done)
@@ -505,7 +506,7 @@ func (c *CrawlNode) upload(ctx context.Context, src *CrawlNode, bar *uiprogress.
 	} else {
 		upErr = c.sdkClient.s3Upload(ctx, fullPath, content, stats.Size(), bar == nil, errChan)
 	}
-	fmt.Println("... About to return from upload, error:", upErr)
+	// fmt.Println("... About to return from upload, error:", upErr)
 	return upErr
 }
 
@@ -542,8 +543,14 @@ func (c *CrawlNode) download(ctx context.Context, src *CrawlNode, bar *uiprogres
 			)
 		}
 	}(writer)
-	_, e = io.Copy(writer, content)
-	return e
+	written, e := io.Copy(writer, content)
+	if e != nil {
+		return e
+	} else if written != int64(length) {
+		fmt.Printf("[Warning] written length (%d) does not fit with source file length (%d) for %s\n",
+			written, int64(length), src.FullPath)
+	}
+	return nil
 }
 
 // createLocalFolders creates necessary folders on the client machine.

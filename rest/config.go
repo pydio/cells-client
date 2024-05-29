@@ -5,9 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/pydio/cells-sdk-go/v5/transport"
-	sdkHttp "github.com/pydio/cells-sdk-go/v5/transport/http"
-	"github.com/shibukawa/configdir"
 	"log"
 	"net/http"
 	"net/url"
@@ -17,8 +14,11 @@ import (
 	"sync"
 
 	"github.com/manifoldco/promptui"
+	"github.com/shibukawa/configdir"
 
 	cellsSdk "github.com/pydio/cells-sdk-go/v5"
+	"github.com/pydio/cells-sdk-go/v5/transport"
+	sdkHttp "github.com/pydio/cells-sdk-go/v5/transport/http"
 	sdkRest "github.com/pydio/cells-sdk-go/v5/transport/rest"
 
 	"github.com/pydio/cells-client/v4/common"

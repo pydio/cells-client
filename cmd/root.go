@@ -15,6 +15,8 @@ import (
 	"github.com/ory/viper"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 
 	cellsSdk "github.com/pydio/cells-sdk-go/v5"
 
@@ -92,8 +94,15 @@ ENVIRONMENT
 			return
 		}
 
-		needSetup := true
+		logger, err := configureLogger(viper.GetString("log"))
+		if err != nil {
+			log.Fatalf("could not initialize logger: %v, aborting.", err)
+		}
+		defer func(logger *zap.Logger) {
+			_ = logger.Sync()
+		}(logger)
 
+		needSetup := true
 		for _, skip := range infoCommands { // info commands do not require a configured env.
 			// We only check this at the 2 first command "levels" for the time being
 			if os.Args[1] == skip || (len(os.Args) > 2 && os.Args[2] == skip) {
@@ -116,12 +125,12 @@ ENVIRONMENT
 		tmpURLStr := viper.GetString("url")
 		if tmpURLStr != "" {
 			// Also sanitize the passed URL
-			var err error
 			serverURL, err = rest.CleanURL(tmpURLStr)
 			if err != nil {
-				log.Fatalf("server URL %s seems to be unvalid, please double check and adapt. Cause: %s", tmpURLStr, err.Error())
+				rest.Log.Fatalf("server URL %s seems to be unvalid, please double check and adapt. Cause: %s", tmpURLStr, err.Error())
 			}
 		}
+
 		authType = viper.GetString("auth_type")
 		token = viper.GetString("token")
 		login = viper.GetString("login")
@@ -134,10 +143,10 @@ ENVIRONMENT
 			e := setUpEnvironment(cmd.Context())
 			if e != nil {
 				if !os.IsNotExist(e) {
-					log.Fatalf("unexpected error during initialisation phase: %s", e.Error())
+					rest.Log.Fatalf("unexpected error during initialisation phase: %s", e.Error())
 				}
 				// TODO Directly launch necessary configure command
-				log.Fatalf("No configuration has been found, please make sure to run '%s config add' first.\n", os.Args[0])
+				rest.Log.Fatalf("No configuration has been found, please make sure to run '%s config add' first.\n", os.Args[0])
 			}
 		}
 	},
@@ -145,6 +154,19 @@ ENVIRONMENT
 	Run: func(cmd *cobra.Command, args []string) {
 		_ = cmd.Usage()
 	},
+}
+
+func configureLogger(logLevel string) (*zap.Logger, error) {
+	level := zapcore.InfoLevel
+	switch logLevel {
+	case "debug", "DEBUG":
+		level = zapcore.DebugLevel
+	case "warn", "WARN":
+		level = zapcore.WarnLevel
+	case "error", "ERROR":
+		level = zapcore.ErrorLevel
+	}
+	return rest.SetLogger(level), nil
 }
 
 // RegisterExtraOfflineCommand adds the passed commands to the list of commands that skip the verifications
@@ -159,6 +181,8 @@ func init() {
 	viper.AutomaticEnv()
 
 	flags := RootCmd.PersistentFlags()
+
+	flags.String("log", "info", "change log level (default: info)")
 
 	flags.String("config", "", fmt.Sprintf("Location of Cells Client's config files (default: %s)", rest.DefaultConfigFilePath()))
 	// flags.String("config", rest.DefaultConfigDirPath(), "Location of Cells Client's config files")
@@ -224,7 +248,7 @@ func setUpEnvironment(ctx context.Context) error {
 	// FIXME
 	// TODO rather launch a clever background thread that will call the refresh if necessary as long as the command runs.
 	if _, err := sdkClient.GetStore().RefreshIfRequired(ctx, c.SdkConfig); err != nil {
-		log.Fatal("SetUp env: could not refresh authentication token:", err)
+		rest.Log.Fatal("SetUp env: could not refresh authentication token:", err)
 	}
 	return nil
 }
@@ -301,7 +325,7 @@ func bindViperFlags(flags *pflag.FlagSet, replaceKeys map[string]string) {
 			key = replace
 		}
 		if err := viper.BindPFlag(key, flag); err != nil {
-			fmt.Printf("could not bind flag with key %s, cause:  %s ", key, err.Error())
+			rest.Log.Errorf("could not bind flag with key %s, cause:  %s ", key, err.Error())
 		}
 	})
 }
