@@ -130,7 +130,7 @@ func ClearKeyring(c *CecConfig) error {
 	return nil
 }
 
-func retrieveLegacyKey(ctx context.Context, conf *CecConfig) error {
+func retrieveLegacyKey(_ context.Context, conf *CecConfig) error {
 	if conf.User != "" && conf.Password == "" { // client auth
 		if value, e := keyring.Get(getKeyringServiceName(), key(conf.Url, "ClientCredentials")); e == nil {
 			parts := splitValue(value)

@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"github.com/pydio/cells-sdk-go/v5/client/tree_service"
 	"github.com/pydio/cells-sdk-go/v5/models"
 )
@@ -120,35 +118,4 @@ func (fx *SdkClient) GetAllBulkMeta(ctx context.Context, path string) (nodes []*
 		}
 	}
 	return nodes, nil
-}
-
-// createRemoteFolders creates necessary folders on the distant server.
-func (fx *SdkClient) createRemoteFolders(ctx context.Context, mm []*models.TreeNode, pool *BarsPool) error {
-
-	for i := 0; i < len(mm); i += pageSize {
-		end := i + pageSize
-		if end > len(mm) {
-			end = len(mm)
-		}
-		subArray := mm[i:end]
-
-		params := tree_service.NewCreateNodesParams()
-		params.Body = &models.RestCreateNodesRequest{
-			Nodes:     subArray,
-			Recursive: false,
-		}
-		_, err := fx.GetApiClient().TreeService.CreateNodes(params)
-		if err != nil {
-			return errors.Errorf("could not create folders: %s", err.Error())
-		}
-		// TODO:  Stat all folders to make sure they are indexed ?
-		if pool != nil {
-			for range subArray {
-				pool.Done()
-			}
-		} else { // verbose mode
-			fmt.Printf("... Created %d folders on remote server\n", end)
-		}
-	}
-	return nil
 }

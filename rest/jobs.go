@@ -65,7 +65,7 @@ func (fx *SdkClient) GetTaskStatusForJob(ctx context.Context, jobID string) (sta
 func (fx *SdkClient) MonitorJob(ctx context.Context, JobID string) (err error) {
 	for {
 		status, _, _, e := fx.GetTaskStatusForJob(ctx, JobID)
-		if err != nil {
+		if e != nil {
 			err = e
 			return
 		}
