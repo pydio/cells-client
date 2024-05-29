@@ -479,7 +479,14 @@ func (c *CrawlNode) upload(ctx context.Context, src *CrawlNode, bar *uiprogress.
 		wrapper.double = false
 		content = wrapper
 	} else {
-		// FIXME we must also initialise the error chan in no-progress mode
+		// also initialise the error chan in no-progress mode
+		var done chan struct{}
+		handleError := func(e error) {
+			// fixme
+			fmt.Println("Error:", e)
+		}
+		errChan, done = newErrorChan(handleError)
+		defer close(done)
 
 		content = file
 	}
@@ -498,7 +505,7 @@ func (c *CrawlNode) upload(ctx context.Context, src *CrawlNode, bar *uiprogress.
 	} else {
 		upErr = c.sdkClient.s3Upload(ctx, fullPath, content, stats.Size(), bar == nil, errChan)
 	}
-
+	fmt.Println("... About to return from upload, error:", upErr)
 	return upErr
 }
 

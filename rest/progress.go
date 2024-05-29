@@ -80,20 +80,43 @@ type ReaderWithProgress struct {
 }
 
 func (r *ReaderWithProgress) CreateErrorChan() (chan error, chan struct{}) {
+	errors, done := newErrorChan(r.sendErr)
+	r.errChan = errors
+	return errors, done
+}
+
+//func (r *ReaderWithProgress) CreateErrorChan() (chan error, chan struct{}) {
+//	done := make(chan struct{}, 1)
+//	r.errChan = make(chan error)
+//	go func() {
+//		for {
+//			select {
+//			case e := <-r.errChan:
+//				r.sendErr(e)
+//			case <-done:
+//				close(r.errChan)
+//				return
+//			}
+//		}
+//	}()
+//	return r.errChan, done
+//}
+
+func newErrorChan(handleError func(error)) (chan error, chan struct{}) {
 	done := make(chan struct{}, 1)
-	r.errChan = make(chan error)
+	errChan := make(chan error)
 	go func() {
 		for {
 			select {
-			case e := <-r.errChan:
-				r.sendErr(e)
+			case e := <-errChan:
+				handleError(e)
 			case <-done:
-				close(r.errChan)
+				close(errChan)
 				return
 			}
 		}
 	}()
-	return r.errChan, done
+	return errChan, done
 }
 
 func (r *ReaderWithProgress) Read(p []byte) (n int, err error) {
