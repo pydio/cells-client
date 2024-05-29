@@ -416,11 +416,21 @@ func (c *CrawlNode) TransferAll(ctx context.Context, dd []*CrawlNode, pool *Bars
 			bar = pool.Get(idx, int(barSize), d.base())
 		}
 		go func(src *CrawlNode, barId int) {
+			if len(errs) > 0 { // We skip launching new jobs as soon as we get an error
+				Log.Debugf("... Skipping transfer for %s", src.FullPath)
+				wg.Done()
+				if pool != nil {
+					pool.Done()
+				}
+				<-buf
+			}
+
 			defer func() {
-				// TODO this could be a debug msg
-				// if len(errs) > 0 {
-				// 	fmt.Printf("... Transfer for %s aborted with error: %s\n", src.FullPath, errs[0].Error())
-				// }
+				if len(errs) > 0 {
+					Log.Errorf("... Transfer for %s aborted with error: %s", src.FullPath, errs[0].Error())
+				} else {
+					Log.Debugf("... Transfer for %s terminated", src.FullPath)
+				}
 				wg.Done()
 				if pool != nil {
 					pool.Done()

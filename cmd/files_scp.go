@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -197,7 +196,7 @@ EXAMPLES
 			if pool != nil { // Force stop of the pool that stays blocked otherwise
 				pool.Stop()
 			}
-			log.Fatal(e)
+			rest.Log.Fatal(e)
 		}
 
 		// CREATE FOLDERS
@@ -206,7 +205,7 @@ EXAMPLES
 			if pool != nil { // Force stop of the pool that stays blocked otherwise
 				pool.Stop()
 			}
-			log.Fatal(e)
+			rest.Log.Fatal(e)
 		}
 
 		// UPLOAD / DOWNLOAD FILES
@@ -219,11 +218,11 @@ EXAMPLES
 			//if pool != nil { // Force stop of the pool that stays blocked otherwise
 			//	pool.Stop()
 			//}
-			rest.Log.Infof("... Transfer has terminated with %d errors:\n", len(errs))
+			rest.Log.Infof("... Transfer has terminated with %d errors:", len(errs))
 			for i, currErr := range errs {
-				rest.Log.Infof("\t#%d: %s\n", i+1, currErr)
+				rest.Log.Infof("\t#%d: %s", i+1, currErr)
 			}
-			rest.Log.Infoln("... End of error list")
+			rest.Log.Infoln()
 			os.Exit(1)
 		} else {
 			rest.Log.Infoln("... Transfer terminated")

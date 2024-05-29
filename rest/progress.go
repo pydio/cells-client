@@ -22,8 +22,10 @@ func NewBarsPool(showGlobal bool, totalNodes int, refreshInterval time.Duration)
 		b.nodesBar = b.AddBar(totalNodes)
 		b.nodesBar.PrependCompleted()
 		b.nodesBar.AppendFunc(func(b *uiprogress.Bar) string {
+
 			if b.Current() == b.Total {
-				return fmt.Sprintf("Transferred %d/%d files and folders in %s.", b.Current(), b.Total, b.TimeElapsedString())
+				//return fmt.Sprintf("Transferred %d/%d files and folders in %s.", b.Current(), b.Total, b.TimeElapsedString())
+				return fmt.Sprintf("Transferred terminated in %s.", b.TimeElapsedString())
 			} else {
 				return fmt.Sprintf("Copying folders and files since %s: %d/%d", b.TimeElapsedString(), b.Current(), b.Total)
 			}
