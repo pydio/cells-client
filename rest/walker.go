@@ -197,7 +197,7 @@ func (c *CrawlNode) localWalk(ctx context.Context, targetFolder *CrawlNode,
 		currLocal := NewLocalNode(c.sdkClient, fullPath, relPath, fileInfo)
 
 		// Check current node and append where necessary
-		targetChild, err3 := c.checkLocalTarget(currLocal, currTargetFolder, tt, tc, td)
+		targetChild, err3 := c.checkRemoteTarget(ctx, currLocal, currTargetFolder, tt, tc, td)
 		if err3 != nil {
 			err = err3
 			return
