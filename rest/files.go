@@ -2,7 +2,6 @@ package rest
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/pydio/cells-sdk-go/v5/client/tree_service"
@@ -34,7 +33,7 @@ func (fx *SdkClient) StatNode(ctx context.Context, pathToFile string) (*models.T
 	}, 5, 2*time.Second)
 
 	if e != nil {
-		fmt.Println("Could not stat node", pathToFile)
+		Log.Debugf("Could not stat node at %s, cause: %s", pathToFile, e.Error())
 		return nil, false
 	}
 	return node, exists
@@ -61,8 +60,8 @@ func (fx *SdkClient) ListNodesPath(ctx context.Context, path string) ([]string, 
 }
 
 func (fx *SdkClient) DeleteNodes(ctx context.Context, paths []string, permanently ...bool) (jobUUIDs []string, e error) {
-	if len(paths) == 0 {
-		e = fmt.Errorf("no paths found to delete")
+	if len(paths) == 0 { // List is empty
+		Log.Warnln("called DeleteNodes with an empty list")
 		return
 	}
 	var nn []*models.TreeNode

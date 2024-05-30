@@ -374,7 +374,7 @@ func (c *CrawlNode) deleteRemoteItems(ctx context.Context, dd []*CrawlNode, pool
 				pool.Done()
 			}
 		} else { // verbose mode
-			fmt.Printf("... Deleted %d nodes in the remote server\n", end)
+			Log.Infof("... Deleted %d nodes in the remote server\n", end)
 		}
 	}
 	return nil
@@ -473,8 +473,7 @@ func (c *CrawlNode) upload(ctx context.Context, src *CrawlNode, bar *uiprogress.
 	}
 	stats, e := file.Stat()
 	if e != nil {
-		fmt.Printf("[Error] could not stat file at %s, cause: %s", src.FullPath, e.Error())
-		return e
+		return fmt.Errorf("could not stat file at %s, cause: %s", src.FullPath, e.Error())
 	}
 
 	var content io.ReadSeeker
@@ -513,8 +512,8 @@ func (c *CrawlNode) upload(ctx context.Context, src *CrawlNode, bar *uiprogress.
 		if _, e = c.sdkClient.PutFile(ctx, fullPath, file, false); e != nil {
 			upErr = fmt.Errorf("could not upload single part file %s: %s", fullPath, e.Error())
 		}
-		if bar == nil { // TODO this must be a debug level msg
-			fmt.Printf("\t%s: uploaded\n", fullPath)
+		if bar == nil {
+			Log.Debugf("\t%s: uploaded\n", fullPath)
 		}
 	} else {
 		upErr = c.sdkClient.s3Upload(ctx, fullPath, content, stats.Size(), bar == nil, errChan)
@@ -548,9 +547,9 @@ func (c *CrawlNode) download(ctx context.Context, src *CrawlNode, bar *uiprogres
 	}
 	defer func(writer *os.File) {
 		err := writer.Close()
-		if err != nil && bar == nil { // Only in no progress mode. TODO rather use a logger
-			fmt.Printf(
-				"[Warning] could not close writer after creating %s: %s\n",
+		if err != nil && bar == nil { // Only in no progress mode.
+			Log.Warnf(
+				"could not close writer after creating %s: %s\n",
 				localTargetPath,
 				err.Error(),
 			)
@@ -560,7 +559,7 @@ func (c *CrawlNode) download(ctx context.Context, src *CrawlNode, bar *uiprogres
 	if e != nil {
 		return e
 	} else if written != int64(length) {
-		fmt.Printf("[Warning] written length (%d) does not fit with source file length (%d) for %s\n",
+		Log.Warnf("written length (%d) does not fit with source file length (%d) for %s\n",
 			written, int64(length), src.FullPath)
 	}
 	return nil
@@ -614,8 +613,8 @@ func (c *CrawlNode) createRemoteFolders(target *CrawlNode, toCreateDirs []*Crawl
 			for range subArray {
 				pool.Done()
 			}
-		} else { // verbose mode
-			fmt.Printf("... Created %d folders on remote server\n", end)
+		} else {
+			Log.Infof("... Created %d folders on remote server\n", end)
 		}
 	}
 	return nil
@@ -628,7 +627,7 @@ func (c *CrawlNode) dryRunCreate(toCreateDirs []*CrawlNode) {
 	// TODO handle parent folder
 	for _, d := range toCreateDirs {
 		newFolder := c.join(c.FullPath, d.RelPath)
-		fmt.Println("MkDir: \t", newFolder)
+		Log.Infof("MkDir: %s", newFolder)
 	}
 }
 
@@ -636,7 +635,7 @@ func (c *CrawlNode) dryRunCreate(toCreateDirs []*CrawlNode) {
 func (c *CrawlNode) dryRunDelete(toDeleteItems []*CrawlNode) {
 	for _, d := range toDeleteItems {
 		toDelete := c.join(c.FullPath, d.RelPath)
-		fmt.Println("Delete: \t", toDelete)
+		Log.Infof("Delete: %s", toDelete)
 	}
 }
 

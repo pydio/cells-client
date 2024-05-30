@@ -218,7 +218,7 @@ EXAMPLES
 			//if pool != nil { // Force stop of the pool that stays blocked otherwise
 			//	pool.Stop()
 			//}
-			rest.Log.Infof("\n... Transfer has terminated with %d errors:", len(errs))
+			rest.Log.Infof("\n... Transfer aborted after %d errors:", len(errs))
 			for i, currErr := range errs {
 				rest.Log.Infof("\t#%d: %s\n", i+1, currErr)
 			}

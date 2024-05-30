@@ -87,23 +87,6 @@ func (r *ReaderWithProgress) CreateErrorChan() (chan error, chan struct{}) {
 	return errors, done
 }
 
-//func (r *ReaderWithProgress) CreateErrorChan() (chan error, chan struct{}) {
-//	done := make(chan struct{}, 1)
-//	r.errChan = make(chan error)
-//	go func() {
-//		for {
-//			select {
-//			case e := <-r.errChan:
-//				r.sendErr(e)
-//			case <-done:
-//				close(r.errChan)
-//				return
-//			}
-//		}
-//	}()
-//	return r.errChan, done
-//}
-
 func newErrorChan(handleError func(error)) (chan error, chan struct{}) {
 	done := make(chan struct{}, 1)
 	errChan := make(chan error)
@@ -129,13 +112,13 @@ func (r *ReaderWithProgress) Read(p []byte) (n int, err error) {
 		} else {
 			r.read += n
 		}
-		r.bar.Set(r.read)
+		_ = r.bar.Set(r.read)
 	} else if err == io.EOF {
 		if r.double && !r.first {
 			r.first = true
-			r.bar.Set(r.total / 2)
+			_ = r.bar.Set(r.total / 2)
 		} else {
-			r.bar.Set(r.total)
+			_ = r.bar.Set(r.total)
 		}
 	}
 	return
@@ -147,7 +130,7 @@ func (r *ReaderWithProgress) Seek(offset int64, whence int) (int64, error) {
 	} else {
 		r.read = int(offset)
 	}
-	r.bar.Set(r.read)
+	_ = r.bar.Set(r.read)
 	return r.Seeker.Seek(offset, whence)
 }
 

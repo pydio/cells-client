@@ -109,7 +109,7 @@ func (fx *SdkClient) s3Upload(ctx context.Context, path string,
 		return err
 	}
 	if verbose {
-		fmt.Println("... Launching upload for", path)
+		Log.Infof("... Launching upload for %s", path)
 		numParts := math.Ceil(float64(fSize) / float64(ps))
 		fmt.Println("\tSize:", humanize.Bytes(uint64(fSize)))
 		fmt.Println("\tPart Size:", humanize.Bytes(uint64(ps)))
