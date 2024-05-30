@@ -187,7 +187,7 @@ EXAMPLES
 			pool = rest.NewBarsPool(len(t)+len(c)+len(d) > 1, len(t)+len(c)+len(d), refreshInterval)
 			pool.Start()
 		} else {
-			rest.Log.Infof("... After walking the tree, found %d nodes to delete, %d to create and %d transfer \n", len(d), len(c), len(t))
+			rest.Log.Infof("After walking the tree, found %d nodes to delete, %d to create and %d transfer", len(d), len(c), len(t))
 		}
 
 		// Delete necessary items
@@ -200,7 +200,7 @@ EXAMPLES
 		}
 
 		// CREATE FOLDERS
-		e = targetNode.CreateFolders(ctx, c, pool)
+		e = targetNode.CreateFolders(ctx, targetNode, c, pool)
 		if e != nil {
 			if pool != nil { // Force stop of the pool that stays blocked otherwise
 				pool.Stop()
@@ -218,11 +218,10 @@ EXAMPLES
 			//if pool != nil { // Force stop of the pool that stays blocked otherwise
 			//	pool.Stop()
 			//}
-			rest.Log.Infof("... Transfer has terminated with %d errors:", len(errs))
+			rest.Log.Infof("\n... Transfer has terminated with %d errors:", len(errs))
 			for i, currErr := range errs {
-				rest.Log.Infof("\t#%d: %s", i+1, currErr)
+				rest.Log.Infof("\t#%d: %s\n", i+1, currErr)
 			}
-			rest.Log.Infoln()
 			os.Exit(1)
 		} else {
 			rest.Log.Infoln("... Transfer terminated")

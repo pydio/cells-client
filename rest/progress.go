@@ -25,7 +25,7 @@ func NewBarsPool(showGlobal bool, totalNodes int, refreshInterval time.Duration)
 
 			if b.Current() == b.Total {
 				//return fmt.Sprintf("Transferred %d/%d files and folders in %s.", b.Current(), b.Total, b.TimeElapsedString())
-				return fmt.Sprintf("Transferred terminated in %s.", b.TimeElapsedString())
+				return fmt.Sprintf("Done in %s.", b.TimeElapsedString())
 			} else {
 				return fmt.Sprintf("Copying folders and files since %s: %d/%d", b.TimeElapsedString(), b.Current(), b.Total)
 			}

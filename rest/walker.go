@@ -381,14 +381,14 @@ func (c *CrawlNode) deleteRemoteItems(ctx context.Context, dd []*CrawlNode, pool
 }
 
 // CreateFolders prepares a recursive scp by first creating all necessary folders under the target root folder.
-func (c *CrawlNode) CreateFolders(_ context.Context, dd []*CrawlNode, pool *BarsPool) error {
+func (c *CrawlNode) CreateFolders(_ context.Context, target *CrawlNode, dd []*CrawlNode, pool *BarsPool) error {
 	if DryRun {
 		c.dryRunCreate(dd)
 		return nil
 	} else if c.IsLocal {
 		return c.createLocalFolders(dd, pool)
 	} else {
-		return c.createRemoteFolders(dd, pool)
+		return c.createRemoteFolders(target, dd, pool)
 	}
 }
 
@@ -426,10 +426,13 @@ func (c *CrawlNode) TransferAll(ctx context.Context, dd []*CrawlNode, pool *Bars
 			}
 
 			defer func() {
-				if len(errs) > 0 {
-					Log.Errorf("... Transfer for %s aborted with error: %s", src.FullPath, errs[0].Error())
-				} else {
-					Log.Debugf("... Transfer for %s terminated", src.FullPath)
+				// TODO also find a way to display error messages with the pool
+				if pool == nil {
+					if len(errs) > 0 && IsDebugEnabled() {
+						Log.Errorf("... Transfer for %s aborted with error: %s", src.FullPath, errs[0].Error())
+					} else {
+						Log.Debugf("... Transfer for %s terminated", src.FullPath)
+					}
 				}
 				wg.Done()
 				if pool != nil {
@@ -578,7 +581,7 @@ func (c *CrawlNode) createLocalFolders(toCreateDirs []*CrawlNode, pool *BarsPool
 }
 
 // createRemoteFolders creates necessary folders on the distant server.
-func (c *CrawlNode) createRemoteFolders(toCreateDirs []*CrawlNode, pool *BarsPool) error {
+func (c *CrawlNode) createRemoteFolders(target *CrawlNode, toCreateDirs []*CrawlNode, pool *BarsPool) error {
 
 	for i := 0; i < len(toCreateDirs); i += pageSize {
 		end := i + pageSize
@@ -601,7 +604,10 @@ func (c *CrawlNode) createRemoteFolders(toCreateDirs []*CrawlNode, pool *BarsPoo
 		}
 		_, err := c.sdkClient.GetApiClient().TreeService.CreateNodes(params)
 		if err != nil {
-			return errors.Errorf("could not create folders: %s", err.Error())
+			if IsDebugEnabled() {
+				return errors.Errorf("could not create folders at %s, cause: %s", target.FullPath, err.Error())
+			}
+			return errors.Errorf("could not prepare tree at %s", target.FullPath)
 		}
 		// TODO:  Stat all folders to make sure they are indexed ?
 		if pool != nil {
