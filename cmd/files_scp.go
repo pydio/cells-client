@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ory/viper"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -81,6 +82,20 @@ EXAMPLES
 		to := args[1]
 		scpCurrentPrefix := ""
 		isSrcLocal := false
+
+		// Retrieve flags
+		scpForce = viper.GetBool("force")
+		scpNoProgress = viper.GetBool("no-progress")
+		scpQuiet = viper.GetBool("quiet")
+		scpVerbose = viper.GetBool("verbose")
+		scpVeryVerbose = viper.GetBool("very-verbose")
+		scpMaxBackoffStr = viper.GetString("retry-max-backoff")
+		common.UploadMaxPartsNumber = viper.GetInt64("max-parts-number")
+		common.UploadDefaultPartSize = viper.GetInt64("part-size")
+		common.UploadPartsConcurrency = viper.GetInt("parts-concurrency")
+		common.UploadSkipMD5 = viper.GetBool("skip-md5")
+		common.UploadSwitchMultipart = viper.GetInt64("multipart-threshold")
+		common.TransferRetryMaxAttempts = viper.GetInt("retry-max-attempts")
 
 		// Handle aliases
 		if scpVeryVerbose {
@@ -234,18 +249,56 @@ EXAMPLES
 
 func init() {
 	flags := scpFiles.PersistentFlags()
-	flags.BoolVarP(&scpForce, "force", "f", false, "*DANGER* turns overwrite mode on: for a given item in the source tree, if a file or folder with same name already exists on the target side, it is merged or replaced.")
-	flags.BoolVarP(&scpNoProgress, "no_progress", "n", false, "Do not show progress bar. You can then fine tune the log level")
-	flags.BoolVarP(&scpVerbose, "verbose", "v", false, "Hide progress bar and rather display more log info during the transfers")
-	flags.BoolVarP(&scpVeryVerbose, "very_verbose", "w", false, "Hide progress bar and rather print out a maximum of log info")
-	flags.BoolVarP(&scpQuiet, "quiet", "q", false, "Reduce refresh frequency of the progress bars, e.g when running cec in a bash script")
-	flags.Int64Var(&common.UploadMaxPartsNumber, "max_parts_number", int64(5000), "Maximum number of parts, S3 supports 10000 but some storage require less parts.")
-	flags.Int64Var(&common.UploadDefaultPartSize, "part_size", int64(50), "Default part size (MB), must always be a multiple of 10MB. It will be recalculated based on the max-parts-number value.")
-	flags.IntVar(&common.UploadPartsConcurrency, "parts_concurrency", 3, "Number of concurrent part uploads.")
-	flags.BoolVar(&common.UploadSkipMD5, "skip_md5", false, "Do not compute md5 (for files bigger than 5GB, it is not computed by default for smaller files).")
-	flags.Int64Var(&common.UploadSwitchMultipart, "multipart_threshold", int64(100), "Files bigger than this size (in MB) will be uploaded using Multipart Upload.")
-	flags.IntVar(&common.TransferRetryMaxAttempts, "retry_max_attempts", common.TransferRetryMaxAttemptsDefault, "Limit the number of attempts before aborting. '0' allows the SDK to retry all retryable errors until the request succeeds, or a non-retryable error is thrown.")
-	flags.StringVar(&scpMaxBackoffStr, "retry_max_backoff", common.TransferRetryMaxBackoffDefault.String(), "Maximum duration to wait after a part transfer fails, before trying again, expressed in Go duration format, e.g., '20s' or '3m'.")
+
+	flags.BoolP("force", "f", false, "*DANGER* turns overwrite mode on: for a given item in the source tree, if a file or folder with same name already exists on the target side, it is merged or replaced.")
+	flags.BoolP("no-progress", "n", false, "Do not show progress bar. You can then fine tune the log level")
+	flags.BoolP("verbose", "v", false, "Hide progress bar and rather display more log info during the transfers")
+	flags.BoolP("very-verbose", "w", false, "Hide progress bar and rather print out a maximum of log info")
+	flags.BoolP("quiet", "q", false, "Reduce refresh frequency of the progress bars, e.g when running cec in a bash script")
+	flags.Int64("max-parts-number", int64(5000), "Maximum number of parts, S3 supports 10000 but some storage require less parts.")
+	flags.Int64("part-size", int64(50), "Default part size (MB), must always be a multiple of 10MB. It will be recalculated based on the max-parts-number value.")
+	flags.Int("parts-concurrency", 3, "Number of concurrent part uploads.")
+	flags.Bool("skip-md5", false, "Do not compute md5 (for files bigger than 5GB, it is not computed by default for smaller files).")
+	flags.Int64("multipart-threshold", int64(100), "Files bigger than this size (in MB) will be uploaded using Multipart Upload.")
+	flags.Int("retry-max-attempts", common.TransferRetryMaxAttemptsDefault, "Limit the number of attempts before aborting. '0' allows the SDK to retry all retryable errors until the request succeeds, or a non-retryable error is thrown.")
+	flags.String("retry-max-backoff", common.TransferRetryMaxBackoffDefault.String(), "Maximum duration to wait after a part transfer fails, before trying again, expressed in Go duration format, e.g., '20s' or '3m'.")
+
+	flags.Bool("no_progress", false, "Deprecated, rather use no-progress flag")
+	flags.Bool("very_verbose", false, "Deprecated, rather use very-verbose flag")
+	flags.Int64("max_parts_number", int64(5000), "Deprecated, rather use max-parts-number flag")
+	flags.Int64("part_size", int64(50), "Deprecated, rather use part-size flag")
+	flags.Int("parts_concurrency", 3, "Deprecated, rather use parts-concurrency flag")
+	flags.Bool("skip_md5", false, "Deprecated, rather use skip-md5 flag")
+	flags.Int64("multipart_threshold", int64(100), "Deprecated, rather use multipart-threshold flag")
+	flags.Int("retry_max_attempts", common.TransferRetryMaxAttemptsDefault, "Deprecated, rather use retry-max-attempts flag")
+	flags.String("retry_max_backoff", common.TransferRetryMaxBackoffDefault.String(), "Deprecated, rather use retry-max-backoff flag")
+
+	// Keep backward compatibility until v5 for old flag names
+	replaceMap := map[string]string{
+		"no_progress":         "no-progress",
+		"very_verbose":        "very-verbose",
+		"max_parts_number":    "max-parts-number",
+		"part_size":           "part-size",
+		"parts_concurrency":   "parts-concurrency",
+		"skip_md5":            "skip-md5",
+		"multipart_threshold": "multipart-threshold",
+		"retry_max_attempts":  "retry-max-attempts",
+		"retry_max_backoff":   "retry-max-backoff",
+	}
+	if os.Getenv(EnvDisplayHiddenFlags) == "" {
+		_ = flags.MarkHidden("no_progress")
+		_ = flags.MarkHidden("very_verbose")
+		_ = flags.MarkHidden("max_parts_number")
+		_ = flags.MarkHidden("part_size")
+		_ = flags.MarkHidden("parts_concurrency")
+		_ = flags.MarkHidden("skip_md5")
+		_ = flags.MarkHidden("multipart_threshold")
+		_ = flags.MarkHidden("retry_max_attempts")
+		_ = flags.MarkHidden("retry_max_backoff")
+	}
+
+	bindViperFlags(flags, replaceMap)
+
 	RootCmd.AddCommand(scpFiles)
 }
 

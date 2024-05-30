@@ -24,6 +24,10 @@ import (
 	"github.com/pydio/cells-client/v4/rest"
 )
 
+const (
+	EnvDisplayHiddenFlags = "CEC_DISPLAY_HIDDEN_FLAGS"
+)
+
 var (
 	// These commands and respective children do not need an already configured environment.
 	infoCommands = []string{
@@ -131,13 +135,14 @@ ENVIRONMENT
 			}
 		}
 
-		authType = viper.GetString("auth_type")
+		//authType = viper.GetString("auth_type")
 		token = viper.GetString("token")
 		login = viper.GetString("login")
 		password = viper.GetString("password")
-		noCache = viper.GetBool("no_cache")
-		skipKeyring = viper.GetBool("skip_keyring")
-		skipVerify = viper.GetBool("skip_verify")
+
+		noCache = viper.GetBool("no-cache")
+		skipKeyring = viper.GetBool("skip-keyring")
+		skipVerify = viper.GetBool("skip-verify")
 
 		if needSetup {
 			e := setUpEnvironment(cmd.Context())
@@ -191,11 +196,28 @@ func init() {
 	flags.String("login", "", "The user login, for Client auth only")
 	flags.String("password", "", "The user password, for Client auth only")
 
-	flags.Bool("skip_verify", false, "By default the Cells Client verifies the validity of TLS certificates for each communication. This option skips TLS certificate verification")
-	flags.Bool("skip_keyring", false, "Explicitly tell the tool to *NOT* try to use a keyring, even if present. Warning: sensitive information will be stored in clear text")
-	flags.Bool("no_cache", false, "Force token refresh at each call. This might slow down scripts with many calls")
+	flags.Bool("skip-verify", false, "By default the Cells Client verifies the validity of TLS certificates for each communication. This option skips TLS certificate verification")
+	flags.Bool("skip-keyring", false, "Explicitly tell the tool to *NOT* try to use a keyring, even if present. Warning: sensitive information will be stored in clear text")
+	flags.Bool("no-cache", false, "Force token refresh at each call. This might slow down scripts with many calls")
 
-	bindViperFlags(flags, map[string]string{})
+	// Keep backward compatibility until v5 for old flag names
+	replaceMap := map[string]string{
+		"skip_verify":  "skip-verify",
+		"skip_keyring": "skip-keyring",
+		"no_cache":     "no-cache",
+	}
+
+	flags.Bool("skip_verify", false, "Deprecated, rather use skip-verify flag")
+	flags.Bool("skip_keyring", false, "Deprecated, rather use skip-keyring flag")
+	flags.Bool("no_cache", false, "Deprecated, rather use no-cache flag")
+
+	if os.Getenv(EnvDisplayHiddenFlags) == "" {
+		_ = flags.MarkHidden("skip_verify")
+		_ = flags.MarkHidden("skip_keyring")
+		_ = flags.MarkHidden("no_cache")
+	}
+
+	bindViperFlags(flags, replaceMap)
 }
 
 // SetUpEnvironment configures the current runtime by setting the SDK Config that is used by child commands.

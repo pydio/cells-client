@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/gookit/color"
@@ -22,7 +23,10 @@ import (
 	"github.com/pydio/cells-client/v4/rest"
 )
 
-var oauthIDToken string
+var (
+	oauthIDToken  string
+	oauthIDToken2 string
+)
 
 // This cannot be changed on the client side: the callback URL, including this port, must be registered on the server side.
 const callbackPort = 3000
@@ -62,6 +66,11 @@ USAGE
 		newConf := rest.DefaultCecConfig()
 		newConf.AuthType = cellsSdk.AuthTypeOAuth
 		newConf.SkipKeyring = skipKeyring
+
+		// Manually support old flag until v5. TODO remove
+		if oauthIDToken == "" && oauthIDToken2 != "" {
+			oauthIDToken = oauthIDToken2
+		}
 
 		var err error
 		if serverURL != "" && oauthIDToken != "" {
@@ -214,7 +223,7 @@ func isPortAvailable(port int, timeout int) bool {
 	if err != nil {
 		return false
 	}
-	conn.Close()
+	_ = conn.Close()
 	return true
 }
 
@@ -235,8 +244,6 @@ func oAuthNonInteractive(ctx context.Context, conf *rest.CecConfig) error {
 		return err
 	}
 
-	// rest.DefaultConfig = conf
-
 	// Ensure we can create a client without issue with this config before saving
 	if _, err = rest.NewSdkClient(ctx, conf); err != nil {
 		return fmt.Errorf("could not connect to newly configured server: %s", err.Error())
@@ -247,7 +254,13 @@ func oAuthNonInteractive(ctx context.Context, conf *rest.CecConfig) error {
 
 func init() {
 	flags := configureOAuthCmd.PersistentFlags()
-	flags.StringVar(&oauthIDToken, "id_token", "", "A currently valid OAuth2 ID token, retrieved via the OIDC credential flow")
-	configureCmd.AddCommand(configureOAuthCmd)
+	flags.StringVar(&oauthIDToken, "id-token", "", "A currently valid OAuth2 ID token, retrieved via the OIDC credential flow")
+
+	// Stays retro compatible
+	flags.StringVar(&oauthIDToken2, "id_token", "", "Deprecated, rather use id-token flag")
+	if os.Getenv(EnvDisplayHiddenFlags) == "" {
+		_ = flags.MarkHidden("id_token")
+	}
+
 	configAddCmd.AddCommand(configureOAuthCmd)
 }
