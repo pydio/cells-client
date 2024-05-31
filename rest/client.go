@@ -3,12 +3,12 @@ package rest
 import (
 	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"log"
 	"runtime"
 	"sync"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/go-openapi/strfmt"
 
@@ -49,6 +49,9 @@ type SdkClient struct {
 	configStore   cellsSdk.ConfigRefresher
 	apiClient     *client.PydioCellsRestAPI
 	s3Client      *s3.Client
+
+	// stopRefreshChan enable stopping the OAuth auto refresh mechanism at teardown
+	stopRefreshChan chan struct{}
 }
 
 // NewSdkClient creates a new client based on the given config.
@@ -75,28 +78,66 @@ func NewSdkClient(ctx context.Context, config *CecConfig) (*SdkClient, error) {
 	}, nil
 }
 
+// Setup prepare the client after it has been created, especially refreshes the token in case of OAuth
+func (client *SdkClient) Setup(ctx context.Context) {
+
+	// Launch a "background thread" that call the refresh if and when necessary as long as the command runs.
+	if client.currentConfig.AuthType == cellsSdk.AuthTypeOAuth {
+		client.stopRefreshChan = make(chan struct{})
+		// First call the refresh synchronously
+		if _, err := client.GetStore().RefreshIfRequired(ctx, client.currentConfig.SdkConfig); err != nil {
+			Log.Fatalf("login failed for %s, cause: %s", id(client.currentConfig.SdkConfig), err)
+		}
+		go func() {
+			ticker := time.NewTicker(20 * time.Second)
+			defer ticker.Stop()
+			for {
+				select {
+				case <-ticker.C:
+					Log.Infof("About to check refreshment for %s", id(client.currentConfig.SdkConfig))
+					if _, err := client.GetStore().RefreshIfRequired(ctx, client.currentConfig.SdkConfig); err != nil {
+						Log.Errorf("could not refresh authentication token: %s", err)
+						close(client.stopRefreshChan)
+					}
+				case <-client.stopRefreshChan:
+					Log.Debugln("Stopping refresh daemon")
+					return
+				}
+			}
+		}()
+	}
+
+}
+
+// Teardown clean resources before terminating.
+func (client *SdkClient) Teardown() {
+	if client.stopRefreshChan != nil {
+		close(client.stopRefreshChan)
+	}
+}
+
 // GetConfig simply exposes the current SdkConfig
-func (fx *SdkClient) GetConfig() *cellsSdk.SdkConfig {
-	return fx.currentConfig.SdkConfig
+func (client *SdkClient) GetConfig() *cellsSdk.SdkConfig {
+	return client.currentConfig.SdkConfig
 }
 
 // GetStore simply exposes the store that centralize credentials (and performs OAuth refresh).
-func (fx *SdkClient) GetStore() cellsSdk.ConfigRefresher {
-	return fx.configStore
+func (client *SdkClient) GetStore() cellsSdk.ConfigRefresher {
+	return client.configStore
 }
 
 // GetApiClient simply exposes the Cells REST API client that is hold by the current SDKClient.
-func (fx *SdkClient) GetApiClient() *client.PydioCellsRestAPI {
-	return fx.apiClient
+func (client *SdkClient) GetApiClient() *client.PydioCellsRestAPI {
+	return client.apiClient
 }
 
 // GetS3Client simply exposes the S3 client that is hold by the current SDKClient.
-func (fx *SdkClient) GetS3Client() *s3.Client {
-	return fx.s3Client
+func (client *SdkClient) GetS3Client() *s3.Client {
+	return client.s3Client
 }
 
 // GetBucketName returns the default buck name to be used with the s3 client.
-func (fx *SdkClient) GetBucketName() string {
+func (client *SdkClient) GetBucketName() string {
 	return cellsSdk.DefaultS3Bucket
 }
 

@@ -159,6 +159,11 @@ ENVIRONMENT
 	Run: func(cmd *cobra.Command, args []string) {
 		_ = cmd.Usage()
 	},
+	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+		if sdkClient != nil {
+			sdkClient.Teardown()
+		}
+	},
 }
 
 func configureLogger(logLevel string) (*zap.Logger, error) {
@@ -266,12 +271,8 @@ func setUpEnvironment(ctx context.Context) error {
 		log.Fatal(err)
 	}
 
-	// Also refresh token if required
-	// FIXME
-	// TODO rather launch a clever background thread that will call the refresh if necessary as long as the command runs.
-	if _, err := sdkClient.GetStore().RefreshIfRequired(ctx, c.SdkConfig); err != nil {
-		rest.Log.Fatal("SetUp env: could not refresh authentication token:", err)
-	}
+	sdkClient.Setup(ctx)
+
 	return nil
 }
 

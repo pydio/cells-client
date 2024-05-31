@@ -293,6 +293,7 @@ type CellsConfigStore struct {
 	refreshLock sync.Mutex
 }
 
+// RefreshIfRequired retrieves latest config from the store and launches a refresh if necessary.
 func (store *CellsConfigStore) RefreshIfRequired(ctx context.Context, sdkConfig *cellsSdk.SdkConfig) (bool, error) {
 
 	// No token to refresh
@@ -301,6 +302,8 @@ func (store *CellsConfigStore) RefreshIfRequired(ctx context.Context, sdkConfig 
 	}
 
 	configId := id(sdkConfig)
+
+	Log.Debugf("About to acquire Lock for %s", configId)
 
 	// We can only launch *one* refresh token procedure at a time (and consume the refresh only once)
 	store.refreshLock.Lock()
@@ -318,7 +321,7 @@ func (store *CellsConfigStore) RefreshIfRequired(ctx context.Context, sdkConfig 
 	if err != nil {
 		return false, fmt.Errorf("could not refresh JWT token for %s, cause: %s", configId, err.Error())
 	}
-	// Update values in the given struct (we have a pointer)
+	// Update values in the current config (param is a pointer)
 	sdkConfig.IdToken = storedConf.IdToken
 	sdkConfig.User = storedConf.User
 	sdkConfig.TokenExpiresAt = storedConf.TokenExpiresAt
@@ -326,14 +329,9 @@ func (store *CellsConfigStore) RefreshIfRequired(ctx context.Context, sdkConfig 
 		return false, nil
 	}
 
-	// Store the updated config
-
 	//  Finally, if username has changed. Not sure if it is really relevant here.
 	newId := id(sdkConfig)
-	if newId != configId {
-		// // Set new active config
-		// list.SetActiveConfig(newId)
-		// Delete old config (ignoring any error while deleting)
+	if newId != configId { // Delete old config (ignoring any error while deleting)
 		_ = list.Remove(configId)
 	}
 
@@ -341,6 +339,7 @@ func (store *CellsConfigStore) RefreshIfRequired(ctx context.Context, sdkConfig 
 	if err != nil {
 		return true, fmt.Errorf("could not store updated conf for %s, cause: %s", newId, err.Error())
 	}
+	Log.Debugf("Token for %s has been refreshed", newId)
 	return true, nil
 }
 
@@ -370,12 +369,14 @@ func UpdateConfig(newConf *CecConfig) error {
 
 	// We create a clone that will be persisted without sensitive info
 	persistedConf := CloneConfig(newConf)
-	if err = ConfigToKeyring(persistedConf); err != nil {
-		// Could not save credentials in the keyring: sensitive information are still in clear text.
-		// We warn the user but do not abort the process.
-		fmt.Println(promptui.IconWarn + " " + NoKeyringMsg)
-		// We also force the "Skip Keyring" flag in the config file to be explicit
-		persistedConf.SkipKeyring = true
+	if !newConf.SkipKeyring {
+		if err = ConfigToKeyring(persistedConf); err != nil {
+			// Could not save credentials in the keyring: sensitive information are still in clear text.
+			// We warn the user but do not abort the process.
+			fmt.Println(promptui.IconWarn + " " + NoKeyringMsg)
+			// We also force the "Skip Keyring" flag in the config file to be explicit
+			persistedConf.SkipKeyring = true
+		}
 	}
 
 	cl, err := GetConfigList()
