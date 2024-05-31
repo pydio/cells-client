@@ -12,7 +12,7 @@ var (
 
 	PackageType  string
 	PackageLabel string
-	Version      string
+	Version      = "4.2.0-local"
 )
 
 const (
