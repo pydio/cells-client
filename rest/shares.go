@@ -8,7 +8,7 @@ import (
 	"github.com/pydio/cells-sdk-go/v5/models"
 )
 
-func (fx *SdkClient) CreateSimpleFolderLink(ctx context.Context, targetNodeUuid, label string) (*models.RestShareLink, error) {
+func (client *SdkClient) CreateSimpleFolderLink(ctx context.Context, targetNodeUuid, label string) (*models.RestShareLink, error) {
 
 	perm := []*models.RestShareLinkAccessType{
 		models.NewRestShareLinkAccessType(models.RestShareLinkAccessTypeDownload),
@@ -28,7 +28,7 @@ func (fx *SdkClient) CreateSimpleFolderLink(ctx context.Context, targetNodeUuid,
 		PasswordEnabled: false,
 	})
 
-	resp, err := fx.GetApiClient().ShareService.PutShareLink(params)
+	resp, err := client.GetApiClient().ShareService.PutShareLink(params)
 	if err != nil {
 		return nil, fmt.Errorf("call to PutShareLink for %s has failed, cause: %s", label, err.Error())
 	}

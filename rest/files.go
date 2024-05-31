@@ -10,14 +10,14 @@ import (
 
 const pageSize = 100
 
-func (fx *SdkClient) StatNode(ctx context.Context, pathToFile string) (*models.TreeNode, bool) {
+func (client *SdkClient) StatNode(ctx context.Context, pathToFile string) (*models.TreeNode, bool) {
 	exists := false
 	var node *models.TreeNode
 	e := RetryCallback(func() error {
 		params := &tree_service.HeadNodeParams{}
 		params.SetNode(pathToFile)
 		params.SetContext(ctx)
-		resp, err := fx.GetApiClient().TreeService.HeadNode(params)
+		resp, err := client.GetApiClient().TreeService.HeadNode(params)
 		if err != nil {
 			switch err.(type) {
 			case *tree_service.HeadNodeNotFound:
@@ -39,13 +39,13 @@ func (fx *SdkClient) StatNode(ctx context.Context, pathToFile string) (*models.T
 	return node, exists
 }
 
-func (fx *SdkClient) ListNodesPath(ctx context.Context, path string) ([]string, error) {
+func (client *SdkClient) ListNodesPath(ctx context.Context, path string) ([]string, error) {
 	params := tree_service.NewBulkStatNodesParamsWithContext(ctx)
 	params.Body = &models.RestGetBulkMetaRequest{
 		Limit:     100,
 		NodePaths: []string{path},
 	}
-	res, e := fx.GetApiClient().TreeService.BulkStatNodes(params)
+	res, e := client.GetApiClient().TreeService.BulkStatNodes(params)
 	if e != nil {
 		return nil, e
 	}
@@ -59,7 +59,7 @@ func (fx *SdkClient) ListNodesPath(ctx context.Context, path string) ([]string, 
 	return nodes, nil
 }
 
-func (fx *SdkClient) DeleteNodes(ctx context.Context, paths []string, permanently ...bool) (jobUUIDs []string, e error) {
+func (client *SdkClient) DeleteNodes(ctx context.Context, paths []string, permanently ...bool) (jobUUIDs []string, e error) {
 	if len(paths) == 0 { // List is empty
 		Log.Warnln("called DeleteNodes with an empty list")
 		return
@@ -79,7 +79,7 @@ func (fx *SdkClient) DeleteNodes(ctx context.Context, paths []string, permanentl
 		Nodes:             nn,
 		RemovePermanently: perm,
 	}
-	res, err := fx.GetApiClient().TreeService.DeleteNodes(params)
+	res, err := client.GetApiClient().TreeService.DeleteNodes(params)
 	if err != nil {
 		e = err
 		return
@@ -91,13 +91,13 @@ func (fx *SdkClient) DeleteNodes(ctx context.Context, paths []string, permanentl
 	return
 }
 
-func (fx *SdkClient) GetAllBulkMeta(ctx context.Context, path string) (nodes []*models.TreeNode, err error) {
+func (client *SdkClient) GetAllBulkMeta(ctx context.Context, path string) (nodes []*models.TreeNode, err error) {
 	params := tree_service.NewBulkStatNodesParamsWithContext(ctx)
 	params.Body = &models.RestGetBulkMetaRequest{
 		Limit:     pageSize,
 		NodePaths: []string{path},
 	}
-	res, e := fx.GetApiClient().TreeService.BulkStatNodes(params)
+	res, e := client.GetApiClient().TreeService.BulkStatNodes(params)
 	if e != nil {
 		return nil, e
 	}
@@ -108,7 +108,7 @@ func (fx *SdkClient) GetAllBulkMeta(ctx context.Context, path string) (nodes []*
 		pg := res.Payload.Pagination
 		for i := pageSize; i <= int(pg.Total); i += pageSize {
 			params.Body.Offset = int32(i)
-			res, err = fx.GetApiClient().TreeService.BulkStatNodes(params)
+			res, err = client.GetApiClient().TreeService.BulkStatNodes(params)
 			if err != nil {
 				return
 			}

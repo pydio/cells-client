@@ -11,21 +11,21 @@ import (
 	"github.com/pydio/cells-sdk-go/v5/models"
 )
 
-func (fx *SdkClient) CopyJob(ctx context.Context, jsonParams string) (string, error) {
-	return fx.RunJob(ctx, "copy", jsonParams)
+func (client *SdkClient) CopyJob(ctx context.Context, jsonParams string) (string, error) {
+	return client.RunJob(ctx, "copy", jsonParams)
 }
 
-func (fx *SdkClient) MoveJob(ctx context.Context, jsonParams string) (string, error) {
-	return fx.RunJob(ctx, "move", jsonParams)
+func (client *SdkClient) MoveJob(ctx context.Context, jsonParams string) (string, error) {
+	return client.RunJob(ctx, "move", jsonParams)
 }
 
 // RunJob runs a job.
-func (fx *SdkClient) RunJob(ctx context.Context, jobName string, jsonParams string) (string, error) {
+func (client *SdkClient) RunJob(ctx context.Context, jobName string, jsonParams string) (string, error) {
 	param := jobs_service.NewUserCreateJobParamsWithContext(ctx)
 	param.Body = jobs_service.UserCreateJobBody{JSONParameters: jsonParams}
 	param.JobName = jobName
 
-	job, err := fx.GetApiClient().JobsService.UserCreateJob(param)
+	job, err := client.GetApiClient().JobsService.UserCreateJob(param)
 	if err != nil {
 		return "", err
 	}
@@ -33,14 +33,14 @@ func (fx *SdkClient) RunJob(ctx context.Context, jobName string, jsonParams stri
 }
 
 // GetTaskStatusForJob retrieves the task status, progress and message.
-func (fx *SdkClient) GetTaskStatusForJob(ctx context.Context, jobID string) (status models.JobsTaskStatus, msg string, pg float32, e error) {
+func (client *SdkClient) GetTaskStatusForJob(ctx context.Context, jobID string) (status models.JobsTaskStatus, msg string, pg float32, e error) {
 	body := &models.JobsListJobsRequest{
 		JobIDs:    []string{jobID},
 		LoadTasks: models.NewJobsTaskStatus(models.JobsTaskStatusAny),
 	}
 	params := jobs_service.NewUserListJobsParamsWithContext(ctx)
 	params.Body = body
-	jobs, err := fx.GetApiClient().JobsService.UserListJobs(params)
+	jobs, err := client.GetApiClient().JobsService.UserListJobs(params)
 	if err != nil {
 		e = err
 		return
@@ -62,9 +62,9 @@ func (fx *SdkClient) GetTaskStatusForJob(ctx context.Context, jobID string) (sta
 }
 
 // MonitorJob monitors a job status every second.
-func (fx *SdkClient) MonitorJob(ctx context.Context, JobID string) (err error) {
+func (client *SdkClient) MonitorJob(ctx context.Context, JobID string) (err error) {
 	for {
-		status, _, _, e := fx.GetTaskStatusForJob(ctx, JobID)
+		status, _, _, e := client.GetTaskStatusForJob(ctx, JobID)
 		if e != nil {
 			err = e
 			return

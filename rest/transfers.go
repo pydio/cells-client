@@ -20,11 +20,11 @@ import (
 )
 
 // GetFile retrieves a file from the server in one big download (**no** multipart download for the time being).
-func (fx *SdkClient) GetFile(ctx context.Context, pathToFile string) (io.Reader, int, error) {
-	hO, err := fx.GetS3Client().HeadObject(
+func (client *SdkClient) GetFile(ctx context.Context, pathToFile string) (io.Reader, int, error) {
+	hO, err := client.GetS3Client().HeadObject(
 		ctx,
 		&s3.HeadObjectInput{
-			Bucket: aws.String(fx.GetBucketName()),
+			Bucket: aws.String(client.GetBucketName()),
 			Key:    aws.String(pathToFile),
 		},
 	)
@@ -32,10 +32,10 @@ func (fx *SdkClient) GetFile(ctx context.Context, pathToFile string) (io.Reader,
 		return nil, 0, err
 	}
 
-	obj, err := fx.GetS3Client().GetObject(
+	obj, err := client.GetS3Client().GetObject(
 		ctx,
 		&s3.GetObjectInput{
-			Bucket: aws.String(fx.GetBucketName()),
+			Bucket: aws.String(client.GetBucketName()),
 			Key:    aws.String(pathToFile),
 		},
 	)
@@ -46,7 +46,7 @@ func (fx *SdkClient) GetFile(ctx context.Context, pathToFile string) (io.Reader,
 }
 
 // PutFile upload a local file to the server without using multipart upload.
-func (fx *SdkClient) PutFile(
+func (client *SdkClient) PutFile(
 	ctx context.Context,
 	pathToFile string,
 	content io.ReadSeeker,
@@ -58,10 +58,10 @@ func (fx *SdkClient) PutFile(
 	var obj *s3.PutObjectOutput
 	err := RetryCallback(func() error {
 		var tmpErr error
-		obj, tmpErr = fx.GetS3Client().PutObject(
+		obj, tmpErr = client.GetS3Client().PutObject(
 			ctx,
 			&s3.PutObjectInput{
-				Bucket: aws.String(fx.GetBucketName()),
+				Bucket: aws.String(client.GetBucketName()),
 				Key:    aws.String(pathToFile),
 				Body:   content,
 			},
@@ -69,7 +69,7 @@ func (fx *SdkClient) PutFile(
 		return tmpErr
 	}, 5, 2*time.Second)
 	if err != nil {
-		errMsg := fmt.Errorf("could not put object in bucket %s with key %s, \ncause: %s", fx.GetBucketName(), key, err.Error())
+		errMsg := fmt.Errorf("could not put object in bucket %s with key %s, \ncause: %s", client.GetBucketName(), key, err.Error())
 		if len(errChan) > 0 {
 			errChan[0] <- errMsg
 		}
@@ -80,14 +80,14 @@ func (fx *SdkClient) PutFile(
 		fmt.Println(" ## Waiting for file to be indexed...")
 		// Now stat Node to make sure it is indexed
 		err = RetryCallback(func() error {
-			_, ok := fx.StatNode(ctx, pathToFile)
+			_, ok := client.StatNode(ctx, pathToFile)
 			if !ok {
 				return fmt.Errorf("could not stat node after PutFile operation")
 			}
 			return nil
 		}, 5, 3*time.Second)
 		if err != nil {
-			errMsg := fmt.Errorf("existence check failed for %s in bucket %s\ntimeout after 15s, last error: %s", key, fx.GetBucketName(), err.Error())
+			errMsg := fmt.Errorf("existence check failed for %s in bucket %s\ntimeout after 15s, last error: %s", key, client.GetBucketName(), err.Error())
 			if len(errChan) > 0 {
 				errChan[0] <- errMsg
 			}
@@ -98,7 +98,7 @@ func (fx *SdkClient) PutFile(
 	return obj, nil
 }
 
-func (fx *SdkClient) s3Upload(ctx context.Context, path string,
+func (client *SdkClient) s3Upload(ctx context.Context, path string,
 	content io.ReadSeeker, fSize int64, verbose bool, errChan ...chan error) error {
 
 	ps, err := sdkS3.ComputePartSize(fSize, common.UploadDefaultPartSize, common.UploadMaxPartsNumber)
@@ -116,7 +116,7 @@ func (fx *SdkClient) s3Upload(ctx context.Context, path string,
 		Log.Infof("\tNumber of parts: %d", int64(numParts))
 	}
 
-	uploader := manager.NewUploader(fx.GetS3Client(),
+	uploader := manager.NewUploader(client.GetS3Client(),
 		func(u *manager.Uploader) {
 			u.Concurrency = common.UploadPartsConcurrency
 			u.PartSize = ps
@@ -127,7 +127,7 @@ func (fx *SdkClient) s3Upload(ctx context.Context, path string,
 	uploader.BufferProvider = sdkS3.NewCallbackTransferProvider(path, fSize, ps)
 
 	_, err = uploader.Upload(ctx, &s3.PutObjectInput{
-		Bucket: aws.String(fx.GetBucketName()),
+		Bucket: aws.String(client.GetBucketName()),
 		Key:    aws.String(path),
 		Body:   content,
 	})
