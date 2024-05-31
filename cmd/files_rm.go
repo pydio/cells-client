@@ -10,6 +10,8 @@ import (
 
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
+
+	"github.com/pydio/cells-client/v4/rest"
 )
 
 var (
@@ -112,10 +114,10 @@ EXAMPLES
 		for _, id := range jobUUID {
 			wg.Add(1)
 			go func(id string) {
-				err := sdkClient.MonitorJob(ctx, id)
 				defer wg.Done()
+				err := sdkClient.MonitorJob(ctx, id)
 				if err != nil {
-					log.Printf("could not monitor job, %s\n", id)
+					rest.Log.Warnf("could not monitor job %s: %s", id, err.Error())
 				}
 			}(id)
 		}
