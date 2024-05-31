@@ -351,7 +351,7 @@ func sizeToHuman(size string) string {
 		return "-"
 	}
 	if i, e := strconv.ParseUint(size, 10, 64); e == nil {
-		return humanize.Bytes(i)
+		return humanize.IBytes(i)
 	}
 	return "-"
 }

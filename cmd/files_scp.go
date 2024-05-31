@@ -202,7 +202,7 @@ EXAMPLES
 			pool = rest.NewBarsPool(len(t)+len(c)+len(d) > 1, len(t)+len(c)+len(d), refreshInterval)
 			pool.Start()
 		} else {
-			rest.Log.Infof("After walking the tree, found %d nodes to delete, %d to create and %d transfer", len(d), len(c), len(t))
+			rest.Log.Infof("After walking the tree, found %d nodes to delete, %d to create and %d to transfer", len(d), len(c), len(t))
 		}
 
 		// Delete necessary items

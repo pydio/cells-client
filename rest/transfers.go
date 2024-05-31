@@ -111,9 +111,9 @@ func (fx *SdkClient) s3Upload(ctx context.Context, path string,
 	if verbose {
 		Log.Infof("... Launching upload for %s", path)
 		numParts := math.Ceil(float64(fSize) / float64(ps))
-		fmt.Println("\tSize:", humanize.Bytes(uint64(fSize)))
-		fmt.Println("\tPart Size:", humanize.Bytes(uint64(ps)))
-		fmt.Println("\tNumber of parts:", numParts)
+		Log.Infof("\tSize: %s", humanize.IBytes(uint64(fSize)))
+		Log.Infof("\tPart Size: %s", humanize.IBytes(uint64(ps)))
+		Log.Infof("\tNumber of parts: %d", int64(numParts))
 	}
 
 	uploader := manager.NewUploader(fx.GetS3Client(),
