@@ -24,7 +24,8 @@ import (
 var (
 	// defaultCellsStore holds a static singleton that ensure we only have *one* source of truth
 	// to trigger OAuth refresh
-	// TODO make it more clever to be able to launch more than one command in parallel from the same machine.
+	// TODO Make the cells store more clever to be able to launch more than one command in parallel from the same machine.
+	//  In current state we might get issues with the refresh procedure
 	defaultCellsStore cellsSdk.ConfigRefresher
 	cellsStoreInit    = &sync.Once{}
 )
@@ -78,6 +79,23 @@ func NewSdkClient(ctx context.Context, config *CecConfig) (*SdkClient, error) {
 	}, nil
 }
 
+// ConfigureS3Logger reset the current s3 client that is hold in the SDK client, adding a logger that is configured via the passed flags.
+func (client *SdkClient) ConfigureS3Logger(ctx context.Context, s3Flags string) error {
+
+	options := buildS3Options(client.configStore)
+	if logOption := optionFromS3Flags(s3Flags); logOption != nil {
+		options = append(options, logOption)
+		// TODO handle error
+	}
+
+	if cfg, e := sdkS3.LoadConfig(ctx, client.currentConfig.SdkConfig, options...); e != nil {
+		return e
+	} else {
+		client.s3Client = sdkS3.NewClientFromConfig(cfg, client.currentConfig.Url)
+	}
+	return nil
+}
+
 // Setup prepare the client after it has been created, especially refreshes the token in case of OAuth
 func (client *SdkClient) Setup(ctx context.Context) {
 
@@ -106,7 +124,6 @@ func (client *SdkClient) Setup(ctx context.Context) {
 			}
 		}()
 	}
-
 }
 
 // Teardown clean resources before terminating.
@@ -119,6 +136,11 @@ func (client *SdkClient) Teardown() {
 // GetConfig simply exposes the current SdkConfig
 func (client *SdkClient) GetConfig() *cellsSdk.SdkConfig {
 	return client.currentConfig.SdkConfig
+}
+
+// GetCecConfig simply exposes the current CecConfig
+func (client *SdkClient) GetCecConfig() *CecConfig {
+	return client.currentConfig
 }
 
 // GetStore simply exposes the store that centralize credentials (and performs OAuth refresh).
@@ -143,16 +165,24 @@ func (client *SdkClient) GetBucketName() string {
 
 // doGetS3Client creates a new S3 client based on the given config to transfer files to/from a distant Cells server.
 func doGetS3Client(ctx context.Context, configStore cellsSdk.ConfigRefresher, conf *cellsSdk.SdkConfig) (*s3.Client, error) {
+	options := buildS3Options(configStore)
+	if logOption := configureLogMode(); logOption != nil {
+		options = append(options, logOption)
+	}
+	if cfg, e := sdkS3.LoadConfig(ctx, conf, options...); e != nil {
+		return nil, e
+	} else {
+		return sdkS3.NewClientFromConfig(cfg, conf.Url), nil
+	}
+}
+
+func buildS3Options(configStore cellsSdk.ConfigRefresher) []interface{} {
 	var options []interface{}
 	options = append(options, sdkS3.WithCellsConfigStore(configStore))
 
 	if int(common.S3RequestTimeout) > 0 {
 		to := time.Duration(int(common.S3RequestTimeout)) * time.Second
 		options = append(options, sdkHttp.WithTimout(to))
-	}
-
-	if logOption := configureLogMode(); logOption != nil {
-		options = append(options, logOption)
 	}
 
 	if common.TransferRetryMaxBackoff != common.TransferRetryMaxBackoffDefault ||
@@ -167,13 +197,24 @@ func doGetS3Client(ctx context.Context, configStore cellsSdk.ConfigRefresher, co
 			),
 		)
 	}
+	return options
+}
 
-	cfg, e := sdkS3.LoadConfig(ctx, conf, options...)
-	if e != nil {
-		return nil, e
+func optionFromS3Flags(s3Flags string) cellsSdk.AwsConfigOption {
+
+	// input := "Retries | Signing | Response | "
+	// For the record was:
+	// - verbose: 	aws.LogRetries | aws.LogRequest | aws.LogSigning
+	//	- very verbose: aws.LogSigning | aws.LogResponseEventMessage |
+	//			aws.LogRetries | aws.LogRequest | aws.LogResponse |
+	//			aws.LogDeprecatedUsage | aws.LogRequestEventMessage
+	// 2 more: aws.LogRequestWithBody | aws.LogResponseWithBody
+
+	if s3Flags == "" {
+		return nil
 	}
-
-	return sdkS3.NewClientFromConfig(cfg, conf.Url), nil
+	logMode := getLogMode(s3Flags)
+	return sdkS3.WithLogger(printLnWriter{}, logMode)
 }
 
 // TODO Work in progress: finalize and clean
@@ -182,10 +223,12 @@ func configureLogMode() cellsSdk.AwsConfigOption {
 	case common.Info:
 		return nil
 	case common.Debug:
-		logMode := aws.LogSigning | aws.LogRetries
+		logMode := aws.LogRetries | aws.LogRequest // | aws.LogSigning
 		return sdkS3.WithLogger(printLnWriter{}, logMode)
 	case common.Trace:
-		logMode := aws.LogSigning | aws.LogRetries | aws.LogRequest | aws.LogResponse | aws.LogDeprecatedUsage | aws.LogRequestEventMessage | aws.LogResponseEventMessage
+		logMode := aws.LogSigning |
+			aws.LogRetries | aws.LogRequest | aws.LogResponse |
+			aws.LogDeprecatedUsage | aws.LogRequestEventMessage | aws.LogResponseEventMessage
 		return sdkS3.WithLogger(printLnWriter{}, logMode)
 	default:
 		log.Fatal("unsupported log level:", common.CurrentLogLevel)

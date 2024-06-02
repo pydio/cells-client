@@ -1,8 +1,11 @@
 package rest
 
 import (
+	"fmt"
 	"os"
+	"strings"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -70,4 +73,36 @@ func customInfoLevelEncoder(level zapcore.Level, enc zapcore.PrimitiveArrayEncod
 		level = zapcore.ErrorLevel
 	}
 	enc.AppendString(level.CapitalString())
+}
+
+// S3 SDK logging:
+
+// Map of log category strings to their corresponding aws.ClientLogMode constants
+var logCategoryMap = map[string]aws.ClientLogMode{
+	"Signing":              aws.LogSigning,
+	"Retries":              aws.LogRetries,
+	"Request":              aws.LogRequest,
+	"RequestWithBody":      aws.LogRequestWithBody,
+	"Response":             aws.LogResponse,
+	"ResponseWithBody":     aws.LogResponseWithBody,
+	"DeprecatedUsage":      aws.LogDeprecatedUsage,
+	"RequestEventMessage":  aws.LogRequestEventMessage,
+	"ResponseEventMessage": aws.LogResponseEventMessage,
+}
+
+func getLogMode(input string) aws.ClientLogMode {
+	logMode := aws.ClientLogMode(0)
+	categories := strings.Split(input, "|")
+	for _, category := range categories {
+		trimmedCategory := strings.TrimSpace(category)
+		if trimmedCategory == "" {
+			continue // Skip empty categories
+		}
+		if mode, exists := logCategoryMap[trimmedCategory]; exists {
+			logMode |= mode
+		} else {
+			fmt.Printf("Unknown log category: %s\n", trimmedCategory)
+		}
+	}
+	return logMode
 }

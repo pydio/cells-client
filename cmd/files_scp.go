@@ -23,6 +23,13 @@ import (
 const (
 	standardPrefix   = "cells://"
 	completionPrefix = "cells//"
+
+	// SDK Debug Flags for verbose modes
+	// verbose: 	aws.LogRetries | aws.LogRequest | aws.LogSigning
+	vFlags = "Retries | Request | Signing"
+	//	very verbose
+	vvFlags = "Retries | Request | Response | Signing | ResponseEventMessage | DeprecatedUsage | RequestEventMessage"
+	// 2 more: aws.LogRequestWithBody | aws.LogResponseWithBody
 )
 
 var (
@@ -32,6 +39,7 @@ var (
 	scpVerbose       bool
 	scpVeryVerbose   bool
 	scpMaxBackoffStr string
+	scpS3DebugFlags  string
 )
 
 var scpFiles = &cobra.Command{
@@ -90,6 +98,7 @@ EXAMPLES
 		scpVerbose = viper.GetBool("verbose")
 		scpVeryVerbose = viper.GetBool("very-verbose")
 		scpMaxBackoffStr = viper.GetString("retry-max-backoff")
+		scpS3DebugFlags = viper.GetString("multipart-debug-flags")
 		common.UploadMaxPartsNumber = viper.GetInt64("max-parts-number")
 		common.UploadDefaultPartSize = viper.GetInt64("part-size")
 		common.UploadPartsConcurrency = viper.GetInt("parts-concurrency")
@@ -100,20 +109,26 @@ EXAMPLES
 		// Handle aliases
 		if scpVeryVerbose {
 			scpNoProgress = true
-			common.CurrentLogLevel = common.Trace
+			scpS3DebugFlags = vvFlags
 			logger := rest.SetLogger(zapcore.DebugLevel)
 			defer func(logger *zap.Logger) {
 				_ = logger.Sync()
 			}(logger)
 		} else if scpVerbose {
 			scpNoProgress = true
-			common.CurrentLogLevel = common.Debug
+			scpS3DebugFlags = vFlags
 			logger := rest.SetLogger(zapcore.InfoLevel)
 			defer func(logger *zap.Logger) {
 				_ = logger.Sync()
 			}(logger)
-		} else {
-			common.CurrentLogLevel = common.Info
+		}
+
+		if scpS3DebugFlags != "" {
+			// We force recreation of the S3Client, to ensure the debug flags are correctly set
+			e := sdkClient.ConfigureS3Logger(ctx, scpS3DebugFlags)
+			if e != nil {
+				rest.Log.Fatal(e)
+			}
 		}
 
 		if scpMaxBackoffStr != "" {
@@ -158,10 +173,8 @@ EXAMPLES
 			}
 			rest.Log.Infof("Uploading %s to %s", srcPath, standardPrefix+targetPath)
 		} else { // Download
-
 			srcPath = strings.TrimPrefix(from, scpCurrentPrefix)
 			srcName := filepath.Base(srcPath)
-
 			targetPath, err = filepath.Abs(to)
 			if err != nil {
 				rest.Log.Fatalf("%s is not a valid destination: %s", to, err)
@@ -260,6 +273,7 @@ func init() {
 	flags.Int("parts-concurrency", 3, "Number of concurrent part uploads.")
 	flags.Bool("skip-md5", false, "Do not compute md5 (for files bigger than 5GB, it is not computed by default for smaller files).")
 	flags.Int64("multipart-threshold", int64(100), "Files bigger than this size (in MB) will be uploaded using Multipart Upload.")
+	flags.String("multipart-debug-flags", "", "Define flags to fine tune debug messages emitted by the underlying AWS SDK during multi-part uploads")
 	flags.Int("retry-max-attempts", common.TransferRetryMaxAttemptsDefault, "Limit the number of attempts before aborting. '0' allows the SDK to retry all retryable errors until the request succeeds, or a non-retryable error is thrown.")
 	flags.String("retry-max-backoff", common.TransferRetryMaxBackoffDefault.String(), "Maximum duration to wait after a part transfer fails, before trying again, expressed in Go duration format, e.g., '20s' or '3m'.")
 
