@@ -34,8 +34,8 @@ var (
 		"help", "config", "version", "completion", "oauth", "clear", "doc", "update", "token", "tools",
 		// legacy
 		"configure",
-		// TODO Really useful ?
-		"--help",
+		// Useless
+		// "--help",
 	}
 
 	sdkClient *rest.SdkClient
@@ -163,7 +163,7 @@ ENVIRONMENT
 					rest.Log.Fatalf("unexpected error during initialisation phase: %s", e.Error())
 				}
 				// TODO Directly launch necessary configure command
-				rest.Log.Fatalf("No configuration has been found, please make sure to run '%s config add' first.\n", os.Args[0])
+				rest.Log.Fatalf("no configuration has been found, please make sure to run '%s config add' first", os.Args[0])
 			}
 		}
 	},
