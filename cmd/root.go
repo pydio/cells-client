@@ -31,9 +31,11 @@ const (
 var (
 	// These commands and respective children do not need an already configured environment.
 	infoCommands = []string{
-		"help", "--help", "config", "version", "completion", "oauth", "clear", "doc", "update", "token", "tools",
+		"help", "config", "version", "completion", "oauth", "clear", "doc", "update", "token", "tools",
 		// legacy
 		"configure",
+		// TODO Really useful ?
+		"--help",
 	}
 
 	sdkClient *rest.SdkClient
@@ -144,6 +146,16 @@ ENVIRONMENT
 		skipKeyring = viper.GetBool("skip-keyring")
 		skipVerify = viper.GetBool("skip-verify")
 
+		if viper.GetBool("no_cache") {
+			noCache = true
+		}
+		if viper.GetBool("skip_keyring") {
+			skipKeyring = true
+		}
+		if viper.GetBool("skip_verify") {
+			skipVerify = true
+		}
+
 		if needSetup {
 			e := setUpEnvironment(cmd.Context())
 			if e != nil {
@@ -205,12 +217,15 @@ func init() {
 	flags.Bool("skip-keyring", false, "Explicitly tell the tool to *NOT* try to use a keyring, even if present. Warning: sensitive information will be stored in clear text")
 	flags.Bool("no-cache", false, "Force token refresh at each call. This might slow down scripts with many calls")
 
+	//
+	replaceMap := map[string]string{}
 	// Keep backward compatibility until v5 for old flag names
-	replaceMap := map[string]string{
-		"skip_verify":  "skip-verify",
-		"skip_keyring": "skip-keyring",
-		"no_cache":     "no-cache",
-	}
+	// Does not work as expected -> skipped
+	//replaceMap := map[string]string{
+	//	"skip_verify":  "skip-verify",
+	//	"skip_keyring": "skip-keyring",
+	//	"no_cache":     "no-cache",
+	//}
 
 	flags.Bool("skip_verify", false, "Deprecated, rather use skip-verify flag")
 	flags.Bool("skip_keyring", false, "Deprecated, rather use skip-keyring flag")

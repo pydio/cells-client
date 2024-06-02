@@ -25,11 +25,12 @@ const (
 	completionPrefix = "cells//"
 
 	// SDK Debug Flags for verbose modes
-	// verbose: 	aws.LogRetries | aws.LogRequest | aws.LogSigning
-	vFlags = "Retries | Request | Signing"
-	//	very verbose
+	// FIXME should we keep the Log prefix to make it easier to find info about the flags on the internet?
+	// verbose
+	vFlags = "Retries | Signing" // | Request
+	// very verbose
 	vvFlags = "Retries | Request | Response | Signing | ResponseEventMessage | DeprecatedUsage | RequestEventMessage"
-	// 2 more: aws.LogRequestWithBody | aws.LogResponseWithBody
+	// For the record, there are 2 more flags: aws.LogRequestWithBody | aws.LogResponseWithBody
 )
 
 var (
@@ -105,6 +106,35 @@ EXAMPLES
 		common.UploadSkipMD5 = viper.GetBool("skip-md5")
 		common.UploadSwitchMultipart = viper.GetInt64("multipart-threshold")
 		common.TransferRetryMaxAttempts = viper.GetInt("retry-max-attempts")
+
+		// Keep backward retro-compatibility until v5 for old flags
+		if viper.GetBool("no_progress") {
+			scpNoProgress = true
+		}
+		if viper.GetBool("very_verbose") {
+			scpVeryVerbose = true
+		}
+		if viper.GetBool("skip_md5") {
+			common.UploadSkipMD5 = true
+		}
+		if c := viper.GetInt("parts_concurrency"); c > -1 {
+			common.UploadPartsConcurrency = c
+		}
+		if c := viper.GetInt("retry_max_attempts"); c > -1 {
+			common.TransferRetryMaxAttempts = c
+		}
+		if c := viper.GetInt64("max_parts_number"); c > -1 {
+			common.UploadMaxPartsNumber = c
+		}
+		if c := viper.GetInt64("part_size"); c > -1 {
+			common.UploadDefaultPartSize = c
+		}
+		if c := viper.GetInt64("multipart_threshold"); c > -1 {
+			common.UploadSwitchMultipart = c
+		}
+		if c := viper.GetString("retry_max_backoff"); c != "" {
+			scpMaxBackoffStr = c
+		}
 
 		// Handle aliases
 		if scpVeryVerbose {
@@ -279,26 +309,31 @@ func init() {
 
 	flags.Bool("no_progress", false, "Deprecated, rather use no-progress flag")
 	flags.Bool("very_verbose", false, "Deprecated, rather use very-verbose flag")
-	flags.Int64("max_parts_number", int64(5000), "Deprecated, rather use max-parts-number flag")
-	flags.Int64("part_size", int64(50), "Deprecated, rather use part-size flag")
-	flags.Int("parts_concurrency", 3, "Deprecated, rather use parts-concurrency flag")
+	flags.Int64("max_parts_number", int64(-1), "Deprecated, rather use max-parts-number flag")
+	flags.Int64("part_size", int64(-1), "Deprecated, rather use part-size flag")
+	flags.Int("parts_concurrency", -1, "Deprecated, rather use parts-concurrency flag")
 	flags.Bool("skip_md5", false, "Deprecated, rather use skip-md5 flag")
-	flags.Int64("multipart_threshold", int64(100), "Deprecated, rather use multipart-threshold flag")
-	flags.Int("retry_max_attempts", common.TransferRetryMaxAttemptsDefault, "Deprecated, rather use retry-max-attempts flag")
-	flags.String("retry_max_backoff", common.TransferRetryMaxBackoffDefault.String(), "Deprecated, rather use retry-max-backoff flag")
+	flags.Int64("multipart_threshold", int64(-1), "Deprecated, rather use multipart-threshold flag")
+	flags.Int("retry_max_attempts", -1, "Deprecated, rather use retry-max-attempts flag")
+	flags.String("retry_max_backoff", "", "Deprecated, rather use retry-max-backoff flag")
 
 	// Keep backward compatibility until v5 for old flag names
-	replaceMap := map[string]string{
-		"no_progress":         "no-progress",
-		"very_verbose":        "very-verbose",
-		"max_parts_number":    "max-parts-number",
-		"part_size":           "part-size",
-		"parts_concurrency":   "parts-concurrency",
-		"skip_md5":            "skip-md5",
-		"multipart_threshold": "multipart-threshold",
-		"retry_max_attempts":  "retry-max-attempts",
-		"retry_max_backoff":   "retry-max-backoff",
-	}
+	// This does not work as expected, default from old command overwrite passed value from new flag
+	//replaceMap := map[string]string{
+	//	"no_progress": "no-progress",
+	//	//"no-progress":         "no_progress",
+	//	"very_verbose":        "very-verbose",
+	//	"max_parts_number":    "max-parts-number",
+	//	"part_size":           "part-size",
+	//	"parts_concurrency":   "parts-concurrency",
+	//	"skip_md5":            "skip-md5",
+	//	"multipart_threshold": "multipart-threshold",
+	//	"retry_max_attempts":  "retry-max-attempts",
+	//	"retry_max_backoff":   "retry-max-backoff",
+	//}
+	// We pass an empty map and do retrocompatibility "manually" when retrieving the flags
+	replaceMap := map[string]string{}
+
 	if os.Getenv(EnvDisplayHiddenFlags) == "" {
 		_ = flags.MarkHidden("no_progress")
 		_ = flags.MarkHidden("very_verbose")
@@ -310,9 +345,7 @@ func init() {
 		_ = flags.MarkHidden("retry_max_attempts")
 		_ = flags.MarkHidden("retry_max_backoff")
 	}
-
 	bindViperFlags(flags, replaceMap)
-
 	RootCmd.AddCommand(scpFiles)
 }
 
