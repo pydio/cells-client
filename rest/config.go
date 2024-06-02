@@ -303,8 +303,6 @@ func (store *CellsConfigStore) RefreshIfRequired(ctx context.Context, sdkConfig 
 
 	configId := id(sdkConfig)
 
-	Log.Debugf("About to acquire Lock for %s", configId)
-
 	// We can only launch *one* refresh token procedure at a time (and consume the refresh only once)
 	store.refreshLock.Lock()
 	defer store.refreshLock.Unlock()

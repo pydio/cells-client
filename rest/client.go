@@ -112,7 +112,7 @@ func (client *SdkClient) Setup(ctx context.Context) {
 			for {
 				select {
 				case <-ticker.C:
-					Log.Infof("About to check refreshment for %s", id(client.currentConfig.SdkConfig))
+					Log.Debugf("About to check refreshment for %s", id(client.currentConfig.SdkConfig))
 					if _, err := client.GetStore().RefreshIfRequired(ctx, client.currentConfig.SdkConfig); err != nil {
 						Log.Errorf("could not refresh authentication token: %s", err)
 						close(client.stopRefreshChan)

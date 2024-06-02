@@ -614,7 +614,7 @@ func (c *CrawlNode) createRemoteFolders(target *CrawlNode, toCreateDirs []*Crawl
 				pool.Done()
 			}
 		} else {
-			Log.Infof("... Created %d folders on remote server\n", end)
+			Log.Infof("... Created %d folders on remote server", end)
 		}
 	}
 	return nil
