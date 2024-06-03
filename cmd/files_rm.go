@@ -124,15 +124,15 @@ EXAMPLES
 
 		if rmPermanently {
 			if len(targetNodes) == 1 {
-				cmd.Println("Node has been permanently removed")
+				rest.Log.Infoln("Node has been permanently removed")
 			} else {
-				cmd.Println("Nodes have been permanently removed")
+				rest.Log.Infoln("Nodes have been permanently removed")
 			}
 		} else {
 			if len(targetNodes) == 1 {
-				cmd.Println("Node has been moved to the Recycle Bin")
+				rest.Log.Infoln("Node has been moved to the Recycle Bin")
 			} else {
-				cmd.Println("Nodes have been moved to the Recycle Bin")
+				rest.Log.Infoln("Nodes have been moved to the Recycle Bin")
 			}
 		}
 	},

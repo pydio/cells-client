@@ -433,7 +433,7 @@ func (c *CrawlNode) TransferAll(ctx context.Context, dd []*CrawlNode, pool *Bars
 					if len(errs) > 0 && IsDebugEnabled() {
 						Log.Errorf("... Transfer for %s aborted with error: %s", src.FullPath, errs[0].Error())
 					} else {
-						Log.Debugf("... Transfer for %s terminated", src.FullPath)
+						Log.Infof("... Transfer for %s terminated", src.FullPath)
 					}
 				}
 				wg.Done()

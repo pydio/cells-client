@@ -267,18 +267,18 @@ EXAMPLES
 
 		// UPLOAD / DOWNLOAD FILES
 		if scpNoProgress {
-			rest.Log.Infof("... Now transferring files")
+			rest.Log.Infof("Now transferring files")
 		}
 
 		errs := targetNode.TransferAll(ctx, t, pool)
 		if len(errs) > 0 {
-			rest.Log.Infof("\n... Transfer aborted after %d errors:", len(errs))
+			rest.Log.Infof("\nTransfer aborted after %d errors:", len(errs))
 			for i, currErr := range errs {
 				rest.Log.Infof("\t#%d: %s\n", i+1, currErr)
 			}
 			os.Exit(1)
 		} else {
-			rest.Log.Infoln("... Transfer terminated")
+			rest.Log.Infoln("Transfer terminated")
 		}
 	},
 }
@@ -314,7 +314,6 @@ func init() {
 	// This does not work as expected, default from old command overwrite passed value from new flag
 	//replaceMap := map[string]string{
 	//	"no_progress": "no-progress",
-	//	//"no-progress":         "no_progress",
 	//	"very_verbose":        "very-verbose",
 	//	"max_parts_number":    "max-parts-number",
 	//	"part_size":           "part-size",
