@@ -15,8 +15,6 @@ import (
 	"github.com/dustin/go-humanize"
 
 	sdkS3 "github.com/pydio/cells-sdk-go/v5/transport/s3"
-
-	"github.com/pydio/cells-client/v4/common"
 )
 
 // GetFile retrieves a file from the server in one big download (**no** multipart download for the time being).
@@ -101,7 +99,7 @@ func (client *SdkClient) PutFile(
 func (client *SdkClient) s3Upload(ctx context.Context, path string,
 	content io.ReadSeeker, fSize int64, verbose bool, errChan ...chan error) error {
 
-	ps, err := sdkS3.ComputePartSize(fSize, common.UploadDefaultPartSize, common.UploadMaxPartsNumber)
+	ps, err := sdkS3.ComputePartSize(fSize, UploadDefaultPartSize, UploadMaxPartsNumber)
 	if err != nil {
 		if errChan != nil {
 			errChan[0] <- err
@@ -118,7 +116,7 @@ func (client *SdkClient) s3Upload(ctx context.Context, path string,
 
 	uploader := manager.NewUploader(client.GetS3Client(),
 		func(u *manager.Uploader) {
-			u.Concurrency = common.UploadPartsConcurrency
+			u.Concurrency = UploadPartsConcurrency
 			u.PartSize = ps
 		},
 	)

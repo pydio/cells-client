@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path"
 	"strings"
@@ -55,7 +54,7 @@ EXAMPLE
 		if path.Base(fromPath) == "*" {
 			nodes, err := sdkClient.ListNodesPath(cmd.Context(), fromPath)
 			if err != nil {
-				log.Fatalf("Preparing grouped copy, could not list all nodes under %s, cause: %s", path.Dir(fromPath), err.Error())
+				rest.Log.Fatalf("Preparing grouped copy, could not list all nodes under %s, cause: %s", path.Dir(fromPath), err.Error())
 			}
 			sourceNodes = nodes
 		} else if strings.HasSuffix(path.Base(fromPath), "*") {
@@ -72,18 +71,18 @@ EXAMPLE
 				// target is a folder as expected nothing to do
 			} else {
 				// Target is an existing file, we throw an error for the time being
-				log.Fatalf("A file already exists at %s. \nThe cells-client does not yet handle this case. If you want to overwrite, first delete the existing target file.", toPath)
+				rest.Log.Fatalf("A file already exists at %s. \nThe cells-client does not yet handle this case. If you want to overwrite, first delete the existing target file.", toPath)
 			}
 		} else { // We assume we have been given full path including target file name
 			parPath, _ := path.Split(toPath)
 			if parPath == "" {
-				log.Fatalf("Target location %s does not exist on server, double check your parameters.", toPath)
+				rest.Log.Fatalf("Target location %s does not exist on server, double check your parameters.", toPath)
 			}
 			targetNode, targetExists := sdkClient.StatNode(cmd.Context(), parPath)
 			if !targetExists {
-				log.Fatalf("Parent target location %s does not exist on server, double check your parameters.", parPath)
+				rest.Log.Fatalf("Parent target location %s does not exist on server, double check your parameters.", parPath)
 			} else if *targetNode.Type != models.TreeNodeTypeCOLLECTION {
-				log.Fatalf("Parent target location %s exists on server but is not a folder. It cannot be used as a copy target location.", parPath)
+				rest.Log.Fatalf("Parent target location %s exists on server but is not a folder. It cannot be used as a copy target location.", parPath)
 			}
 			// parent exists and is a folder => we assume we have been passed a full target path including target file name.
 			targetParent = false
@@ -93,12 +92,12 @@ EXAMPLE
 		params := rest.BuildParams(sourceNodes, toPath, targetParent)
 		jobID, err := sdkClient.CopyJob(cmd.Context(), params)
 		if err != nil {
-			log.Fatalln("could not run job:", err.Error())
+			rest.Log.Fatalf("could not launch copy job to %s: %s", toPath, err.Error())
 		}
 
 		err = sdkClient.MonitorJob(cmd.Context(), jobID)
 		if err != nil {
-			log.Fatalln("could not monitor job", err.Error())
+			rest.Log.Warnf("could not monitor copy: %s", err.Error())
 		}
 	},
 }

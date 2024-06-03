@@ -3,12 +3,10 @@ package rest
 import (
 	"context"
 	"fmt"
-	"log"
 	"runtime"
 	"sync"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/go-openapi/strfmt"
 
@@ -21,7 +19,24 @@ import (
 	"github.com/pydio/cells-client/v4/common"
 )
 
+const (
+	TransferRetryMaxAttemptsDefault = 3
+	TransferRetryMaxBackoffDefault  = time.Second * 3
+)
+
 var (
+	UploadSwitchMultipart = int64(100)
+	UploadDefaultPartSize = int64(50)
+	UploadMaxPartsNumber  = int64(5000)
+
+	TransferRetryMaxAttempts = TransferRetryMaxAttemptsDefault
+	TransferRetryMaxBackoff  = TransferRetryMaxBackoffDefault
+
+	UploadPartsSteps       = int64(10 * 1024 * 1024)
+	UploadPartsConcurrency = 3
+	UploadSkipMD5          = false
+	S3RequestTimeout       = int64(-1)
+
 	// defaultCellsStore holds a static singleton that ensure we only have *one* source of truth
 	// to trigger OAuth refresh
 	// TODO Make the cells store more clever to be able to launch more than one command in parallel from the same machine.
@@ -166,9 +181,9 @@ func (client *SdkClient) GetBucketName() string {
 // doGetS3Client creates a new S3 client based on the given config to transfer files to/from a distant Cells server.
 func doGetS3Client(ctx context.Context, configStore cellsSdk.ConfigRefresher, conf *cellsSdk.SdkConfig) (*s3.Client, error) {
 	options := buildS3Options(configStore)
-	if logOption := configureLogMode(); logOption != nil {
-		options = append(options, logOption)
-	}
+	//if logOption := configureLogMode(); logOption != nil {
+	//	options = append(options, logOption)
+	//}
 	if cfg, e := sdkS3.LoadConfig(ctx, conf, options...); e != nil {
 		return nil, e
 	} else {
@@ -180,19 +195,19 @@ func buildS3Options(configStore cellsSdk.ConfigRefresher) []interface{} {
 	var options []interface{}
 	options = append(options, sdkS3.WithCellsConfigStore(configStore))
 
-	if int(common.S3RequestTimeout) > 0 {
-		to := time.Duration(int(common.S3RequestTimeout)) * time.Second
+	if int(S3RequestTimeout) > 0 {
+		to := time.Duration(int(S3RequestTimeout)) * time.Second
 		options = append(options, sdkHttp.WithTimout(to))
 	}
 
-	if common.TransferRetryMaxBackoff != common.TransferRetryMaxBackoffDefault ||
-		common.TransferRetryMaxAttempts != common.TransferRetryMaxAttemptsDefault {
+	if TransferRetryMaxBackoff != TransferRetryMaxBackoffDefault ||
+		TransferRetryMaxAttempts != TransferRetryMaxAttemptsDefault {
 		// TODO finalize addition of extra error codes that must be seen as "retry-able"
 		options = append(
 			options,
 			sdkS3.WithCustomRetry(
-				common.TransferRetryMaxAttempts,
-				common.TransferRetryMaxBackoff,
+				TransferRetryMaxAttempts,
+				TransferRetryMaxBackoff,
 				"ClientDisconnected",
 			),
 		)
@@ -217,24 +232,24 @@ func optionFromS3Flags(s3Flags string) cellsSdk.AwsConfigOption {
 	return sdkS3.WithLogger(printLnWriter{}, logMode)
 }
 
-// TODO Work in progress: finalize and clean
-func configureLogMode() cellsSdk.AwsConfigOption {
-	switch common.CurrentLogLevel {
-	case common.Info:
-		return nil
-	case common.Debug:
-		logMode := aws.LogRetries | aws.LogRequest // | aws.LogSigning
-		return sdkS3.WithLogger(printLnWriter{}, logMode)
-	case common.Trace:
-		logMode := aws.LogSigning |
-			aws.LogRetries | aws.LogRequest | aws.LogResponse |
-			aws.LogDeprecatedUsage | aws.LogRequestEventMessage | aws.LogResponseEventMessage
-		return sdkS3.WithLogger(printLnWriter{}, logMode)
-	default:
-		log.Fatal("unsupported log level:", common.CurrentLogLevel)
-	}
-	return nil
-}
+//// TODO Work in progress: finalize and clean
+//func configureLogMode() cellsSdk.AwsConfigOption {
+//	switch common.CurrentLogLevel {
+//	case common.Info:
+//		return nil
+//	case common.Debug:
+//		logMode := aws.LogRetries | aws.LogRequest // | aws.LogSigning
+//		return sdkS3.WithLogger(printLnWriter{}, logMode)
+//	case common.Trace:
+//		logMode := aws.LogSigning |
+//			aws.LogRetries | aws.LogRequest | aws.LogResponse |
+//			aws.LogDeprecatedUsage | aws.LogRequestEventMessage | aws.LogResponseEventMessage
+//		return sdkS3.WithLogger(printLnWriter{}, logMode)
+//	default:
+//		log.Fatal("unsupported log level:", common.CurrentLogLevel)
+//	}
+//	return nil
+//}
 
 type printLnWriter struct{}
 

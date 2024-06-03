@@ -1,18 +1,7 @@
 package common
 
 import (
-	"time"
-
 	cellsSdk "github.com/pydio/cells-sdk-go/v5"
-)
-
-var (
-	// AppName stores the technical name of the Cells Client application.
-	AppName = "cells-client"
-
-	PackageType  string
-	PackageLabel string
-	Version      = "4.2.0-local"
 )
 
 const (
@@ -64,34 +53,4 @@ const (
 	LegacyCecConfigAuthTypePat   = "Personal Access Token"
 	LegacyCecConfigAuthTypeBasic = "Client Credentials"
 	LegacyCecConfigAuthTypeOAuth = "OAuth2"
-)
-
-type LogLevel int
-
-const (
-	Trace LogLevel = iota
-	Debug
-	Info
-	Warn
-	Error
-	Fatal
-
-	TransferRetryMaxAttemptsDefault = 3
-	TransferRetryMaxBackoffDefault  = time.Second * 3
-)
-
-var (
-	UploadSwitchMultipart = int64(100)
-	UploadDefaultPartSize = int64(50)
-	UploadMaxPartsNumber  = int64(5000)
-
-	TransferRetryMaxAttempts = TransferRetryMaxAttemptsDefault
-	TransferRetryMaxBackoff  = TransferRetryMaxBackoffDefault
-
-	UploadPartsSteps       = int64(10 * 1024 * 1024)
-	UploadPartsConcurrency = 3
-	UploadSkipMD5          = false
-	S3RequestTimeout       = int64(-1)
-
-	CurrentLogLevel = Info
 )

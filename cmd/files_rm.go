@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-	"log"
 	"os"
 	"path"
 	"strings"
@@ -65,10 +63,10 @@ EXAMPLES
 	Run: func(cmd *cobra.Command, args []string) {
 
 		// Ask for user approval before deleting
-		p := promptui.Select{Label: "Are you sure", Items: []string{"No", "Yes"}}
 		if !rmForce {
+			p := promptui.Select{Label: "Are you sure", Items: []string{"No", "Yes"}}
 			if _, resp, e := p.Run(); resp == "No" && e == nil {
-				log.Println("Nothing will be deleted")
+				cmd.Println(promptui.IconBad, "Aborted by user")
 				return
 			}
 		}
@@ -77,7 +75,8 @@ EXAMPLES
 		for _, arg := range args {
 			_, exists := sdkClient.StatNode(ctx, strings.TrimRight(arg, rmWildcardChar))
 			if !exists {
-				log.Printf("Node not found %v, could not delete\n", arg)
+				rest.Log.Warnf("Node %s not found: it could not be deleted", arg)
+				continue
 			}
 			if path.Base(arg) == rmWildcardChar {
 				dir, _ := path.Split(arg)
@@ -92,7 +91,7 @@ EXAMPLES
 				}
 
 				if err != nil {
-					log.Fatalf("Could not list nodes inside %s, aborting. Cause: %s\n", path.Dir(arg), err.Error())
+					rest.Log.Fatalf("Could not list nodes inside %s, aborting. Cause: %s\n", path.Dir(arg), err.Error())
 				}
 				targetNodes = append(targetNodes, nodes...)
 			} else {
@@ -101,13 +100,13 @@ EXAMPLES
 		}
 
 		if len(targetNodes) <= 0 {
-			log.Println("Nothing to delete")
+			cmd.Println("Nothing to delete")
 			return
 		}
 
 		jobUUID, err := sdkClient.DeleteNodes(ctx, targetNodes, rmPermanently)
 		if err != nil {
-			log.Fatalf("could not delete nodes, cause: %s\n", err)
+			rest.Log.Fatalf("could not delete nodes, cause: %s\n", err)
 		}
 
 		var wg sync.WaitGroup
@@ -124,9 +123,17 @@ EXAMPLES
 		wg.Wait()
 
 		if rmPermanently {
-			fmt.Println("Nodes have been permanently removed")
+			if len(targetNodes) == 1 {
+				cmd.Println("Node has been permanently removed")
+			} else {
+				cmd.Println("Nodes have been permanently removed")
+			}
 		} else {
-			fmt.Println("Nodes have been moved to the Recycle Bin")
+			if len(targetNodes) == 1 {
+				cmd.Println("Node has been moved to the Recycle Bin")
+			} else {
+				cmd.Println("Nodes have been moved to the Recycle Bin")
+			}
 		}
 	},
 }

@@ -146,6 +146,7 @@ ENVIRONMENT
 		skipKeyring = viper.GetBool("skip-keyring")
 		skipVerify = viper.GetBool("skip-verify")
 
+		// Tweak to support old flags
 		if viper.GetBool("no_cache") {
 			noCache = true
 		}
@@ -162,7 +163,6 @@ ENVIRONMENT
 				if !os.IsNotExist(e) {
 					rest.Log.Fatalf("unexpected error during initialisation phase: %s", e.Error())
 				}
-				// TODO Directly launch necessary configure command
 				rest.Log.Fatalf("no configuration has been found, please make sure to run '%s config add' first", os.Args[0])
 			}
 		}
@@ -217,9 +217,8 @@ func init() {
 	flags.Bool("skip-keyring", false, "Explicitly tell the tool to *NOT* try to use a keyring, even if present. Warning: sensitive information will be stored in clear text")
 	flags.Bool("no-cache", false, "Force token refresh at each call. This might slow down scripts with many calls")
 
-	//
-	replaceMap := map[string]string{}
 	// Keep backward compatibility until v5 for old flag names
+	replaceMap := map[string]string{}
 	// Does not work as expected -> skipped
 	//replaceMap := map[string]string{
 	//	"skip_verify":  "skip-verify",
@@ -253,7 +252,7 @@ func setUpEnvironment(ctx context.Context) error {
 	// Try first to establish context using flag or ENV vars
 	c := getCecConfigFromEnv()
 
-	// Fallback to registered account
+	// Fallback to latest active registered account
 	if c.SdkConfig == nil {
 		_, err := os.ReadFile(configFilePath)
 		if err != nil {

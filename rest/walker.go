@@ -15,7 +15,6 @@ import (
 	"github.com/gosuri/uiprogress"
 	"github.com/pkg/errors"
 
-	"github.com/pydio/cells-client/v4/common"
 	"github.com/pydio/cells-sdk-go/v5/client/tree_service"
 	"github.com/pydio/cells-sdk-go/v5/models"
 )
@@ -58,6 +57,9 @@ func NewCrawler(ctx context.Context, sdkClient *SdkClient, basePath string, isLo
 		if !b {
 			return nil, fmt.Errorf("no node found at %s", basePath)
 		}
+		//if !scpNoProgress {
+		//	fmt.Println("") // Add a line to reduce glitches in the terminal
+		//}
 		return NewRemoteNode(sdkClient, n), nil
 	}
 }
@@ -508,7 +510,7 @@ func (c *CrawlNode) upload(ctx context.Context, src *CrawlNode, bar *uiprogress.
 	fullPath := c.join(c.FullPath, bName)
 
 	var upErr error
-	if stats.Size() <= common.UploadSwitchMultipart*(1024*1024) {
+	if stats.Size() <= UploadSwitchMultipart*(1024*1024) {
 		if _, e = c.sdkClient.PutFile(ctx, fullPath, file, false); e != nil {
 			upErr = fmt.Errorf("could not upload single part file %s: %s", fullPath, e.Error())
 		}

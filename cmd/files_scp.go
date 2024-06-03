@@ -16,7 +16,6 @@ import (
 
 	"github.com/pydio/cells-sdk-go/v5/models"
 
-	"github.com/pydio/cells-client/v4/common"
 	"github.com/pydio/cells-client/v4/rest"
 )
 
@@ -100,12 +99,12 @@ EXAMPLES
 		scpVeryVerbose = viper.GetBool("very-verbose")
 		scpMaxBackoffStr = viper.GetString("retry-max-backoff")
 		scpS3DebugFlags = viper.GetString("multipart-debug-flags")
-		common.UploadMaxPartsNumber = viper.GetInt64("max-parts-number")
-		common.UploadDefaultPartSize = viper.GetInt64("part-size")
-		common.UploadPartsConcurrency = viper.GetInt("parts-concurrency")
-		common.UploadSkipMD5 = viper.GetBool("skip-md5")
-		common.UploadSwitchMultipart = viper.GetInt64("multipart-threshold")
-		common.TransferRetryMaxAttempts = viper.GetInt("retry-max-attempts")
+		rest.UploadMaxPartsNumber = viper.GetInt64("max-parts-number")
+		rest.UploadDefaultPartSize = viper.GetInt64("part-size")
+		rest.UploadPartsConcurrency = viper.GetInt("parts-concurrency")
+		rest.UploadSkipMD5 = viper.GetBool("skip-md5")
+		rest.UploadSwitchMultipart = viper.GetInt64("multipart-threshold")
+		rest.TransferRetryMaxAttempts = viper.GetInt("retry-max-attempts")
 
 		// Keep backward retro-compatibility until v5 for old flags
 		if viper.GetBool("no_progress") {
@@ -115,22 +114,22 @@ EXAMPLES
 			scpVeryVerbose = true
 		}
 		if viper.GetBool("skip_md5") {
-			common.UploadSkipMD5 = true
+			rest.UploadSkipMD5 = true
 		}
 		if c := viper.GetInt("parts_concurrency"); c > -1 {
-			common.UploadPartsConcurrency = c
+			rest.UploadPartsConcurrency = c
 		}
 		if c := viper.GetInt("retry_max_attempts"); c > -1 {
-			common.TransferRetryMaxAttempts = c
+			rest.TransferRetryMaxAttempts = c
 		}
 		if c := viper.GetInt64("max_parts_number"); c > -1 {
-			common.UploadMaxPartsNumber = c
+			rest.UploadMaxPartsNumber = c
 		}
 		if c := viper.GetInt64("part_size"); c > -1 {
-			common.UploadDefaultPartSize = c
+			rest.UploadDefaultPartSize = c
 		}
 		if c := viper.GetInt64("multipart_threshold"); c > -1 {
-			common.UploadSwitchMultipart = c
+			rest.UploadSwitchMultipart = c
 		}
 		if c := viper.GetString("retry_max_backoff"); c != "" {
 			scpMaxBackoffStr = c
@@ -164,7 +163,7 @@ EXAMPLES
 		if scpMaxBackoffStr != "" {
 			// Parse and set a specific backoff duration
 			var e error
-			common.TransferRetryMaxBackoff, e = time.ParseDuration(scpMaxBackoffStr)
+			rest.TransferRetryMaxBackoff, e = time.ParseDuration(scpMaxBackoffStr)
 			if e != nil {
 				rest.Log.Fatalln("could not parse backoff duration:", e)
 			}
@@ -273,9 +272,6 @@ EXAMPLES
 
 		errs := targetNode.TransferAll(ctx, t, pool)
 		if len(errs) > 0 {
-			//if pool != nil { // Force stop of the pool that stays blocked otherwise
-			//	pool.Stop()
-			//}
 			rest.Log.Infof("\n... Transfer aborted after %d errors:", len(errs))
 			for i, currErr := range errs {
 				rest.Log.Infof("\t#%d: %s\n", i+1, currErr)
@@ -284,9 +280,6 @@ EXAMPLES
 		} else {
 			rest.Log.Infoln("... Transfer terminated")
 		}
-		//if !scpNoProgress {
-		//	fmt.Println("") // Add a line to reduce glitches in the terminal
-		//}
 	},
 }
 
@@ -304,8 +297,8 @@ func init() {
 	flags.Bool("skip-md5", false, "Do not compute md5 (for files bigger than 5GB, it is not computed by default for smaller files).")
 	flags.Int64("multipart-threshold", int64(100), "Files bigger than this size (in MB) will be uploaded using Multipart Upload.")
 	flags.String("multipart-debug-flags", "", "Define flags to fine tune debug messages emitted by the underlying AWS SDK during multi-part uploads")
-	flags.Int("retry-max-attempts", common.TransferRetryMaxAttemptsDefault, "Limit the number of attempts before aborting. '0' allows the SDK to retry all retryable errors until the request succeeds, or a non-retryable error is thrown.")
-	flags.String("retry-max-backoff", common.TransferRetryMaxBackoffDefault.String(), "Maximum duration to wait after a part transfer fails, before trying again, expressed in Go duration format, e.g., '20s' or '3m'.")
+	flags.Int("retry-max-attempts", rest.TransferRetryMaxAttemptsDefault, "Limit the number of attempts before aborting. '0' allows the SDK to retry all retryable errors until the request succeeds, or a non-retryable error is thrown.")
+	flags.String("retry-max-backoff", rest.TransferRetryMaxBackoffDefault.String(), "Maximum duration to wait after a part transfer fails, before trying again, expressed in Go duration format, e.g., '20s' or '3m'.")
 
 	flags.Bool("no_progress", false, "Deprecated, rather use no-progress flag")
 	flags.Bool("very_verbose", false, "Deprecated, rather use very-verbose flag")
