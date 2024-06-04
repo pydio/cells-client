@@ -178,6 +178,10 @@ ENVIRONMENT
 	},
 }
 
+func CurrentSdkClient() *rest.SdkClient {
+	return sdkClient
+}
+
 func configureLogger(logLevel string) (*zap.Logger, error) {
 	level := zapcore.InfoLevel
 	switch logLevel {
