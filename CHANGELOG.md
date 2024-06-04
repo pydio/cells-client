@@ -1,7 +1,9 @@
-# Changes between v4.1.0 and v4.2.0-alpha0
+# Changes between v4.1.0 and v4.2.0-alpha1
 
-[See Full Changelog](https://github.com/pydio/cells-client/compare/v4.1.0...v4.2.0-alpha0)
+[See Full Changelog](https://github.com/pydio/cells-client/compare/v4.1.0...v4.2.0-alpha1)
 
+- [#b0155cc](https://github.com/pydio/cells-client/commit/b0155ccf1ec772514026a68c7d33b2e613f7fb47): Expose SDK client to extending apps
+- [#7764d2b](https://github.com/pydio/cells-client/commit/7764d2bf20e0f2d3f5f82c3dee3ca383c307b3cf): Release v4.2.0-alpha0
 - [#dd8154e](https://github.com/pydio/cells-client/commit/dd8154eee6fc1f4b97e5e58af57b2b003603dcfe): Better logs
 - [#91e4cc7](https://github.com/pydio/cells-client/commit/91e4cc79daa6c0c17841467589d005f61c738b74): More resiliant job monitoring, better logs
 - [#b9f5a45](https://github.com/pydio/cells-client/commit/b9f5a451f0e93ce0a6f0a10cfac9d27810a2343e): Update library, remove useless flag from the info command list
