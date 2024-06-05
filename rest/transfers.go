@@ -106,12 +106,12 @@ func (client *SdkClient) s3Upload(ctx context.Context, path string,
 		}
 		return err
 	}
+	numParts := int(math.Ceil(float64(fSize) / float64(ps)))
 	if verbose {
-		Log.Infof("... Launching upload for %s", path)
-		numParts := math.Ceil(float64(fSize) / float64(ps))
+		Log.Infof("Multipart upload for %s", path)
 		Log.Infof("\tSize: %s", humanize.IBytes(uint64(fSize)))
 		Log.Infof("\tPart Size: %s", humanize.IBytes(uint64(ps)))
-		Log.Infof("\tNumber of parts: %d", int64(numParts))
+		Log.Infof("\tNumber of parts: %d", numParts)
 	}
 
 	uploader := manager.NewUploader(client.GetS3Client(),
@@ -122,7 +122,7 @@ func (client *SdkClient) s3Upload(ctx context.Context, path string,
 	)
 
 	// Adds a callback entry point so that we can follow the effective part upload.
-	uploader.BufferProvider = sdkS3.NewCallbackTransferProvider(path, fSize, ps)
+	uploader.BufferProvider = sdkS3.NewCallbackTransferProvider(path, fSize, ps, numParts, verbose)
 
 	_, err = uploader.Upload(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(client.GetBucketName()),

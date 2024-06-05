@@ -431,9 +431,9 @@ func (c *CrawlNode) TransferAll(ctx context.Context, dd []*CrawlNode, pool *Bars
 				// TODO also find a way to display error messages with the pool
 				if pool == nil {
 					if len(errs) > 0 && IsDebugEnabled() {
-						Log.Errorf("... Transfer for %s aborted with error: %s", src.FullPath, errs[0].Error())
+						Log.Errorf("Transfer for %s aborted with error: %s", src.FullPath, errs[0].Error())
 					} else {
-						Log.Infof("... Transfer for %s terminated", src.FullPath)
+						Log.Debugf("Transfer for %s terminated", src.FullPath)
 					}
 				}
 				wg.Done()
@@ -518,7 +518,7 @@ func (c *CrawlNode) upload(ctx context.Context, src *CrawlNode, bar *uiprogress.
 			Log.Debugf("\t%s: uploaded\n", fullPath)
 		}
 	} else {
-		upErr = c.sdkClient.s3Upload(ctx, fullPath, content, stats.Size(), bar == nil, errChan)
+		upErr = c.sdkClient.s3Upload(ctx, fullPath, content, stats.Size(), IsDebugEnabled(), errChan)
 	}
 	// fmt.Println("... About to return from upload, error:", upErr)
 	return upErr

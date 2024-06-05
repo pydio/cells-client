@@ -98,9 +98,10 @@ func NewSdkClient(ctx context.Context, config *CecConfig) (*SdkClient, error) {
 func (client *SdkClient) ConfigureS3Logger(ctx context.Context, s3Flags string) error {
 
 	options := buildS3Options(client.configStore)
-	if logOption := optionFromS3Flags(s3Flags); logOption != nil {
+	if logOption, err := optionFromS3Flags(s3Flags); err != nil {
+		return err
+	} else if logOption != nil {
 		options = append(options, logOption)
-		// TODO handle error
 	}
 
 	if cfg, e := sdkS3.LoadConfig(ctx, client.currentConfig.SdkConfig, options...); e != nil {
@@ -215,9 +216,9 @@ func buildS3Options(configStore cellsSdk.ConfigRefresher) []interface{} {
 	return options
 }
 
-func optionFromS3Flags(s3Flags string) cellsSdk.AwsConfigOption {
+func optionFromS3Flags(s3Flags string) (cellsSdk.AwsConfigOption, error) {
 
-	// input := "Retries | Signing | Response | "
+	// s3Flags := "retries | signing"
 	// For the record was:
 	// - verbose: 	aws.LogRetries | aws.LogRequest | aws.LogSigning
 	//	- very verbose: aws.LogSigning | aws.LogResponseEventMessage |
@@ -226,30 +227,14 @@ func optionFromS3Flags(s3Flags string) cellsSdk.AwsConfigOption {
 	// 2 more: aws.LogRequestWithBody | aws.LogResponseWithBody
 
 	if s3Flags == "" {
-		return nil
+		return nil, nil
 	}
-	logMode := getLogMode(s3Flags)
-	return sdkS3.WithLogger(printLnWriter{}, logMode)
+	logMode, err := getLogMode(s3Flags)
+	if err != nil {
+		return nil, err
+	}
+	return sdkS3.WithLogger(printLnWriter{}, logMode), nil
 }
-
-//// TODO Work in progress: finalize and clean
-//func configureLogMode() cellsSdk.AwsConfigOption {
-//	switch common.CurrentLogLevel {
-//	case common.Info:
-//		return nil
-//	case common.Debug:
-//		logMode := aws.LogRetries | aws.LogRequest // | aws.LogSigning
-//		return sdkS3.WithLogger(printLnWriter{}, logMode)
-//	case common.Trace:
-//		logMode := aws.LogSigning |
-//			aws.LogRetries | aws.LogRequest | aws.LogResponse |
-//			aws.LogDeprecatedUsage | aws.LogRequestEventMessage | aws.LogResponseEventMessage
-//		return sdkS3.WithLogger(printLnWriter{}, logMode)
-//	default:
-//		log.Fatal("unsupported log level:", common.CurrentLogLevel)
-//	}
-//	return nil
-//}
 
 type printLnWriter struct{}
 

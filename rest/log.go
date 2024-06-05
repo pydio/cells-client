@@ -90,7 +90,7 @@ var logCategoryMap = map[string]aws.ClientLogMode{
 	"response_event_message": aws.LogResponseEventMessage,
 }
 
-func getLogMode(input string) aws.ClientLogMode {
+func getLogMode(input string) (aws.ClientLogMode, error) {
 	logMode := aws.ClientLogMode(0)
 	categories := strings.Split(input, "|")
 	for _, category := range categories {
@@ -101,8 +101,8 @@ func getLogMode(input string) aws.ClientLogMode {
 		if mode, exists := logCategoryMap[trimmedCategory]; exists {
 			logMode |= mode
 		} else {
-			fmt.Printf("Unknown log category: %s\n", trimmedCategory)
+			return logMode, fmt.Errorf("Unknown log category: %s\n", trimmedCategory)
 		}
 	}
-	return logMode
+	return logMode, nil
 }
