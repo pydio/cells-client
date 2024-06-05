@@ -213,6 +213,10 @@ EXAMPLES
 			if err != nil {
 				rest.Log.Fatalf("%s is not a valid source: %s", from, err)
 			}
+			_, err := os.Stat(srcPath)
+			if err != nil && os.IsNotExist(err) {
+				rest.Log.Fatalln(err)
+			}
 			srcName := filepath.Base(srcPath)
 			targetPath = strings.TrimPrefix(to, scpCurrentPrefix)
 			if needMerge, err = preProcessRemoteTarget(ctx, sdkClient, srcName, targetPath, scpForce); err != nil {
@@ -221,6 +225,9 @@ EXAMPLES
 			rest.Log.Infof("Uploading %s to %s", srcPath, standardPrefix+targetPath)
 		} else { // Download
 			srcPath = strings.TrimPrefix(from, scpCurrentPrefix)
+			if _, ok := sdkClient.StatNode(ctx, srcPath); !ok {
+				rest.Log.Fatalf("cannot find %s on remote server", srcPath)
+			}
 			srcName := filepath.Base(srcPath)
 			targetPath, err = filepath.Abs(to)
 			if err != nil {
@@ -261,6 +268,8 @@ EXAMPLES
 			}
 			pool = rest.NewBarsPool(len(t)+len(c)+len(d) > 1, len(t)+len(c)+len(d), refreshInterval)
 			pool.Start()
+		} else if len(t) == 1 && len(c) == 0 && len(d) == 0 {
+			// we just transfer one file, no log at this point
 		} else {
 			rest.Log.Infof("After walking the tree, found %d nodes to delete, %d to create and %d to transfer", len(d), len(c), len(t))
 		}
@@ -284,7 +293,7 @@ EXAMPLES
 		}
 
 		// UPLOAD / DOWNLOAD FILES
-		if scpNoProgress {
+		if scpNoProgress && len(t) > 1 {
 			rest.Log.Infof("Now transferring files")
 		}
 
