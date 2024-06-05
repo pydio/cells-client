@@ -24,12 +24,12 @@ const (
 	completionPrefix = "cells//"
 
 	// SDK Debug Flags for verbose modes
-	// FIXME should we keep the Log prefix to make it easier to find info about the flags on the internet?
-	// verbose
-	vFlags = "Retries | Signing" // | Request
+	//verbose
+	vFlags = "retries | signing" // | request
 	// very verbose
-	vvFlags = "Retries | Request | Response | Signing | ResponseEventMessage | DeprecatedUsage | RequestEventMessage"
-	// For the record, there are 2 more flags: aws.LogRequestWithBody | aws.LogResponseWithBody
+	vvFlags = "request | response | signing | retries | deprecated_usage"
+	// For the record, there are 4 more flags:
+	//  request_event_message, response_event_message, request_with_body & response_with_body
 )
 
 var (
@@ -63,7 +63,25 @@ DESCRIPTION
     - 'old' and 'new' are of a different type: we first erase 'old' in the target and then copy (recursively) 'new'
     - both folder: for each child of 'new' we try to copy in 'old'. If an item with same name already exists on the target side, we apply the rules recursively.
   WARNING: this could lead to erasing data on the target side. Only use with extra care.
+
+  Depending on your use-case, you might want to choose to use the 'scp' command in interactive mode, with a progress bar or with log messages, typically when launched from a script.
   
+TROUBLESHOOTING 
+
+  If you have problems with the transfer of big files and/or large tree structures, we strongly suggest to use the 'scp' command with a PAT and the '--no-progress' flag set. 
+
+  You can also adjust the log level, e.g. with '--log debug' and choose which events are logged by the AWS SDK that performs the real work under the hood for multipart uploads.
+
+  Known events type are: 
+     signing, retries, request, request_with_body, response, response_with_body, deprecated_usage, request_event_message, response_event_message 
+  that respectively turn on following AWS SDK log type: 
+     aws.LogSigning, aws.LogRetries, aws.LogRequest, aws.LogRequestWithBody, aws.LogResponse, aws.LogResponseWithBody, aws.LogDeprecatedUsage, aws.LogRequestEventMessage, aws.LogResponseEventMessage
+  You define the required mix with e.g: '--multipart-debug-flags="signing | retries"' (spaces are optional)  
+
+  For convenience and retro-compatibility, we defined two 'shortcut' flags:
+  '--verbose' is equivalent to '--no-progress --log info --multipart-debug-flags="signing | retries"'   
+  '--very-verbose' is equivalent to '--no-progress --log debug --multipart-debug-flags="request | response | signing | retries | deprecated_usage"'   
+
 EXAMPLES
 
   1/ Uploading a file to the server:
@@ -323,7 +341,7 @@ func init() {
 	//	"retry_max_attempts":  "retry-max-attempts",
 	//	"retry_max_backoff":   "retry-max-backoff",
 	//}
-	// We pass an empty map and do retrocompatibility "manually" when retrieving the flags
+	// We pass an empty map and do retro-compatibility "manually" when retrieving the flags
 	replaceMap := map[string]string{}
 
 	if os.Getenv(EnvDisplayHiddenFlags) == "" {

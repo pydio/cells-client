@@ -79,15 +79,15 @@ func customInfoLevelEncoder(level zapcore.Level, enc zapcore.PrimitiveArrayEncod
 
 // Map of log category strings to their corresponding aws.ClientLogMode constants
 var logCategoryMap = map[string]aws.ClientLogMode{
-	"Signing":              aws.LogSigning,
-	"Retries":              aws.LogRetries,
-	"Request":              aws.LogRequest,
-	"RequestWithBody":      aws.LogRequestWithBody,
-	"Response":             aws.LogResponse,
-	"ResponseWithBody":     aws.LogResponseWithBody,
-	"DeprecatedUsage":      aws.LogDeprecatedUsage,
-	"RequestEventMessage":  aws.LogRequestEventMessage,
-	"ResponseEventMessage": aws.LogResponseEventMessage,
+	"signing":                aws.LogSigning,
+	"retries":                aws.LogRetries,
+	"request":                aws.LogRequest,
+	"request_with_body":      aws.LogRequestWithBody,
+	"response":               aws.LogResponse,
+	"response_with_body":     aws.LogResponseWithBody,
+	"deprecated_usage":       aws.LogDeprecatedUsage,
+	"request_event_message":  aws.LogRequestEventMessage,
+	"response_event_message": aws.LogResponseEventMessage,
 }
 
 func getLogMode(input string) aws.ClientLogMode {
