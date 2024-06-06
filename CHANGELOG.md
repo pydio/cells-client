@@ -1,72 +1,9 @@
-# Changes between v4.1.0 and v4.2.0-alpha1
+# Changes between v4.2.0-alpha1 and v4.2.0-alpha2
 
-[See Full Changelog](https://github.com/pydio/cells-client/compare/v4.1.0...v4.2.0-alpha1)
+[See Full Changelog](https://github.com/pydio/cells-client/compare/v4.2.0-alpha1...v4.2.0-alpha2)
 
-- [#b0155cc](https://github.com/pydio/cells-client/commit/b0155ccf1ec772514026a68c7d33b2e613f7fb47): Expose SDK client to extending apps
-- [#7764d2b](https://github.com/pydio/cells-client/commit/7764d2bf20e0f2d3f5f82c3dee3ca383c307b3cf): Release v4.2.0-alpha0
-- [#dd8154e](https://github.com/pydio/cells-client/commit/dd8154eee6fc1f4b97e5e58af57b2b003603dcfe): Better logs
-- [#91e4cc7](https://github.com/pydio/cells-client/commit/91e4cc79daa6c0c17841467589d005f61c738b74): More resiliant job monitoring, better logs
-- [#b9f5a45](https://github.com/pydio/cells-client/commit/b9f5a451f0e93ce0a6f0a10cfac9d27810a2343e): Update library, remove useless flag from the info command list
-- [#d01bac1](https://github.com/pydio/cells-client/commit/d01bac1ce2702afa452f1844429c280fadc4fec4): Fix flag retrocompatibility
-- [#56fb78b](https://github.com/pydio/cells-client/commit/56fb78b1c4a1a3a941d9c0ba77f62528427ce5a7): Better logs
-- [#17b06fa](https://github.com/pydio/cells-client/commit/17b06fa2e16c5402019a8171d102757fa76a5072): Cleaner config mechanism to debug large multipart uploads with the AWS S3 SDK
-- [#0d21291](https://github.com/pydio/cells-client/commit/0d21291bc7341c60857b0986039a0fe3a86be7c6): Define a default version when building locally without make
-- [#af1f165](https://github.com/pydio/cells-client/commit/af1f165297c8542d8c8f894cc28655f3f52d71b4): Better naming
-- [#ee85d78](https://github.com/pydio/cells-client/commit/ee85d78912430c3572ce8d55ea3637ee193e3826): Fix log
-- [#3deb888](https://github.com/pydio/cells-client/commit/3deb88875c63189bcf0b294acf5ea9c735766ecb): Add a background refresher when using OAuth
-- [#43d3e94](https://github.com/pydio/cells-client/commit/43d3e943a9815497106690766ad6833e4af2b837): Use correct method when humanizing sizes in Bytes
-- [#b7093ba](https://github.com/pydio/cells-client/commit/b7093ba3a5f9a8171181389ee6b1436f6464a724): Rather use dashes in flag names, still supporting old version
-- [#1293ae6](https://github.com/pydio/cells-client/commit/1293ae6da745191d599e1d46ced482d3a8853c38): Cleaner logs, remove unused code...
-- [#f8d02b2](https://github.com/pydio/cells-client/commit/f8d02b2cd1ae53650d149e47ba8e5f8f96544591): Fix typo in local walking
-- [#f77ee4d](https://github.com/pydio/cells-client/commit/f77ee4d39a6b7a9388b151c9dd500313311baafd): User friendlier logs
-- [#de3bddf](https://github.com/pydio/cells-client/commit/de3bddfa162714481f55c994c534ef185d866560): Skip remaining transfer as soon as an error is detected
-- [#cd97bfe](https://github.com/pydio/cells-client/commit/cd97bfe97d3236a3265ac0338812662ea68d9901): Rework loging strategy
-- [#9cd2c7c](https://github.com/pydio/cells-client/commit/9cd2c7cf4119db2bf26d1833c3c9d6e242c1f2b6): Fix a few warning and a typo
-- [#757c179](https://github.com/pydio/cells-client/commit/757c179fbbdb613942791c11ffd17fc86f629d7e): Update AWS SDK
-- [#dc548f5](https://github.com/pydio/cells-client/commit/dc548f5ffafd8eb26d2f6921b048e3b255fb113e): Correctly initialise the error channel in no-progress mode
-- [#f8b07ec](https://github.com/pydio/cells-client/commit/f8b07ecf1899a414490626a779cdaec8db0a4756): Debuging dead-lock issue when downloading in non verbose modes and server becomes unreachable
-- [#0c19928](https://github.com/pydio/cells-client/commit/0c19928905ba2087a7af250f45885ca2dd235e86): Better examples
-- [#b9f3434](https://github.com/pydio/cells-client/commit/b9f34344c02dab7b43fa41d7b54486474316bed1): Fix remote walking
-- [#6cff660](https://github.com/pydio/cells-client/commit/6cff660f30d91910f9f5ed271abec58bfe78fdfc): Fix appending in recursivity
-- [#c0acfbc](https://github.com/pydio/cells-client/commit/c0acfbc2bce06cbc2d2bf43ad1b1b1e22cc311d1): Rework scp command to enable simple merge
-- [#96a53fe](https://github.com/pydio/cells-client/commit/96a53fe45d3888776721351988e9ed5355ddf0e1): Prepare force feature for scp
-- [#f550bd9](https://github.com/pydio/cells-client/commit/f550bd9e7d67a410b3074c422c019752829b3cb5): Cleaner code
-- [#a8e6cc0](https://github.com/pydio/cells-client/commit/a8e6cc02f461743eb024181bce5a30029daa33cc): Rather use a centralised SdkClient
-- [#ffdec7e](https://github.com/pydio/cells-client/commit/ffdec7e079ddbab47436a72dea88cd33052ecd6a): Better comments and inline doc, amke linter happy
-- [#5936cda](https://github.com/pydio/cells-client/commit/5936cdafc9d60c16c71218806c9347e535d52e8a): Update dependencies
-- [#fd9c50a](https://github.com/pydio/cells-client/commit/fd9c50a3ded3837ae3d2c1030aad7ed9135b39f9): Cosmetic changes
-- [#e194872](https://github.com/pydio/cells-client/commit/e194872f6a7757c57a0737e54af9c8181d997868): Use retry call back when making stat to cover expired token use case
-- [#b500621](https://github.com/pydio/cells-client/commit/b5006212138da8f3077c594b280129476e00db56): Fix Glitches
-- [#24db8ba](https://github.com/pydio/cells-client/commit/24db8baf703907c89bc09786688b90c7318e6637): Rework scp command
-- [#a877784](https://github.com/pydio/cells-client/commit/a8777848501ad3fa7a58b1089ba3710a2d996527): Ensure we only have one CellsStore
-- [#536ee5c](https://github.com/pydio/cells-client/commit/536ee5c930cfab753e4a096d9f2d9f061b443874): Cosmetic changes
-- [#37d4731](https://github.com/pydio/cells-client/commit/37d4731adbe1669fcd2af431fa3b7947bdc1f603): Go mod tidy
-- [#733cfcb](https://github.com/pydio/cells-client/commit/733cfcb53ab74155339f307f248ad9791bdd5e5a): Rather paginate new remote folder creation
-- [#97bf14e](https://github.com/pydio/cells-client/commit/97bf14eb4e1d6966a1cf444a0a4f430d588d999f): More logs for verbose mode
-- [#7d0300d](https://github.com/pydio/cells-client/commit/7d0300d0c5925f7b1b6b13fd1a7ead3453775fa3): Fix a typo in condition check, add confirmation before deletion
-- [#e02408c](https://github.com/pydio/cells-client/commit/e02408c6399095a97c67ab51fa6a2dd7264ef2f6): Update library versions
-- [#cd99129](https://github.com/pydio/cells-client/commit/cd99129392e20ae1024ab3debad7b8ee1e95d1d7): Add a hook to define more "offline" commands when extending the cec in other modules
-- [#b46a0d0](https://github.com/pydio/cells-client/commit/b46a0d0fbabf1348c721a8f1cf5c0f24f4f69d52): Update TPs
-- [#6ce6b21](https://github.com/pydio/cells-client/commit/6ce6b2144495b3ea27e5b038ff39184021051400): Update transitive dependencies
-- [#8664594](https://github.com/pydio/cells-client/commit/8664594c25094afda3a00a58c4f71a3c75d0c82f): Update TPs
-- [#a7647bf](https://github.com/pydio/cells-client/commit/a7647bfea6f1007ff6f792d6446306279e44b244): Remove extra SIMD option to compute md5 hash
-- [#25c5cb6](https://github.com/pydio/cells-client/commit/25c5cb62d593635a472daca6817463eb23976b8b): More logs to ease debugging for huge upload
-- [#1cc2e07](https://github.com/pydio/cells-client/commit/1cc2e0755b8b22dab689c74c6b13fa003dd5b535): Fix a few typos and warnings
-- [#771fcb3](https://github.com/pydio/cells-client/commit/771fcb348e68ed236238cd49f3390c4af3b7e721): We do not need a valid connection to compute the "Cells hash" of a file locally
-- [#5642bac](https://github.com/pydio/cells-client/commit/5642bac2e576c5b75e0672320889fd596ece7cc1): Fix typo
-- [#4e6a8b6](https://github.com/pydio/cells-client/commit/4e6a8b6c4e28ded9f014150bef8fd3aad60846c7): Make 'hash' a sub-command of 'cec tools'
-- [#61c933f](https://github.com/pydio/cells-client/commit/61c933f7dccd310f3f22ad2446909f6f98757972): Advertise hidden command has deprecated, fix in-line doc.
-- [#00a897b](https://github.com/pydio/cells-client/commit/00a897bc94a768e17950a996f0da9500d9b11b1e): Fix unit test
-- [#ed2f59f](https://github.com/pydio/cells-client/commit/ed2f59f5451deaad948bac84a6c88b7379580a7a): Reformat long usage for new command
-- [#72ec24a](https://github.com/pydio/cells-client/commit/72ec24a0200bf207bfa357dbbf5ef98153bdf0b0): Add new command to compute files hash with similar method as in the server.
-- [#34e1fd7](https://github.com/pydio/cells-client/commit/34e1fd73f299c9f14c2c0dfaeb851f8a325a7e6d): Update TPs
-- [#f6e826e](https://github.com/pydio/cells-client/commit/f6e826e0f9c638c427f20b634f0f55962ef2bf8f): Release v4.1.1-alpha1
-- [#9084f4c](https://github.com/pydio/cells-client/commit/9084f4ca7643d9de5674a3ac5af4a4c543aa26a0): Update minimal Go version
-- [#5168a3c](https://github.com/pydio/cells-client/commit/5168a3c5478a5cecbaa4ce83daf3d19cc58416bc): Use underscore rather than dash in new flags to stay homogeneus with existing flags
-- [#5ddec77](https://github.com/pydio/cells-client/commit/5ddec77462a61e00f7e131f041aa68e737ce88db): Make retry strategy configurable
-- [#735533b](https://github.com/pydio/cells-client/commit/735533bd27ca91ff99da48ec8b9a43439bff0837): Update libraries
-- [#807470a](https://github.com/pydio/cells-client/commit/807470a96b8b5eff4f1dfa0d5416470459e2c6a0): Use latest Cells SDK
-- [#2770bb0](https://github.com/pydio/cells-client/commit/2770bb0b3e15e105d79a4aeafdf8908e9ce23369): Update AWS SDK
-- [#e983eb9](https://github.com/pydio/cells-client/commit/e983eb9e8427fb245dbc6ee4f55f7b4caaac280a): Update third party libraries
-- [#8e2c5dd](https://github.com/pydio/cells-client/commit/8e2c5ddaea31e4b891bcf7bbec0eecdcb9505169): Wire remove permanently option for the rm sub-command
-- [#f124049](https://github.com/pydio/cells-client/commit/f124049371d69b3450c54d054b449901690c6c37): Next development cycle
+- [#f5f556e](https://github.com/pydio/cells-client/commit/f5f556eeb809c78d276c70d5951163a95fac9e7f): Fix typos
+- [#cc90c19](https://github.com/pydio/cells-client/commit/cc90c19ffe0bc13e898708c33a2e8510df8eb493): Improve in-line help message
+- [#fb6e892](https://github.com/pydio/cells-client/commit/fb6e89237cbc1377fbefbc464a73ddb97f88eb0b): Improve multi part logs
+- [#c620a96](https://github.com/pydio/cells-client/commit/c620a962503c205c5e4c22093a89385ea6cbbd75): Fail early if the source is not found
+- [#f87b3fa](https://github.com/pydio/cells-client/commit/f87b3fa973e12da1d11415c48eb159a952a31b7a): Rather use snake case for SDK flags after code review with Charles
