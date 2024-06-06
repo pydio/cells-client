@@ -42,45 +42,58 @@ var (
 	scpS3DebugFlags  string
 )
 
+const scpHelp = `
+DESCRIPTION
+
+  scp copies files between your client machine and a Pydio Cells server.
+
+  To distinguish between local and remote paths, prefix remote paths with 'cells://'
+  If you have installed the completion and intend to use it, remote prefix is 'cells//', without the colon.
+
+  Currently, copying can only be performed between the client machine and the server or vice versa.
+  Direct transfers between two Cells instances are not yet supported.
+
+  For convenience:
+    - If the target folder does not exist (but its parent does), it will be created.
+    - If an item with the same name already exists on the target side, the transfer will abort with an error unless "force" mode is enabled.
+
+  When "force" mode is enabled:
+    - If both 'old' (existing) and 'new' items are files: 'new' replaces 'old'.
+    - If 'old' and 'new' are of different types: 'old' is erased on the target, then 'new' is copied (recursively).
+    - If both are folders: each child of 'new' is copied into 'old'. If an item with the same name already exists on the target side, the rules are applied recursively.
+
+  WARNING: This could lead to data loss on the target side. Use with caution.
+
+  Depending on your use-case, you might want to use the 'scp' command in interactive mode, with a progress bar, or with log messages, especially when launching from a script.
+
+TROUBLESHOOTING
+
+  If you encounter issues with transferring large files or extensive directory structures, we recommend using the 'scp' command with a PAT and the '--no-progress' flag set.
+
+  You can also adjust the log level, e.g., with '--log debug' and choose which events are logged by the AWS SDK that handles multipart uploads.
+
+  Known event types and corresponding AWS SDK log types:
+    - signing: aws.LogSigning
+    - retries: aws.LogRetries
+    - request: aws.LogRequest
+    - request_with_body: aws.LogRequestWithBody
+    - response: aws.LogResponse
+    - response_with_body: aws.LogResponseWithBody
+    - deprecated_usage: aws.LogDeprecatedUsage
+    - request_event_message: aws.LogRequestEventMessage
+    - response_event_message: aws.LogResponseEventMessage
+
+  Specify the desired mix of event types with, e.g., '--multipart-debug-flags="signing | retries"' (spaces are optional).
+
+  Convenience flags for retro-compatibility:
+    - '--verbose' is equivalent to '--no-progress --log info --multipart-debug-flags="signing | retries"'
+    - '--very-verbose' is equivalent to '--no-progress --log debug --multipart-debug-flags="request | response | signing | retries | deprecated_usage"'
+`
+
 var scpFiles = &cobra.Command{
 	Use:   "scp",
 	Short: `Copy files from/to Cells`,
-	Long: `
-DESCRIPTION
-
-  Copy files from the client machine to your Pydio Cells server instance (and vice versa).
-
-  To differentiate local from remote, prefix remote paths with 'cells://' or with 'cells//' (without the column) if you have installed the completion and intend to use it.
-  For the time being, copy can only be performed from the client machine to the server or the other way round:
-  it is not yet possible to directly transfer files from one Cells instance to another.
-
-  For convenience, if the *target* folder does not exist (but its parent does), we create it.
-
-  On the other hand, we check if an item with the same name already exists on the target side and abort the transfer with an error in such case. 
-  You might want to enable the "force" mode. 
-  Then, when 'old' (existing) and 'new' item have the same name, if:    
-    - 'old' and 'new' are both files: 'new' replaces 'old'
-    - 'old' and 'new' are of a different type: we first erase 'old' in the target and then copy (recursively) 'new'
-    - both folder: for each child of 'new' we try to copy in 'old'. If an item with same name already exists on the target side, we apply the rules recursively.
-  WARNING: this could lead to erasing data on the target side. Only use with extra care.
-
-  Depending on your use-case, you might want to choose to use the 'scp' command in interactive mode, with a progress bar or with log messages, typically when launched from a script.
-  
-TROUBLESHOOTING 
-
-  If you have problems with the transfer of big files and/or large tree structures, we strongly suggest to use the 'scp' command with a PAT and the '--no-progress' flag set. 
-
-  You can also adjust the log level, e.g. with '--log debug' and choose which events are logged by the AWS SDK that performs the real work under the hood for multipart uploads.
-
-  Known events type are: 
-     signing, retries, request, request_with_body, response, response_with_body, deprecated_usage, request_event_message, response_event_message 
-  that respectively turn on following AWS SDK log type: 
-     aws.LogSigning, aws.LogRetries, aws.LogRequest, aws.LogRequestWithBody, aws.LogResponse, aws.LogResponseWithBody, aws.LogDeprecatedUsage, aws.LogRequestEventMessage, aws.LogResponseEventMessage
-  You define the required mix with e.g: '--multipart-debug-flags="signing | retries"' (spaces are optional)  
-
-  For convenience and retro-compatibility, we defined two 'shortcut' flags:
-  '--verbose' is equivalent to '--no-progress --log info --multipart-debug-flags="signing | retries"'   
-  '--very-verbose' is equivalent to '--no-progress --log debug --multipart-debug-flags="request | response | signing | retries | deprecated_usage"'   
+	Long: scpHelp + ` 
 
 EXAMPLES
 
@@ -315,8 +328,8 @@ func init() {
 
 	flags.BoolP("force", "f", false, "*DANGER* turns overwrite mode on: for a given item in the source tree, if a file or folder with same name already exists on the target side, it is merged or replaced.")
 	flags.BoolP("no-progress", "n", false, "Do not show progress bar. You can then fine tune the log level")
-	flags.BoolP("verbose", "v", false, "Hide progress bar and rather display more log info during the transfers")
-	flags.BoolP("very-verbose", "w", false, "Hide progress bar and rather print out a maximum of log info")
+	flags.BoolP("verbose", "v", false, "Alias for an opinionated debug configuration to investigate problematic uploads")
+	flags.BoolP("very-verbose", "w", false, "Alias that turns most of the debug options on when investigating problematic uploads")
 	flags.BoolP("quiet", "q", false, "Reduce refresh frequency of the progress bars, e.g when running cec in a bash script")
 	flags.Int64("max-parts-number", int64(5000), "Maximum number of parts, S3 supports 10000 but some storage require less parts.")
 	flags.Int64("part-size", int64(50), "Default part size (MB), must always be a multiple of 10MB. It will be recalculated based on the max-parts-number value.")
