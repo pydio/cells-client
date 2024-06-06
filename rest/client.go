@@ -21,7 +21,7 @@ import (
 
 const (
 	TransferRetryMaxAttemptsDefault = 3
-	TransferRetryMaxBackoffDefault  = time.Second * 3
+	TransferRetryMaxBackoffDefault  = 3 * time.Second
 )
 
 var (
@@ -32,10 +32,9 @@ var (
 	TransferRetryMaxAttempts = TransferRetryMaxAttemptsDefault
 	TransferRetryMaxBackoff  = TransferRetryMaxBackoffDefault
 
-	UploadPartsSteps       = int64(10 * 1024 * 1024)
 	UploadPartsConcurrency = 3
-	UploadSkipMD5          = false
 	S3RequestTimeout       = int64(-1)
+	UploadSkipMD5          = false
 
 	// defaultCellsStore holds a static singleton that ensure we only have *one* source of truth
 	// to trigger OAuth refresh
@@ -115,7 +114,7 @@ func (client *SdkClient) ConfigureS3Logger(ctx context.Context, s3Flags string) 
 // Setup prepare the client after it has been created, especially refreshes the token in case of OAuth
 func (client *SdkClient) Setup(ctx context.Context) {
 
-	// Launch a "background thread" that call the refresh if and when necessary as long as the command runs.
+	// Launch a "background thread" that calls the refresh if and when necessary as long as the command runs.
 	if client.currentConfig.AuthType == cellsSdk.AuthTypeOAuth {
 		client.stopRefreshChan = make(chan struct{})
 		// First call the refresh synchronously
@@ -182,9 +181,6 @@ func (client *SdkClient) GetBucketName() string {
 // doGetS3Client creates a new S3 client based on the given config to transfer files to/from a distant Cells server.
 func doGetS3Client(ctx context.Context, configStore cellsSdk.ConfigRefresher, conf *cellsSdk.SdkConfig) (*s3.Client, error) {
 	options := buildS3Options(configStore)
-	//if logOption := configureLogMode(); logOption != nil {
-	//	options = append(options, logOption)
-	//}
 	if cfg, e := sdkS3.LoadConfig(ctx, conf, options...); e != nil {
 		return nil, e
 	} else {

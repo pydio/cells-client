@@ -263,7 +263,7 @@ EXAMPLES
 			rest.Log.Fatalln(e)
 		}
 
-		// Walk the full source tree to prepare a list of node to create
+		// Walk the full source tree to prepare a list of nodes to create
 		var tf *rest.CrawlNode
 		if needMerge {
 			tf = targetNode
