@@ -128,19 +128,23 @@ var configRemoveCmd = &cobra.Command{
 		var index int
 		var active string
 
-		if len(items) == 1 {
+		if len(items) == 0 {
+			return fmt.Errorf("configuration list is empty")
+		} else if len(items) == 1 {
 			if confirmAccountDeletion(items[0]) {
 				return ClearConfig()
+			} else {
+				rest.Log.Infof("  Operation canceled by user...")
+				return nil
 			}
-		} else if len(items) > 1 {
-
+		} else { // len(items) > 1
 			pSelect := pui.Select{Label: "Select a configuration to remove", Items: items, Size: len(items)}
 			index, removed, err = pSelect.Run()
 			if err != nil {
 				return err
 			}
 			if !confirmAccountDeletion(items[index]) {
-				fmt.Println("  Operation canceled by user...")
+				rest.Log.Infof("  Operation canceled by user...")
 				return nil
 			}
 
@@ -162,9 +166,6 @@ var configRemoveCmd = &cobra.Command{
 			} else if len(items) == 1 {
 				active = items[0]
 			}
-
-		} else {
-			return fmt.Errorf("configuration list is empty")
 		}
 
 		if !cl.Configs[removed].SkipKeyring {
