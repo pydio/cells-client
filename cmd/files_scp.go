@@ -273,6 +273,12 @@ EXAMPLES
 			rest.Log.Fatal(e)
 		}
 
+		if len(t) == 1 && len(c) == 0 && len(d) == 0 {
+			// we just transfer one file, no log at this point
+		} else {
+			rest.Log.Infof("After walking the tree, found %d nodes to delete, %d to create and %d to transfer", len(d), len(c), len(t))
+		}
+
 		var pool *rest.BarsPool = nil
 		if !scpNoProgress {
 			refreshInterval := time.Millisecond * 10 // this is the default
@@ -281,10 +287,6 @@ EXAMPLES
 			}
 			pool = rest.NewBarsPool(len(t)+len(c)+len(d) > 1, len(t)+len(c)+len(d), refreshInterval)
 			pool.Start()
-		} else if len(t) == 1 && len(c) == 0 && len(d) == 0 {
-			// we just transfer one file, no log at this point
-		} else {
-			rest.Log.Infof("After walking the tree, found %d nodes to delete, %d to create and %d to transfer", len(d), len(c), len(t))
 		}
 
 		// Delete necessary items
