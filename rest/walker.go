@@ -172,6 +172,7 @@ func (c *CrawlNode) localWalk(ctx context.Context, targetFolder *CrawlNode,
 		if !c.IsDir { // Source is a single file
 			return
 		}
+		Log.Infoln("Walking local tree to prepare upload")
 		relPath = c.RelPath
 	} else {
 		relPath = givenRelPath[0]
