@@ -230,16 +230,19 @@ func (c *CrawlNode) remoteWalk(ctx context.Context, targetFolder *CrawlNode,
 		if !c.IsDir { // Source is a single file
 			return
 		}
+		Log.Infoln("Walking remote tree to prepare download")
 		relPath = c.RelPath
 	} else {
 		relPath = givenRelPath[0]
 	}
 
+	// Log.Debugln("About to get bulk meta for", c.FullPath)
 	nn, err2 := c.sdkClient.GetAllBulkMeta(ctx, path.Join(c.FullPath, "*"))
 	if err2 != nil {
 		err = err2
 		return
 	}
+	// Log.Debugln("Now iterating over children")
 	for _, n := range nn {
 		// Prepare current node
 		remote := NewRemoteNode(c.sdkClient, n)
@@ -511,7 +514,7 @@ func (c *CrawlNode) upload(ctx context.Context, src *CrawlNode, bar *uiprogress.
 
 	var upErr error
 	if stats.Size() <= UploadSwitchMultipart*(1024*1024) {
-		if _, e = c.sdkClient.PutFile(ctx, fullPath, file, false); e != nil {
+		if _, e = c.sdkClient.PutFile(ctx, fullPath, content, false); e != nil {
 			upErr = fmt.Errorf("could not upload single part file %s: %s", fullPath, e.Error())
 		}
 		if bar == nil {
