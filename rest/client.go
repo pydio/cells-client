@@ -127,11 +127,15 @@ func (client *SdkClient) Setup(ctx context.Context) {
 			for {
 				select {
 				case <-ticker.C:
-					Log.Debugf("About to check refreshment for %s", id(client.currentConfig.SdkConfig))
-					if _, err := client.GetStore().RefreshIfRequired(ctx, client.currentConfig.SdkConfig); err != nil {
-						Log.Errorf("could not refresh authentication token: %s", err)
+					Log.Debugf("### About to check refreshment for %s", id(client.currentConfig.SdkConfig))
+					refreshed, err2 := client.GetStore().RefreshIfRequired(ctx, client.currentConfig.SdkConfig)
+					if err2 != nil {
+						Log.Errorf("could not refresh authentication token: %s", err2)
 						close(client.stopRefreshChan)
+					} else if refreshed {
+						Log.Debugln("--> token has been refreshed")
 					}
+					Log.Debugf("### After refresh - updated: %v, expiration time %s ", refreshed, time.Unix(int64(client.currentConfig.TokenExpiresAt), 0))
 				case <-client.stopRefreshChan:
 					Log.Debugln("Stopping refresh daemon")
 					return

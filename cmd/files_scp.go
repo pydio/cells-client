@@ -319,7 +319,7 @@ EXAMPLES
 				rest.Log.Infof("\t#%d: %s\n", i+1, currErr)
 			}
 			os.Exit(1)
-		} else {
+		} else if scpNoProgress && len(t) > 1 {
 			rest.Log.Infoln("Transfer terminated")
 		}
 	},

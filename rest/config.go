@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"sync"
+	"time"
 
 	"github.com/manifoldco/promptui"
 	"github.com/shibukawa/configdir"
@@ -297,11 +298,12 @@ type CellsConfigStore struct {
 func (store *CellsConfigStore) RefreshIfRequired(ctx context.Context, sdkConfig *cellsSdk.SdkConfig) (bool, error) {
 
 	// No token to refresh
+	configId := id(sdkConfig)
+
 	if sdkConfig.IdToken == "" || sdkConfig.RefreshToken == "" || sdkConfig.TokenExpiresAt == 0 {
+		Log.Debugln("No token to refresh for", configId)
 		return false, nil
 	}
-
-	configId := id(sdkConfig)
 
 	// We can only launch *one* refresh token procedure at a time (and consume the refresh only once)
 	store.refreshLock.Lock()
@@ -319,6 +321,8 @@ func (store *CellsConfigStore) RefreshIfRequired(ctx context.Context, sdkConfig 
 	if err != nil {
 		return false, fmt.Errorf("could not refresh JWT token for %s, cause: %s", configId, err.Error())
 	}
+	Log.Debugf("... After refresh - updated: %v, expiration time %s ", updated, time.Unix(int64(sdkConfig.TokenExpiresAt), 0))
+
 	// Update values in the current config (param is a pointer)
 	sdkConfig.IdToken = storedConf.IdToken
 	sdkConfig.User = storedConf.User
