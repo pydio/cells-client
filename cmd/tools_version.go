@@ -48,23 +48,23 @@ EXAMPLES
   A *non* valid version:
    ` + os.Args[0] + ` tools version isvalid 2.a
 `,
-	Run: func(cm *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 1 {
-			cm.Printf("Please provide a version to parse\n")
+			cmd.Printf("Please provide a version to parse\n")
 			os.Exit(1)
 		}
 		versionStr := args[0]
 		_, err := hashivers.NewVersion(versionStr)
 		if versionQuiet {
 			if err == nil {
-				cm.Println("1")
+				fmt.Println("1")
 			} else {
-				cm.Println("0")
+				fmt.Println("0")
 			}
 			os.Exit(0)
 		} else {
 			if err != nil {
-				cm.Printf("[%s] is *not* a valid version\n", versionStr)
+				cmd.Printf("[%s] is *not* a valid version\n", versionStr)
 				os.Exit(1)
 			}
 		}
@@ -100,9 +100,9 @@ EXAMPLES
   A *non* release version:
    ` + os.Args[0] + ` tools version isrelease 2.0.6-dev.20191205
 `,
-	Run: func(cm *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 1 {
-			cm.Printf("Please provide a single version to be parsed\n")
+			cmd.Printf("Please provide a single version to be parsed\n")
 			os.Exit(1)
 		}
 		versionStr := args[0]
@@ -121,14 +121,14 @@ EXAMPLES
 
 		if versionQuiet {
 			if resultOK {
-				cm.Println("1")
+				fmt.Println("1")
 			} else {
-				cm.Println("0")
+				fmt.Println("0")
 			}
 			os.Exit(0)
 		} else {
 			if !resultOK {
-				cm.Println(errMessage)
+				cmd.Println(errMessage)
 				os.Exit(1)
 			}
 			// Valid release version and not in quiet mode, we simply do nothing.
@@ -195,9 +195,9 @@ EXAMPLE
 
 		if versionQuiet {
 			if resultOK {
-				cmd.Println("1")
+				fmt.Println("1")
 			} else {
-				cmd.Println("0")
+				fmt.Println("0")
 			}
 			os.Exit(0)
 		} else {
@@ -241,7 +241,7 @@ var hiddenIgtCmd = &cobra.Command{
 	Short:  "Compare the two versions, succeed when the first is greater than the second",
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Println("[WARNING] this command is deprecated and will be removed in a future release.")
-		cmd.Println("Rather use:", os.Args[0], " tools version isgreater 4.1.1 4.1.1-dev.20240425")
+		cmd.Println("Rather use e.G:", os.Args[0], " tools version isgreater 4.1.1 4.1.1-dev.20240425")
 		igtCmd.Run(cmd, args)
 	},
 }
