@@ -1,7 +1,15 @@
-# Changes between v4.1.0 and v4.2.0-alpha3
+# Changes between v4.1.0 and v4.2.0
 
-[See Full Changelog](https://github.com/pydio/cells-client/compare/v4.1.0...v4.2.0-alpha3)
+[See Full Changelog](https://github.com/pydio/cells-client/compare/v4.1.0...v4.2.0)
 
+- [#41b0385](https://github.com/pydio/cells-client/commit/41b0385405b25ad7e649dffe9c32a123f5e861f5): Also log message before starting to walk the tree for uploads
+- [#4959b10](https://github.com/pydio/cells-client/commit/4959b107853d6196a8881630d3ea63951bedbe1a): Better log messages
+- [#e99bb3a](https://github.com/pydio/cells-client/commit/e99bb3ac0ebf62cb6b7001131505d49e82fe79ba): Fix progress for small file upload
+- [#51df716](https://github.com/pydio/cells-client/commit/51df7168d4175ab6e48a2cac3ab703d22d4dac5b): Rather use fmt to print to standard output in quiet mode
+- [#6dbc35e](https://github.com/pydio/cells-client/commit/6dbc35e1eb2f0b2251c644f52bf8f2f78e7a0dbe): Latest AWS SDK
+- [#3fb9c5b](https://github.com/pydio/cells-client/commit/3fb9c5b3413f874f9ea4f7631ed80a68e7f12392): Also print meta info before showing progress when transfering a folder
+- [#6f16d63](https://github.com/pydio/cells-client/commit/6f16d63db34083ca7d8de6534eaf33cdc987e307): Update TPs
+- [#0271b3f](https://github.com/pydio/cells-client/commit/0271b3fe000c3ad93bc9a9f4718b6a6ba9313ab5): Release v4.2.0-alpha3
 - [#72117fe](https://github.com/pydio/cells-client/commit/72117fe5d468a532f60d79ffb46277c784091691): Fix panic when aborting the removal of the last defined account
 - [#2202f10](https://github.com/pydio/cells-client/commit/2202f10f008342d0a5dc6ab546fb5c18acbbbab2): Release v4.2.0-alpha2
 - [#f5f556e](https://github.com/pydio/cells-client/commit/f5f556eeb809c78d276c70d5951163a95fac9e7f): Fix typos
