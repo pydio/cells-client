@@ -32,9 +32,9 @@ require (
 	go.uber.org/zap v1.27.0
 )
 
-require github.com/alessio/shellescape v1.4.1 // indirect
-
 require (
+	// Updating this raises dependency problem because the maintainer changed the package name.
+	github.com/alessio/shellescape v1.4.2 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.4 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.27.33 // indirect
@@ -104,5 +104,3 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace github.com/alessio/shellescape v1.4.2 => al.essio.dev/pkg/shellescape v1.5.0
