@@ -1,4 +1,4 @@
-<img src="https://github.com/pydio/cells/wiki/images/PydioCellsColor.png" width="400" />
+<img src="https://github.com/pydio/cells/wiki/images/PydioCellsColor.png" width="400"  alt="Pydio Cells Logo"/>
 
 [Homepage](https://pydio.com/) | [GitHub-Repository](https://github.com/pydio/cells-client) |
 [Issue-Tracker](https://github.com/pydio/cells-client/issues)
@@ -8,9 +8,9 @@
 
 Cells Client provides an easy way to communicate with a [Pydio Cells](https://github.com/pydio/cells) server instance from the command line (or from automation scripts). It uses the [Cells SDK for Go](https://github.com/pydio/cells-sdk-go) and the REST API under the hood.
 
-Cells Client a.k.a `cec` works like standard command line tools like **ls**, **scp**, etc.  Using the `cec` command, you can list, download and upload directly to your remote Cells server.
+Cells Client a.k.a. `cec` works like standard command line tools like **ls**, **scp**, etc.  Using the `cec` command, you can list, download and upload directly to your remote Cells server.
 
-The v4 version of this tools is meant to be used with a remote Cells server that is also at version v4+, please rather use cells-client v2 if your server is older (but you really should update your Cells server!).
+The v4 version of this tool is meant to be used with a remote Cells server that is also at version v4+, please rather use cells-client v2 if your server is older (but you really should update your Cells server!).
 
 ## Usage
 
@@ -116,7 +116,7 @@ Cells Client requires an authenticated connection to the target Cells server. Fo
 Once a valid user is available, there are 2 options:
 
 - Go through an interactive configuration and persist necessary information on the client machine (Persistent Mode)
-- Pass the necessary connection information at each call (Non Persistent Mode)
+- Pass the necessary connection information at each call (Non-Persistent Mode)
 
 ### Persistent Mode
 
@@ -143,7 +143,7 @@ The token is saved locally and will be refreshed automatically as required. If a
 cec config check-keyring 
 ```
 
-Supported keyrings are MacOSX Keychain, Linux DBUS and Windows Credential Manager API.
+Supported keyring systems are MacOSX Keychain, Linux DBUS and Windows Credential Manager API.
 
 #### Troubleshooting
 
@@ -263,7 +263,7 @@ cd ./cells-client
 make dev
 ```
 
-Cells Client uses the Go Modules mechanism to manage dependencies: you can checkout the code anywhere in your local machine, it does not have to be within your `GOPATH`.
+Cells Client uses the Go Modules mechanism to manage dependencies: you can check out the code anywhere in your local machine, it does not have to be within your `GOPATH`.
 
 ## License
 
