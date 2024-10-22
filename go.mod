@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.66.0
 	github.com/aws/smithy-go v1.22.0
 	github.com/dustin/go-humanize v1.0.1
-	github.com/fatih/color v1.17.0
+	github.com/fatih/color v1.18.0
 	github.com/go-openapi/runtime v0.28.0
 	github.com/go-openapi/strfmt v0.23.0
 	github.com/gookit/color v1.5.4
@@ -19,7 +19,6 @@ require (
 	github.com/manifoldco/promptui v0.9.0
 	github.com/minio/md5-simd v1.1.2
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/ory/viper v1.7.5
 	github.com/pkg/errors v0.9.1
 	github.com/pydio/cells-sdk-go/v5 v5.0.0-alpha7
 	github.com/pydio/go v0.0.0-20191211170306-d00ac19450ef
@@ -28,6 +27,7 @@ require (
 	github.com/smartystreets/goconvey v1.8.1
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
+	github.com/spf13/viper v1.9.0
 	github.com/zalando/go-keyring v0.2.5
 	go.uber.org/zap v1.27.0
 )
@@ -51,10 +51,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sso v1.24.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.28.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.32.2 // indirect
-	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/chzyer/readline v1.5.1 // indirect
 	github.com/danieljoos/wincred v1.2.2 // indirect
-	github.com/dgraph-io/ristretto v1.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
