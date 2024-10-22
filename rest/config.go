@@ -154,7 +154,7 @@ func GetConfigList() (*ConfigList, error) {
 	configList := &tmp
 
 	// Double-check to detect and migrate legacy configs
-	if configList.Configs == nil || len(configList.Configs) == 0 {
+	if len(configList.Configs) == 0 {
 
 		configList, err = tryToGetLegacyConfig(data)
 		if err != nil {
@@ -321,7 +321,11 @@ func (store *CellsConfigStore) RefreshIfRequired(ctx context.Context, sdkConfig 
 	if err != nil {
 		return false, fmt.Errorf("could not refresh JWT token for %s, cause: %s", configId, err.Error())
 	}
-	Log.Debugf("... After refresh - updated: %v, expiration time %s ", updated, time.Unix(int64(sdkConfig.TokenExpiresAt), 0))
+	if updated {
+		Log.Debugf("Token refreshed. New expiration time: %s ", time.Unix(int64(storedConf.TokenExpiresAt), 0))
+	} else {
+		Log.Debugf("Token checked, still expiring at %s ", time.Unix(int64(storedConf.TokenExpiresAt), 0))
+	}
 
 	// Update values in the current config (param is a pointer)
 	sdkConfig.IdToken = storedConf.IdToken
@@ -348,16 +352,6 @@ func (store *CellsConfigStore) RefreshIfRequired(ctx context.Context, sdkConfig 
 func UpdateConfig(newConf *CecConfig) error {
 
 	var err error
-
-	//// Failsafe if an error is thrown at save time
-	//if DefaultConfig != nil && DefaultConfig.SdkConfig != nil {
-	//	oldConfig := CloneConfig(DefaultConfig)
-	//	defer func() {
-	//		if err != nil {
-	//			DefaultConfig = CloneConfig(oldConfig)
-	//		}
-	//	}()
-	//}
 
 	uname, e := RetrieveSessionLogin(newConf)
 	if e != nil {
