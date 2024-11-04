@@ -1,6 +1,8 @@
 module github.com/pydio/cells-client/v4
 
-go 1.22
+go 1.22.0
+
+toolchain go1.22.8
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.32.3
@@ -52,7 +54,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.32.3 // indirect
 	github.com/chzyer/readline v1.5.1 // indirect
 	github.com/danieljoos/wincred v1.2.2 // indirect
-	github.com/fsnotify/fsnotify v1.7.0 // indirect
+	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/analysis v0.23.0 // indirect
