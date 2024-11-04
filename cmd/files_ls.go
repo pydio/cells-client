@@ -18,38 +18,41 @@ import (
 	"github.com/pydio/cells-sdk-go/v5/models"
 )
 
-var lsCmdExample = ` 1/ Listing the content of the personal-files workspace
+var lsCmdExample = ` 1/ Listing the content of a folder
   
-  $ ` + os.Args[0] + ` ls personal-files
-  +--------+--------------------------+
-  |  TYPE  |           NAME           |
-  +--------+--------------------------+
-  | Folder | .			      |
-  | File   | Cat.jpg                  |
-  | File   | Photo.png                |
-  | Folder | Others                   |
-  | File   | info.txt                 |
-  | Folder | recycle_bin              |
-  +--------+--------------------------+
+  $ ` + os.Args[0] + ` ls common-files/Test
+  Found 6 nodes at common-files/Test:
+  +--------+-----------------+
+  |  TYPE  |      NAME       |
+  +--------+-----------------+
+  | Folder | .               |
+  | Folder | Archives        |
+  | File   | Garden.jpeg     |
+  | File   | Nighthawks.jpeg |
+  | File   | ReadMe.md       |
+  | File   | Summer.jpeg     |
+  +--------+-----------------+
+
   
  2/ Showing details about a file
   
-  $ ` + os.Args[0] + ` ls personal-files/photo.jpg -d
-  Listing: 1 results for personal-files/photo.jpg
-  +------+--------------------------------------+-----------------------------+--------+------------+
-  | TYPE |                 UUID                 |            NAME             |  SIZE  |  MODIFIED  |
-  +------+--------------------------------------+-----------------------------+--------+------------+
-  | File | 98bbd86c-acb9-4b56-a6f3-837609155ba6 | personal-files/photo.jpg    | 3.1 MB | 5 days ago |
-  +------+--------------------------------------+-----------------------------+--------+------------+
-  
-  Will show the metadata for this node (uuid, size, modification date)
+  $ ` + os.Args[0] + ` ls -d common-files/Test/Garden.jpeg
+  Found 1 node at common-files/Test/Garden.jpeg:
+  +------+--------------------------------------+-------------+---------+----------------+----------------------------------+
+  | TYPE |                 UUID                 |    NAME     |  SIZE   |    MODIFIED    |          INTERNAL HASH           |
+  +------+--------------------------------------+-------------+---------+----------------+----------------------------------+
+  | File | e50c9d8a-a84c-4b32-908a-408927657810 | Garden.jpeg | 442 KiB | 52 minutes ago | a6676657eb373c7f3e3c4e01be817fac |
+  +------+--------------------------------------+-------------+---------+----------------+----------------------------------+
+ 
+  Will show the metadata for this node (uuid, size, modification date and internal hash)
   
  3/ Only listing files and folders, one per line.
   
-  $ ` + os.Args[0] + ` ls personal-files -r
-  Cat.jpg
-  info.txt
-  Huge Photo.jpg
+  $ ` + os.Args[0] + ` ls -r common-files/Test
+  common-files/Test/Archives/
+  common-files/Test/Garden.jpeg
+  common-files/Test/Nighthawks.jpeg
+  common-files/Test/ReadMe.md
   ...
   
  4/ Using a template:
@@ -83,6 +86,7 @@ const (
 	metaType      = "Type"
 	metaUuid      = "Uuid"
 	metaName      = "Name"
+	metaHash      = "Hash"
 	metaPath      = "Path"
 	metaHumanSize = "HumanSize"
 	metaSizeBytes = "SizeBytes"
@@ -122,6 +126,7 @@ SYNTAX
   As reference, known attributes for the Go templates are:
    - Type: File, Folder or Workspace
    - Uuid: the unique ID of the corresponding node in the Cells Server
+   - Hash: in case of a file, the internal hash computed by the server 
    - Name: name of the item
    - Path: the path from the root of the server
    - HumanSize: a human-friendly formatted size
@@ -236,6 +241,16 @@ EXAMPLES
 				}
 			}
 
+			iHash := ""
+			if t == "File" {
+				// Retrieve the internal hash
+				if node.MetaStore != nil {
+					if v, ok := node.MetaStore["x-cells-hash"]; ok {
+						iHash = strings.Trim(v, "\"")
+					}
+				}
+			}
+
 			switch displayMode {
 			case details:
 				if wsLevel {
@@ -248,7 +263,7 @@ EXAMPLES
 						fromMetaStore(node, "ws_permissions"),
 					})
 				} else {
-					table.Append([]string{t, node.UUID, currName, sizeToHuman(node.Size), stampToDate(node.MTime)})
+					table.Append([]string{t, node.UUID, currName, sizeToHuman(node.Size), stampToDate(node.MTime), iHash})
 				}
 			case raw:
 				if node.Type != nil && *node.Type == models.TreeNodeTypeCOLLECTION {
@@ -268,6 +283,7 @@ EXAMPLES
 					metaSizeBytes: node.Size,
 					metaTimestamp: node.MTime,
 					medaDate:      stampToDate(node.MTime),
+					metaHash:      iHash,
 				}
 
 				if err = parsedTemplate.Execute(os.Stdout, values); err != nil {
@@ -293,7 +309,7 @@ EXAMPLES
 			if wsLevel {
 				table.SetHeader([]string{"Type", "Uuid", "Name", "Label", "Description", "Permissions"})
 			} else {
-				table.SetHeader([]string{"Type", "Uuid", "Name", "Size", "Modified"})
+				table.SetHeader([]string{"Type", "Uuid", "Name", "Size", "Modified", "Internal Hash"})
 			}
 			table.Render()
 		case raw, goTemplate: // Nothing to add: we just want the raw values that we already displayed while looping

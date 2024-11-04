@@ -15,7 +15,8 @@ import (
 )
 
 var (
-	hashFilePath string
+	hashFilePath  string
+	hashRawResult bool
 )
 
 // Removed as it does not improve compute efficiency:
@@ -23,15 +24,16 @@ var (
 
 var hashFile = &cobra.Command{
 	Use:   "hash",
-	Short: "Compute Hash for a local file using the same algorithm as Cells Server",
+	Short: "Compute the hash of a local file using the same algorithm as the one used by the Cells Server",
 	Long: `
 DESCRIPTION
 
- This command uses the same block-based algorithm as in the Cells server to verify a local file hash.
+ This command uses the same block-based algorithm as in the Cells server to compute the hash of a local file.
  Output should be the same as the File Metadata > Internal Hash displayed on the web UX.
 
  BlockHashing computes hashes for blocks of ` + humanize.Bytes(hasher.DefaultBlockSize) + ` using a specific hasher, then computes md5 of all these hashes joined together. 
 
+ Use the '--raw' flag to only get the resulting hash.  
 EXAMPLE
 
     $ ` + os.Args[0] + ` tools hash --file /path/to/file.ext
@@ -49,7 +51,9 @@ EXAMPLE
 			fmt.Println("Please provide a file, not a folder!")
 			return
 		}
-		fmt.Println("Starting hashing for file " + hashFilePath)
+		if !hashRawResult {
+			fmt.Println("Starting hashing for file " + hashFilePath)
+		}
 		t := time.Now()
 		bH := hasher.NewBlockHash(md5.New(), hasher.DefaultBlockSize)
 		// bH := hasher.NewBlockHash(simd.MD5(), hasher.DefaultBlockSize)
@@ -71,12 +75,17 @@ EXAMPLE
 			return
 		}
 		final := hex.EncodeToString(bH.Sum(nil))
-		fmt.Printf("Final MD5 is '%s'.\nIt was computed in %s for %s.\n", final, time.Since(t), humanize.Bytes(uint64(written)))
+		if hashRawResult {
+			fmt.Println(final)
+		} else {
+			fmt.Printf("Final MD5 is '%s'.\nIt was computed in %s for %s.\n", final, time.Since(t), humanize.Bytes(uint64(written)))
+		}
 	},
 }
 
 func init() {
 	flags := hashFile.PersistentFlags()
 	flags.StringVarP(&hashFilePath, "file", "f", "", "Path to file")
+	flags.BoolVarP(&hashRawResult, "raw", "r", false, "Only returns the computed hash string")
 	ToolsCmd.AddCommand(hashFile)
 }
