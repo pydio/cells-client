@@ -7,7 +7,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	cellsSdk "github.com/pydio/cells-sdk-go/v4"
+	"io"
 	"math"
 	"math/rand"
 	"net/url"
@@ -17,6 +17,7 @@ import (
 	"github.com/go-openapi/runtime"
 
 	"github.com/pydio/cells-client/v4/common"
+	cellsSdk "github.com/pydio/cells-sdk-go/v4"
 )
 
 // RetryCallback implements boilerplate code to easily call the same function until it succeeds
@@ -42,7 +43,9 @@ func RetrieveSessionLogin(currConf *CecConfig) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
 
 	// Simply check tags on the fly and stops when a <user id=""> tag has been found.
 	decoder := xml.NewDecoder(resp.Body)
@@ -70,7 +73,9 @@ func RetrieveRemoteServerVersion(sdkConfig *cellsSdk.SdkConfig) (*common.ServerV
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve bootconf: %s", err.Error())
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
 
 	decoder := json.NewDecoder(resp.Body)
 
@@ -115,9 +120,9 @@ func StandardizeLink(sdkConfig *cellsSdk.SdkConfig, old string) string {
 }
 
 func Unique(length int) string {
-	rand := fmt.Sprintf("%d", time.Now().Nanosecond())
+	pseudoRand := fmt.Sprintf("%d", time.Now().Nanosecond())
 	hash := md5.New()
-	hash.Write([]byte(rand))
+	hash.Write([]byte(pseudoRand))
 	return hex.EncodeToString(hash.Sum(nil))[0:length]
 }
 
