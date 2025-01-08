@@ -14,7 +14,7 @@ import (
 	"github.com/aws/smithy-go"
 	"github.com/dustin/go-humanize"
 
-	sdkS3 "github.com/pydio/cells-sdk-go/v5/transport/s3"
+	sdkS3 "github.com/pydio/cells-sdk-go/v4/transport/s3"
 )
 
 // GetFile retrieves a file from the server in one big download (**no** multipart download for the time being).

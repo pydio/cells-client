@@ -10,11 +10,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/go-openapi/strfmt"
 
-	cellsSdk "github.com/pydio/cells-sdk-go/v5"
-	"github.com/pydio/cells-sdk-go/v5/client"
-	sdkHttp "github.com/pydio/cells-sdk-go/v5/transport/http"
-	sdkRest "github.com/pydio/cells-sdk-go/v5/transport/rest"
-	sdkS3 "github.com/pydio/cells-sdk-go/v5/transport/s3"
+	cellsSdk "github.com/pydio/cells-sdk-go/v4"
+	"github.com/pydio/cells-sdk-go/v4/client"
+	sdkHttp "github.com/pydio/cells-sdk-go/v4/transport/http"
+	sdkRest "github.com/pydio/cells-sdk-go/v4/transport/rest"
+	sdkS3 "github.com/pydio/cells-sdk-go/v4/transport/s3"
 
 	"github.com/pydio/cells-client/v4/common"
 )

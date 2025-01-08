@@ -10,7 +10,7 @@ import (
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 
-	cellsSdk "github.com/pydio/cells-sdk-go/v5"
+	cellsSdk "github.com/pydio/cells-sdk-go/v4"
 
 	"github.com/pydio/cells-client/v4/rest"
 )

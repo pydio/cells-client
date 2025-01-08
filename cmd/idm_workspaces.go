@@ -6,8 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-sdk-go/v5/client/workspace_service"
-	"github.com/pydio/cells-sdk-go/v5/models"
+	"github.com/pydio/cells-sdk-go/v4/client/workspace_service"
+	"github.com/pydio/cells-sdk-go/v4/models"
 )
 
 var listWorkspaces = &cobra.Command{

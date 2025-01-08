@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/pydio/cells-client/v4/rest"
-	cellsSdk "github.com/pydio/cells-sdk-go/v5"
+	cellsSdk "github.com/pydio/cells-sdk-go/v4"
 )
 
 var configurePersonalAccessTokenCmd = &cobra.Command{

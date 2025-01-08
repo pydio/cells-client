@@ -8,7 +8,7 @@ import (
 	"github.com/zalando/go-keyring"
 
 	"github.com/pydio/cells-client/v4/common"
-	cellsSdk "github.com/pydio/cells-sdk-go/v5"
+	cellsSdk "github.com/pydio/cells-sdk-go/v4"
 )
 
 const (

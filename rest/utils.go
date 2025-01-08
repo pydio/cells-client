@@ -7,7 +7,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	cellsSdk "github.com/pydio/cells-sdk-go/v5"
+	cellsSdk "github.com/pydio/cells-sdk-go/v4"
 	"math"
 	"math/rand"
 	"net/url"

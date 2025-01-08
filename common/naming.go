@@ -1,7 +1,7 @@
 package common
 
 import (
-	cellsSdk "github.com/pydio/cells-sdk-go/v5"
+	cellsSdk "github.com/pydio/cells-sdk-go/v4"
 )
 
 const (

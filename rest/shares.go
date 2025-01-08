@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/pydio/cells-sdk-go/v5/client/share_service"
-	"github.com/pydio/cells-sdk-go/v5/models"
+	"github.com/pydio/cells-sdk-go/v4/client/share_service"
+	"github.com/pydio/cells-sdk-go/v4/models"
 )
 
 func (client *SdkClient) CreateSimpleFolderLink(ctx context.Context, targetNodeUuid, label string) (*models.RestShareLink, error) {
