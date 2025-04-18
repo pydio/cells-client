@@ -76,12 +76,6 @@ $` + os.Args[0] + ` meta set --path=personal/admin/test.txt --operation=update -
 			return
 		}
 
-		op, err := validateOperation()
-		if err != nil {
-			cmd.PrintErr(err)
-			return
-		}
-
 		uv, err := formatInputData(cmd, nsDef.Type)
 
 		if err != nil {
@@ -91,7 +85,7 @@ $` + os.Args[0] + ` meta set --path=personal/admin/test.txt --operation=update -
 
 		v := getFinalJsonValue(nsDef.Type, uv)
 	
-		do(ctx, client, node, op, v)
+		do(ctx, client, node, v)
 	},
 }
 
@@ -179,7 +173,7 @@ func validateOperation() (models.UpdateUserMetaRequestUserMetaOp, error) {
 }
 
 // Perform effective operation
-func do(ctx context.Context, client *client.PydioCellsRestAPI, node *models.TreeNode, operation models.UpdateUserMetaRequestUserMetaOp, value string) error {
+func do(ctx context.Context, client *client.PydioCellsRestAPI, node *models.TreeNode, value string) error {
 	opPut := models.UpdateUserMetaRequestUserMetaOpPUT
 	params := &user_meta_service.UpdateUserMetaParams{
 		Body: &models.IdmUpdateUserMetaRequest{
