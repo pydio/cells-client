@@ -152,9 +152,9 @@ func init() {
 
 func printMetaNamespaces(namespaces []*models.IdmUserMetaNamespace) {
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Namespace", "Label"})
+	table.SetHeader([]string{"Namespace", "Label", "JSONDefinition"})
 	for _, n := range namespaces {
-		table.Append([]string{n.Namespace, n.Label})
+		table.Append([]string{n.Namespace, n.Label, n.JSONDefinition})
 	}
 	table.Render()
 }
