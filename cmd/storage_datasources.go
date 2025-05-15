@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/pydio/cells-sdk-go/v4/models"
 	"log"
 	"os"
 
@@ -10,6 +9,7 @@ import (
 
 	"github.com/pydio/cells-sdk-go/v4/client/config_service"
 	"github.com/pydio/cells-sdk-go/v4/client/jobs_service"
+	"github.com/pydio/cells-sdk-go/v4/models"
 
 	"github.com/pydio/cells-client/v4/rest"
 )
