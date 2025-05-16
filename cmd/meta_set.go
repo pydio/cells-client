@@ -42,7 +42,7 @@ EXAMPLE
 
 # Update usermeta-tag-validation-status meta of node:
 
-$` + os.Args[0] + ` meta set --path=personal/admin/test.txt --operation=update --meta-name=usermeta-tag-validation-status --value=Validated
+$` + os.Args[0] + ` meta set --path=personal/admin/test.txt --operation=update --meta-name=usermeta-tag-validation-status --string-value=Validated
 
 `,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -249,7 +249,7 @@ type userValues struct {
 	StarValue    int
 }
 
-// formatInputdata try to validate, format and store different input types to userValues struct
+// formatInputData attempts to validate, format, and store different input types into the userValues struct.
 func formatInputData(cmd *cobra.Command, metaType string) (*userValues, error) {
 	uValues := userValues{}
 	if err := validateMetaFlagTypeMatch(cmd, metaType); err != nil {
@@ -342,7 +342,7 @@ func formatInputData(cmd *cobra.Command, metaType string) (*userValues, error) {
 	return &uValues, nil
 }
 
-// getFinalJsonValue grab formated value from userValues then wrap it in a json string for api call.
+// getFinalJsonValue retrieves the formatted value from userValues and wraps it in a JSON string for the API call.
 func getFinalJsonValue(t string, uv *userValues) string {
 	o, _ := validateOperation()
 	if o == models.UpdateUserMetaRequestUserMetaOpPUT {
