@@ -34,8 +34,6 @@ var (
 		"help", "config", "version", "completion", "oauth", "clear", "doc", "update", "token", "tools",
 		// legacy
 		"configure",
-		// Useless
-		// "--help",
 	}
 
 	sdkClient *rest.SdkClient
@@ -48,7 +46,7 @@ var (
 	login     string
 	password  string
 
-	proxyURL    string
+	//proxyURL    string
 	skipKeyring bool
 	skipVerify  bool
 	noCache     bool
@@ -87,7 +85,7 @@ ENVIRONMENT
   All the command flags documented below are mapped to their associated ENV var, using upper case and CEC_ prefix.
 
   For example:
-    $ ` + os.Args[0] + ` ls --no_cache
+    $ ` + os.Args[0] + ` ls --no-cache
   is equivalent to: 
     $ export CEC_NO_CACHE=true; ` + os.Args[0] + ` ls
    
@@ -118,9 +116,6 @@ ENVIRONMENT
 			}
 		}
 
-		// Manually bind to viper instead of flags.StringVar, flags.BoolVar, etc.
-		// => This is useful to ease implementation of retro-compatibility
-
 		// We cannot initialise config path before:
 		// default value is built upon the AppName that can be overwritten by an extending app
 		parPath := viper.GetString("config")
@@ -138,11 +133,10 @@ ENVIRONMENT
 			}
 		}
 
-		//authType = viper.GetString("auth_type")
 		token = viper.GetString("token")
 		login = viper.GetString("login")
 		password = viper.GetString("password")
-		proxyURL = viper.GetString("proxy-url")
+		//proxyURL = viper.GetString("proxy-url")
 		noCache = viper.GetBool("no-cache")
 		skipKeyring = viper.GetBool("skip-keyring")
 		skipVerify = viper.GetBool("skip-verify")
@@ -183,19 +177,6 @@ func CurrentSdkClient() *rest.SdkClient {
 	return sdkClient
 }
 
-func configureLogger(logLevel string) (*zap.Logger, error) {
-	level := zapcore.InfoLevel
-	switch logLevel {
-	case "debug", "DEBUG":
-		level = zapcore.DebugLevel
-	case "warn", "WARN":
-		level = zapcore.WarnLevel
-	case "error", "ERROR":
-		level = zapcore.ErrorLevel
-	}
-	return rest.SetLogger(level), nil
-}
-
 // RegisterExtraOfflineCommand adds the passed commands to the list of commands that skip the verifications
 // that ensure that we have a valid connection to a distant Cells server defined.
 func RegisterExtraOfflineCommand(commands ...string) {
@@ -212,13 +193,12 @@ func init() {
 	flags.String("log", "info", "change log level (default: info)")
 
 	flags.String("config", "", fmt.Sprintf("Location of Cells Client's config files (default: %s)", rest.DefaultConfigFilePath()))
-	// flags.String("config", rest.DefaultConfigDirPath(), "Location of Cells Client's config files")
 	flags.StringP("url", "u", "", "The full URL of the target server")
 	flags.StringP("token", "t", "", "A valid Personal Access Token (PAT)")
 	flags.String("login", "", "The user login, for Client auth only")
 	flags.String("password", "", "The user password, for Client auth only")
 
-	flags.String("proxy-url", "", "Define a custom proxy for outbound requests")
+	//flags.String("proxy-url", "", "Define a custom proxy for outbound requests")
 	flags.Bool("skip-verify", false, "By default the Cells Client verifies the validity of TLS certificates for each communication. This option skips TLS certificate verification")
 	flags.Bool("skip-keyring", false, "Explicitly tell the tool to *NOT* try to use a keyring, even if present. Warning: sensitive information will be stored in clear text")
 	flags.Bool("no-cache", false, "Force token refresh at each call. This might slow down scripts with many calls")
@@ -245,7 +225,7 @@ func init() {
 	bindViperFlags(flags, replaceMap)
 }
 
-// SetUpEnvironment configures the current runtime by setting the SDK Config that is used by child commands.
+// setUpEnvironment configures the current runtime by setting the SDK Config that is used by child commands.
 // It first tries to retrieve parameters via flags or environment variables. If it is not enough to define a valid connection,
 // we check for a locally defined configuration file (that might also rely on local keyring to store sensitive info).
 func setUpEnvironment(ctx context.Context) error {
@@ -258,9 +238,10 @@ func setUpEnvironment(ctx context.Context) error {
 	// Try first to establish context using flag or ENV vars
 	c := getCecConfigFromEnv()
 
+	var err error
 	// Fallback to latest active registered account
 	if c.SdkConfig == nil {
-		_, err := os.ReadFile(configFilePath)
+		_, err = os.ReadFile(configFilePath)
 		if err != nil {
 			return err
 		}
@@ -285,19 +266,46 @@ func setUpEnvironment(ctx context.Context) error {
 	}
 
 	// Initialize an SDK Client
-	options, err := getSdkOptions()
-	if err != nil {
-		return err
-	}
-
-	sdkClient, err = rest.NewSdkClient(ctx, c, options)
+	sdkClient, err = rest.NewSdkClient(ctx, c)
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	sdkClient.Setup(ctx)
 
 	return nil
+}
+
+func configureLogger(logLevel string) (*zap.Logger, error) {
+	level := zapcore.InfoLevel
+	switch logLevel {
+	case "debug", "DEBUG":
+		level = zapcore.DebugLevel
+	case "warn", "WARN":
+		level = zapcore.WarnLevel
+	case "error", "ERROR":
+		level = zapcore.ErrorLevel
+	}
+	return rest.SetLogger(level), nil
+}
+
+// bindViperFlags visits all flags in FlagSet and bind their key to the corresponding viper variable.
+func bindViperFlags(flags *pflag.FlagSet, replaceKeys map[string]string) {
+	flags.VisitAll(func(flag *pflag.Flag) {
+		key := flag.Name
+		if replace, ok := replaceKeys[flag.Name]; ok {
+			key = replace
+		}
+		if err := viper.BindPFlag(key, flag); err != nil {
+			fmt.Printf("=== WARN: could not bind flag with key %s, cause:  %s ", key, err.Error())
+		}
+		if err := viper.BindEnv(key, getEnvVarName(key)); err != nil {
+			fmt.Printf("=== WARN: could not bind flag with env var name: %s, cause:  %s\n", key, err.Error())
+		}
+	})
+}
+
+func getEnvVarName(flagName string) string {
+	return fmt.Sprintf("%s_%s", common.EnvPrefix, strings.ToUpper(strings.ReplaceAll(flagName, "-", "_")))
 }
 
 // getCecConfigFromEnv first check if a valid connection has been configured with flags and/or ENV var
@@ -363,105 +371,3 @@ func handleLegacyParams() {
 		}
 	}
 }
-
-// bindViperFlags visits all flags in FlagSet and bind their key to the corresponding viper variable.
-func bindViperFlags(flags *pflag.FlagSet, replaceKeys map[string]string) {
-	flags.VisitAll(func(flag *pflag.Flag) {
-		key := flag.Name
-		if replace, ok := replaceKeys[flag.Name]; ok {
-			key = replace
-		}
-		if err := viper.BindPFlag(key, flag); err != nil {
-			fmt.Printf("=== WARN: could not bind flag with key %s, cause:  %s ", key, err.Error())
-		}
-		if err := viper.BindEnv(key, getEnvVarName(key)); err != nil {
-			fmt.Printf("=== WARN: could not bind flag with env var name: %s, cause:  %s\n", key, err.Error())
-		}
-	})
-}
-
-func getEnvVarName(flagName string) string {
-	return fmt.Sprintf("%s_%s", common.EnvPrefix, strings.ToUpper(strings.ReplaceAll(flagName, "-", "_")))
-}
-
-var bashCompletionFunc = `__` + os.Args[0] + `_custom_func() {
-  case ${last_command} in
-  ` + os.Args[0] + `_mv | ` + os.Args[0] + `_cp | ` + os.Args[0] + `_rm | ` + os.Args[0] + `_ls)
-    _path_completion
-    return
-    ;;
-	` + os.Args[0] + `_storage_resync-ds)
-    _datasources_completion
-    return
-    ;;
-  ` + os.Args[0] + `_scp)
-    _scp_path_completion
-    return
-    ;;
-  *) ;;
-  esac
-}
-_path_completion() {
-  local lsopts cur dir
-  cur="${COMP_WORDS[COMP_CWORD]}"
-  dir="$(dirname "$cur" 2>/dev/null)"
-
-  currentlength=${#cur}
-  last_char=${cur:currentlength-1:1}
-
-  if [[ $last_char == "/" ]] && [[ currentlength -gt 2 ]]; then
-    dir=$cur
-  elif [[ -z $dir ]]; then
-    dir="/"
-  elif [[ $dir == "." ]]; then
-    dir="/"
-  fi
-
-  IFS=$'\n'
-  lsopts="$(` + os.Args[0] + ` ls --raw $dir)"
-
-  COMPREPLY=($(compgen -W "${lsopts[@]}" -- "$cur"))
-  compopt -o nospace
-  compopt -o filenames
-}
-
-_scp_path_completion() {
-  local lsopts cur dir
-  cur="${COMP_WORDS[COMP_CWORD]}"
-	
-  if [[ $cur != cells//* ]]; then
-    return
-  fi
-
-  prefix="cells//"
-  cur=${cur#$prefix}
-
-  dir="$(dirname "$cur" 2>/dev/null)"
-  currentlength=${#cur}
-  last_char=${cur:currentlength-1:1}
-
-  if [[ $last_char == "/" ]] && [[ currentlength -gt 2 ]]; then
-      dir=$cur
-  elif [[ -z $dir ]]; then
-      dir="/"
-  elif [[ $dir == "." ]]; then
-      dir="/"
-  fi
-
-  IFS=$'\n'
-  lsopts="$(` + os.Args[0] + ` ls --raw $dir)"
-
-  COMPREPLY=($(compgen -P "$prefix" -W "${lsopts[@]}" -- "$cur"))
-  #COMPREPLY=(${COMPREPLY[@]/#/"${prefix}"})
-  compopt -o nospace
-  compopt -o filenames
-}
-
-_datasources_completion() {
-  local dsopts cur
-  cur="${COMP_WORDS[COMP_CWORD]}"
-
-  dsopts="$(` + os.Args[0] + ` storage list-datasources --raw)"
-  COMPREPLY=($(compgen -W "${dsopts[@]}" -- "$cur"))
-}
-`

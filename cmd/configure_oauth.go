@@ -244,12 +244,8 @@ func oAuthNonInteractive(ctx context.Context, conf *rest.CecConfig) error {
 		return err
 	}
 
-	options, err := getSdkOptions()
-	if err != nil {
-		return err
-	}
 	// Ensure we can create a client without issue with this config before saving
-	if _, err = rest.NewSdkClient(ctx, conf, options); err != nil {
+	if _, err = rest.NewSdkClient(ctx, conf); err != nil {
 		return fmt.Errorf("could not connect to newly configured server: %s", err.Error())
 	}
 
