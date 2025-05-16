@@ -48,6 +48,7 @@ var (
 	login     string
 	password  string
 
+	proxyURL    string
 	skipKeyring bool
 	skipVerify  bool
 	noCache     bool
@@ -141,7 +142,7 @@ ENVIRONMENT
 		token = viper.GetString("token")
 		login = viper.GetString("login")
 		password = viper.GetString("password")
-
+		proxyURL = viper.GetString("proxy-url")
 		noCache = viper.GetBool("no-cache")
 		skipKeyring = viper.GetBool("skip-keyring")
 		skipVerify = viper.GetBool("skip-verify")
@@ -217,6 +218,7 @@ func init() {
 	flags.String("login", "", "The user login, for Client auth only")
 	flags.String("password", "", "The user password, for Client auth only")
 
+	flags.String("proxy-url", "", "Define a custom proxy for outbound requests")
 	flags.Bool("skip-verify", false, "By default the Cells Client verifies the validity of TLS certificates for each communication. This option skips TLS certificate verification")
 	flags.Bool("skip-keyring", false, "Explicitly tell the tool to *NOT* try to use a keyring, even if present. Warning: sensitive information will be stored in clear text")
 	flags.Bool("no-cache", false, "Force token refresh at each call. This might slow down scripts with many calls")
@@ -283,8 +285,12 @@ func setUpEnvironment(ctx context.Context) error {
 	}
 
 	// Initialize an SDK Client
-	var err error
-	sdkClient, err = rest.NewSdkClient(ctx, c)
+	options, err := getSdkOptions()
+	if err != nil {
+		return err
+	}
+
+	sdkClient, err = rest.NewSdkClient(ctx, c, options)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -366,9 +372,16 @@ func bindViperFlags(flags *pflag.FlagSet, replaceKeys map[string]string) {
 			key = replace
 		}
 		if err := viper.BindPFlag(key, flag); err != nil {
-			rest.Log.Errorf("could not bind flag with key %s, cause:  %s ", key, err.Error())
+			fmt.Printf("=== WARN: could not bind flag with key %s, cause:  %s ", key, err.Error())
+		}
+		if err := viper.BindEnv(key, getEnvVarName(key)); err != nil {
+			fmt.Printf("=== WARN: could not bind flag with env var name: %s, cause:  %s\n", key, err.Error())
 		}
 	})
+}
+
+func getEnvVarName(flagName string) string {
+	return fmt.Sprintf("%s_%s", common.EnvPrefix, strings.ToUpper(strings.ReplaceAll(flagName, "-", "_")))
 }
 
 var bashCompletionFunc = `__` + os.Args[0] + `_custom_func() {

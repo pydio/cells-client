@@ -71,9 +71,10 @@ type SdkClient struct {
 
 // NewSdkClient creates a new client based on the given config.
 // TODO It has the responsibility to do the token refresh procedure when needed in case of OAuth credentials.
-func NewSdkClient(ctx context.Context, config *CecConfig) (*SdkClient, error) {
+func NewSdkClient(ctx context.Context, config *CecConfig, options ...any) (*SdkClient, error) {
 
-	t, err := sdkRest.GetApiTransport(config.SdkConfig, false)
+	//	t, err := sdkRest.GetApiTransport(config.SdkConfig, false)
+	t, err := sdkRest.GetApiTransportWithOptions(config.SdkConfig, false, options)
 	if err != nil {
 		return nil, err
 	}

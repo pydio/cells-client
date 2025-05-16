@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	cellsSdk "github.com/pydio/cells-sdk-go/v4"
+	"github.com/pydio/cells-sdk-go/v4/transport/http"
 
 	"github.com/pydio/cells-client/v4/rest"
 )
@@ -116,12 +117,29 @@ func nonInteractive(ctx context.Context, conf *rest.CecConfig) error {
 		return fmt.Errorf("URL %s is not valid: %s", conf.Url, err.Error())
 	}
 
+	options, err := getSdkOptions()
+	if err != nil {
+		return err
+	}
+
 	// Ensure we can create a client without issue with this config before saving
-	if _, err := rest.NewSdkClient(ctx, conf); err != nil {
+	if _, err := rest.NewSdkClient(ctx, conf, options); err != nil {
 		return fmt.Errorf("could not connect to newly configured server: %s", err.Error())
 	}
 
 	return nil
+}
+
+func getSdkOptions() ([]any, error) {
+	var options []any
+	if len(proxyURL) > 0 {
+		url, err := url.Parse(proxyURL)
+		if err != nil {
+			return nil, fmt.Errorf("proxyURL %s is not valid: %s", proxyURL, err.Error())
+		}
+		options = append(options, http.WithProxy(url))
+	}
+	return options, nil
 }
 
 func init() {
