@@ -46,7 +46,6 @@ var (
 	login     string
 	password  string
 
-	//proxyURL    string
 	skipKeyring bool
 	skipVerify  bool
 	noCache     bool
@@ -136,7 +135,6 @@ ENVIRONMENT
 		token = viper.GetString("token")
 		login = viper.GetString("login")
 		password = viper.GetString("password")
-		//proxyURL = viper.GetString("proxy-url")
 		noCache = viper.GetBool("no-cache")
 		skipKeyring = viper.GetBool("skip-keyring")
 		skipVerify = viper.GetBool("skip-verify")
