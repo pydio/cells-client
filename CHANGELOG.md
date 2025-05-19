@@ -1,17 +1,20 @@
-# Changes between v4.2.0 and v4.2.1
+# Changes between v4.2.1 and v4.3.0-alpha01
 
-[See Full Changelog](https://github.com/pydio/cells-client/compare/v4.2.0...v4.2.1)
+[See Full Changelog](https://github.com/pydio/cells-client/compare/v4.2.1...v4.3.0-alpha01)
 
-- [#059387b](https://github.com/pydio/cells-client/commit/059387b8448cfca316eb9d14ed19ac4243607de6): Latest TPs
-- [#8fb0e03](https://github.com/pydio/cells-client/commit/8fb0e03346c182c1e00b896210f2aa542cd4a5f9): Better tooling to manage Cells Internal hashes
-- [#0f6f2f6](https://github.com/pydio/cells-client/commit/0f6f2f63fc467eac3e9777a9b5527b392804087e): Update TPs
-- [#f7c70a1](https://github.com/pydio/cells-client/commit/f7c70a130e60da927a0f528253544a044f16b3b0): Use correct (maintained) version of viper lib
-- [#411ea39](https://github.com/pydio/cells-client/commit/411ea3966a06a0714d7bbf30e28fc23df55b8dff): Better log message + update TPs
-- [#2f952d8](https://github.com/pydio/cells-client/commit/2f952d8673e2cc470e936904372464a56cba42e3): Reverting shellescape to v1.4.2
-- [#623bac8](https://github.com/pydio/cells-client/commit/623bac82eda6d096219ed3218b1e0061394d0174): Fix replace directive
-- [#eaaec04](https://github.com/pydio/cells-client/commit/eaaec044298104eaad99c587543c99d3441557f7): Update TPs
-- [#f77c722](https://github.com/pydio/cells-client/commit/f77c722fb747f03fb257856e9ca968463e951572): Fix typos
-- [#9a11667](https://github.com/pydio/cells-client/commit/9a116671b1c59e846767503934c34858281d17d2): Update TPs
-- [#bb0187e](https://github.com/pydio/cells-client/commit/bb0187ed9857de4bc5723484d1c9a4d06e139ac6): Update third parties
-- [#d2744f2](https://github.com/pydio/cells-client/commit/d2744f2d1f80e41fa85821893cebf4536c0af423): Update TPs
-- [#7ceab5e](https://github.com/pydio/cells-client/commit/7ceab5ec2ea55765e4b6778e278cfb52ba2802e7): Next development cycle
+- [#73f2a77](https://github.com/pydio/cells-client/commit/73f2a7712609424b98753e060d2c565170418aec): chore: cleaning
+- [#4938f8d](https://github.com/pydio/cells-client/commit/4938f8d505ffc1b3733d1ca3f2721529ee7c3b8c): fix(Proxy): rather rely on standard Go mechanism to define the HTTP proxy
+- [#31d3221](https://github.com/pydio/cells-client/commit/31d3221be42dedc804515d2321dba5c37c4e7889): feat(Metadata): Add metadata commands
+- [#b11358e](https://github.com/pydio/cells-client/commit/b11358eb79e43f816293829d022ea38f27dfcc23): fix(Metadata) example params and typo
+- [#8e44312](https://github.com/pydio/cells-client/commit/8e44312a248ef2f96f89b4c149a8212fe0435990): feat(proxy): add an option to use an outbound proxy, better viper flag binding
+- [#8f93626](https://github.com/pydio/cells-client/commit/8f93626a6a79990b0ffdf9c08f6190108c51208d): chore: make linter happy
+- [#bd953ab](https://github.com/pydio/cells-client/commit/bd953abae8dca6edaa8e180d8f381a24ce36a270): fix(Metadata) remove unused param
+- [#380bace](https://github.com/pydio/cells-client/commit/380bace2cbd6ba3a3fc8b14007c294c86bbcdfa7): fix(Metadata): support different metadata type
+- [#bfb2574](https://github.com/pydio/cells-client/commit/bfb25740ed80c220b9bdf0bc58b4b3629a72d71d): fix(Metadata): add JSONdefinition column
+- [#ebb72bc](https://github.com/pydio/cells-client/commit/ebb72bc24621a8fe7d283ced10b18e1254b92ca4): add metadata commands
+- [#c2988d6](https://github.com/pydio/cells-client/commit/c2988d6b3b3df464f78778721fac8b0042b54994): Revert "Update TPs" as it breaks the upload
+- [#cb5c9e6](https://github.com/pydio/cells-client/commit/cb5c9e6f6e6719cfdede64b9d31107e739268f4a): Update TPs
+- [#311e44e](https://github.com/pydio/cells-client/commit/311e44ef870bdb5aedef0b232e04efbeefd2fb95): Use latest version of the Go SDK v4.1
+- [#2b85334](https://github.com/pydio/cells-client/commit/2b85334071c5efced9f098ce9a5a18da670a95ac): Update TPs, fix a few warnings
+- [#ffae409](https://github.com/pydio/cells-client/commit/ffae409a8b2c5710b3a9a195e85aa0db926899c8): Rather use latest v4 SDK go that uses Cells API v1
+- [#f35d1ed](https://github.com/pydio/cells-client/commit/f35d1ede15afeae2e3b6e0c508b77e6ce0c08d80): Next development cycle
