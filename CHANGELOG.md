@@ -1,7 +1,10 @@
-# Changes between v4.2.1 and v4.3.0-alpha01
+# Changes between v4.2.1 and v4.3.0
 
-[See Full Changelog](https://github.com/pydio/cells-client/compare/v4.2.1...v4.3.0-alpha01)
+[See Full Changelog](https://github.com/pydio/cells-client/compare/v4.2.1...v4.3.0)
 
+- [#d3f917a](https://github.com/pydio/cells-client/commit/d3f917acc62c402570fb4de379c292851a7fb744): chore: update Go SDK to fix support of self-signed cert on the server side
+- [#dabab9d](https://github.com/pydio/cells-client/commit/dabab9d6cbd1d685f1e1f4b528e26910905672fa): chore(doc): minor improvments in the ReadMe
+- [#5757b50](https://github.com/pydio/cells-client/commit/5757b5054515e2f088f90c811d4a2d04d2f45112): Release v4.3.0-alpha01
 - [#73f2a77](https://github.com/pydio/cells-client/commit/73f2a7712609424b98753e060d2c565170418aec): chore: cleaning
 - [#4938f8d](https://github.com/pydio/cells-client/commit/4938f8d505ffc1b3733d1ca3f2721529ee7c3b8c): fix(Proxy): rather rely on standard Go mechanism to define the HTTP proxy
 - [#31d3221](https://github.com/pydio/cells-client/commit/31d3221be42dedc804515d2321dba5c37c4e7889): feat(Metadata): Add metadata commands
