@@ -12,6 +12,7 @@ import (
 
 	"github.com/dustin/go-humanize"
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/tw"
 	"github.com/spf13/cobra"
 
 	"github.com/pydio/cells-sdk-go/v4/client/meta_service"
@@ -201,7 +202,16 @@ EXAMPLES
 			}
 		}
 
-		table := tablewriter.NewWriter(os.Stdout)
+		table := tablewriter.NewTable(os.Stdout,
+			tablewriter.WithConfig(tablewriter.Config{
+				Row: tw.CellConfig{
+					Formatting: tw.CellFormatting{AutoWrap: tw.WrapNone},
+					Alignment:  tw.CellAlignment{Global: tw.AlignLeft},
+				},
+			}),
+		)
+
+		// table := tablewriter.NewWriter(os.Stdout)
 
 		hiddenRowNb := 0
 		// Process the results
@@ -307,16 +317,16 @@ EXAMPLES
 		case details:
 			fmt.Println(legend)
 			if wsLevel {
-				table.SetHeader([]string{"Type", "Uuid", "Name", "Label", "Description", "Permissions"})
+				table.Header([]string{"Type", "Uuid", "Name", "Label", "Description", "Permissions"})
 			} else {
-				table.SetHeader([]string{"Type", "Uuid", "Name", "Size", "Modified", "Internal Hash"})
+				table.Header([]string{"Type", "Uuid", "Name", "Size", "Modified", "Internal Hash"})
 			}
 			table.Render()
 		case raw, goTemplate: // Nothing to add: we just want the raw values that we already displayed while looping
 			return
 		default:
 			fmt.Println(legend)
-			table.SetHeader([]string{"Type", "Name"})
+			table.Header([]string{"Type", "Name"})
 			table.Render()
 			fmt.Println("Get more info by adding the -d (details) flag")
 		}

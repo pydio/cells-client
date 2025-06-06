@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/tw"
 	"github.com/spf13/cobra"
 
 	"github.com/pydio/cells-sdk-go/v4/client/meta_service"
@@ -15,10 +16,10 @@ import (
 )
 
 var (
-	metaGetNodePath  string
-	metaGetFormat    string // json|table default: table
-	metaGetListNamespaces  bool
-	metaGetNameSpace string  // empty means get all metadata of given node
+	metaGetNodePath       string
+	metaGetFormat         string // json|table default: table
+	metaGetListNamespaces bool
+	metaGetNameSpace      string // empty means get all metadata of given node
 )
 
 var metaGet = &cobra.Command{
@@ -44,8 +45,8 @@ $` + os.Args[0] + ` meta get -all=true
 
 		// Connect to the Cells API
 		ctx := cmd.Context()
-		apiClient := sdkClient.GetApiClient()	
-		
+		apiClient := sdkClient.GetApiClient()
+
 		// List all available namespaces
 		if metaGetListNamespaces {
 			params := &user_meta_service.ListUserMetaNamespaceParams{
@@ -60,7 +61,7 @@ $` + os.Args[0] + ` meta get -all=true
 			cmd.Printf("Node path is not found")
 			return
 		}
-		p := strings.Trim(metaGetNodePath, "/")	
+		p := strings.Trim(metaGetNodePath, "/")
 
 		var exists bool
 		if p != "" {
@@ -105,7 +106,6 @@ $` + os.Args[0] + ` meta get -all=true
 				fmt.Printf("{\"%s\": %s}", metaGetNodePath, mv)
 				return
 			}
-			
 
 			// trim quotes
 			// cleaned := make(map[string]string)
@@ -120,15 +120,22 @@ $` + os.Args[0] + ` meta get -all=true
 			fmt.Printf("%s", data)
 			return
 		case "table":
-			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"Meta name", "Value"})
+			table := tablewriter.NewTable(os.Stdout,
+				tablewriter.WithConfig(tablewriter.Config{
+					Row: tw.CellConfig{
+						Formatting: tw.CellFormatting{AutoWrap: tw.WrapNone},
+						Alignment:  tw.CellAlignment{Global: tw.AlignLeft},
+					},
+				}),
+			)
+			table.Header([]string{"Meta name", "Value"})
 			if metaGetNameSpace != "" {
-			if mv, ok := node.MetaStore[metaGetNameSpace]; ok {
-				table.Append([]string{metaGetNameSpace, mv})
-				table.Render()
-				return
+				if mv, ok := node.MetaStore[metaGetNameSpace]; ok {
+					table.Append([]string{metaGetNameSpace, mv})
+					table.Render()
+					return
+				}
 			}
-		}
 			for m, v := range node.MetaStore {
 				table.Append([]string{m, v})
 			}
@@ -151,8 +158,15 @@ func init() {
 }
 
 func printMetaNamespaces(namespaces []*models.IdmUserMetaNamespace) {
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Namespace", "Label", "JSONDefinition"})
+	table := tablewriter.NewTable(os.Stdout,
+		tablewriter.WithConfig(tablewriter.Config{
+			Row: tw.CellConfig{
+				Formatting: tw.CellFormatting{AutoWrap: tw.WrapNone},
+				Alignment:  tw.CellAlignment{Global: tw.AlignLeft},
+			},
+		}),
+	)
+	table.Header([]string{"Namespace", "Label", "JSONDefinition"})
 	for _, n := range namespaces {
 		table.Append([]string{n.Namespace, n.Label, n.JSONDefinition})
 	}

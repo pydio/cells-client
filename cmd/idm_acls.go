@@ -8,6 +8,7 @@ import (
 
 	"github.com/manifoldco/promptui"
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/tw"
 	"github.com/spf13/cobra"
 
 	"github.com/pydio/cells-sdk-go/v4/client/acl_service"
@@ -85,10 +86,15 @@ Found 4 nodes at test:
 				fmt.Println("  - " + u.NodeID + " | " + u.RoleID + " | " + u.Action.Name + " | " + u.WorkspaceID)
 			}
 
-			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"UUID", "Role ID", "Action Name", "WS ID"})
-			table.SetAlignment(tablewriter.ALIGN_LEFT)
-			table.SetAutoWrapText(false)
+			table := tablewriter.NewTable(os.Stdout,
+				tablewriter.WithConfig(tablewriter.Config{
+					Row: tw.CellConfig{
+						Formatting: tw.CellFormatting{AutoWrap: tw.WrapNone},
+						Alignment:  tw.CellAlignment{Global: tw.AlignLeft},
+					},
+				}),
+			)
+			table.Header([]string{"UUID", "Role ID", "Action Name", "WS ID"})
 
 			for _, u := range result.Payload.ACLs {
 				table.Append([]string{u.NodeID, u.RoleID, u.Action.Name, u.WorkspaceID})
