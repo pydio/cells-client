@@ -12,6 +12,8 @@ Cells Client a.k.a. `cec` works like standard command line tools like **ls**, **
 
 The v4 version of this tool is meant to be used with a remote Cells server that is also at version v4+, please rather use cells-client v2 if your server is older (but you really should update your Cells server!).
 
+> **Warning** the v4.4 branch relies on the latest AWS SDK v2 (that is, greater than v1.33). It cannot be used with a remote Cells server that is older than **v4.4.12** or large updates will fail.
+
 ## Usage
 
 **Use the `cec --help` command** to learn about all available commands: the in-line doc is pretty complete.   
