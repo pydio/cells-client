@@ -2,7 +2,7 @@ DEV_VERSION=4.3.1-dev
 ENV=env GOOS=linux
 TIMESTAMP:=$(shell date -u +%Y%m%d%H%M%S)
 CELLS_CLIENT_VERSION?=${DEV_VERSION}.${TIMESTAMP}
-MOD_UPDATE?=v5-dev
+MOD_UPDATE?=v4.1-dev
 
 .PHONY: all clean main linux arm arm64 win darwin xgo
 

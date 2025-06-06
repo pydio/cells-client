@@ -26,8 +26,8 @@ func (client *SdkClient) MoveJob(ctx context.Context, jsonParams string) (string
 // RunJob runs a job.
 func (client *SdkClient) RunJob(ctx context.Context, jobName string, jsonParams string) (string, error) {
 	params := jobs_service.NewUserCreateJobParamsWithContext(ctx)
-	params.Body = &models.RestUserJobRequest{JSONParameters: jsonParams}
 	params.JobName = jobName
+	params.Body = jobs_service.UserCreateJobBody{JSONParameters: jsonParams}
 
 	job, err := client.GetApiClient().JobsService.UserCreateJob(params)
 	if err != nil {
