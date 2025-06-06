@@ -315,8 +315,22 @@ EXAMPLES
 		errs := targetNode.TransferAll(ctx, t, pool)
 		if len(errs) > 0 {
 			rest.Log.Infof("\nTransfer aborted after %d errors:", len(errs))
+			isWellKnownError := false
 			for i, currErr := range errs {
 				rest.Log.Infof("\t#%d: %s\n", i+1, currErr)
+				if strings.Contains(currErr.Error(), "XAmzContentSHA256Mismatch") {
+					isWellKnownError = true
+				}
+			}
+			if isWellKnownError {
+				dlUrl := "https://download.pydio.com/pub/cells-client/release/4.3.0/"
+				rest.Log.Infof(`
+You are seeing an *XAmzContentSHA256Mismatch* error.
+  => It is most probably that your Cells client version is newer than what your remote Cells server supports.
+	
+Please use a CEC from the 4.3 release train instead, you can download at:
+  %s
+			`, dlUrl)
 			}
 			os.Exit(1)
 		} else if scpNoProgress && len(t) > 1 {
