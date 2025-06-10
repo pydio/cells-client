@@ -1,7 +1,9 @@
-# Changes between v4.3.0 and v4.4.0-alpha01
+# Changes between v4.3.0 and v4.4.0-alpha02
 
-[See Full Changelog](https://github.com/pydio/cells-client/compare/v4.3.0...v4.4.0-alpha01)
+[See Full Changelog](https://github.com/pydio/cells-client/compare/v4.3.0...v4.4.0-alpha02)
 
+- [#942393e](https://github.com/pydio/cells-client/commit/942393ee4a18836249cfc2a03d695b8e33081495): chore: update TPs
+- [#a251ba2](https://github.com/pydio/cells-client/commit/a251ba2f000478d2255e360a4b2a72dad63266be): Release v4.4.0-alpha01
 - [#e22f3af](https://github.com/pydio/cells-client/commit/e22f3af67a2e5b9cb7b18da4409362632a9399fa): fix: finally update table writer library and adapt code
 - [#b04f8e3](https://github.com/pydio/cells-client/commit/b04f8e328bd34fdb963091358a3a875352dfd55c): feat: add a hint for the end user if we encounter the XAmzContentSHA256Mismatch error
 - [#9f72b74](https://github.com/pydio/cells-client/commit/9f72b747c79cf9ab3c07205a72c67c7db3d55edc): fix: finally update the AWS SDK to the latest version for v4.4 branch
