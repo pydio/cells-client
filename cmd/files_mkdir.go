@@ -70,7 +70,10 @@ EXAMPLES
 			_, e := apiClient.TreeService.HeadNode(&tree_service.HeadNodeParams{Node: crt, Context: ctx})
 			if e != nil {
 				if createAncestors {
-					dirs = append(dirs, &models.TreeNode{Path: crt})
+					dirs = append(dirs, &models.TreeNode{
+						Path: crt,
+						Type: models.NewTreeNodeType(models.TreeNodeTypeCOLLECTION),
+					})
 					paths = append(paths, crt)
 				} else {
 					log.Fatalf("Could not find folder at %s, double check and correct your path or use the '-p' flag if you want to force the creation of missing ancestors.", crt)
@@ -79,7 +82,10 @@ EXAMPLES
 		}
 		// always create the leaf folder
 		crt = path.Join(crt, parts[len(parts)-1])
-		dirs = append(dirs, &models.TreeNode{Path: crt})
+		dirs = append(dirs, &models.TreeNode{
+			Path: crt,
+			Type: models.NewTreeNodeType(models.TreeNodeTypeCOLLECTION),
+		})
 		paths = append(paths, crt)
 
 		if len(dirs) == 0 {
