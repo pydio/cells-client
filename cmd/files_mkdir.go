@@ -65,11 +65,12 @@ EXAMPLES
 			log.Fatalf("could not find workspace %s. Please specify a parent workspace that exists", crt)
 		}
 
-		for i := 1; i < len(parts)-1; i++ {
+		for i := 1; i < len(parts); i++ {
 			crt = path.Join(crt, parts[i])
 			_, e := apiClient.TreeService.HeadNode(&tree_service.HeadNodeParams{Node: crt, Context: ctx})
 			if e != nil {
-				if createAncestors {
+				if i == len(parts)-1 || // Target folder we wanted to create
+					createAncestors { // -p flag is set
 					dirs = append(dirs, &models.TreeNode{
 						Path: crt,
 						Type: models.NewTreeNodeType(models.TreeNodeTypeCOLLECTION),
@@ -80,16 +81,8 @@ EXAMPLES
 				}
 			}
 		}
-		// always create the leaf folder
-		crt = path.Join(crt, parts[len(parts)-1])
-		dirs = append(dirs, &models.TreeNode{
-			Path: crt,
-			Type: models.NewTreeNodeType(models.TreeNodeTypeCOLLECTION),
-		})
-		paths = append(paths, crt)
-
 		if len(dirs) == 0 {
-			fmt.Println("All dirs already exist, exiting")
+			fmt.Println("All folders already exist: there is nothing to do.")
 			return
 		}
 		fmt.Printf("Creating folder(s) %s\n", strings.Join(paths, ", "))
