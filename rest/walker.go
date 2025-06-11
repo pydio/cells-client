@@ -599,7 +599,10 @@ func (c *CrawlNode) createRemoteFolders(target *CrawlNode, toCreateDirs []*Crawl
 
 		for _, d := range subArray {
 			newFolder := c.join(c.FullPath, d.RelPath)
-			mm = append(mm, &models.TreeNode{Path: newFolder, Type: models.NewTreeNodeType(models.TreeNodeTypeCOLLECTION)})
+			mm = append(mm, &models.TreeNode{
+				Path: newFolder,
+				Type: models.NewTreeNodeType(models.TreeNodeTypeCOLLECTION),
+			})
 		}
 
 		params := tree_service.NewCreateNodesParams()
