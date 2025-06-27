@@ -60,7 +60,7 @@ field:
  - numtask: number of task of the job (numeric type)
  - owner: the owner of task (string type)
  - task_status: casesensitive, last task's status (valid values: Unknown|Idle|Running|Interrupted|Paused|Error|Queued|Finished)
- - multiple fields will applied using AND operator.
+ - 'AND' operator applies multiple fields.
 ops: 'eq' 'ne' 'gt' 'lt'
 
 EXAMPLE:
