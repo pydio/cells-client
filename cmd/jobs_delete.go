@@ -68,13 +68,14 @@ EXAMPLE:
 $` + os.Args[0] + ` jobs delete --filter "{\"owner\": {\"op\": \"eq\", \"value\":\"admin\"}}" --format table
 
 # Delete job by id:
-./cec jobs delete --job-id 18ab830f-439a-4123-ad7a-1fdeb6f705a3 --dry-run=false
+$` + os.Args[0] + ` jobs delete --job-id 18ab830f-439a-4123-ad7a-1fdeb6f705a3 --dry-run=false
 
 # Delete users' jobs with Error status
-
-./cec jobs delete  --filter "{\"owner\": {\"op\":\"ne\", \"value\": \"pydio.system.user\"},\"task_status\": {\"op\":\"eq\", \"value\": \"Er
+$` + os.Args[0] + ` jobs delete  --filter "{\"owner\": {\"op\":\"ne\", \"value\": \"pydio.system.user\"},\"task_status\": {\"op\":\"eq\", \"value\": \"Er
 ror\"}}" --format table
 
+# Delete systemd job
+$` + os.Args[0] + ` jobs delete --job-id d29be854-e369-4f7d-86e5-2292f3fee49b --dry-run=false --force=true
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		deleteSystemJobConfirmation := "no"
@@ -129,7 +130,7 @@ ror\"}}" --format table
 				return
 			}
 
-			if !forceDeleteSystemJob && len(filteredJobs) > 0 {
+			if forceDeleteSystemJob && len(filteredJobs) > 0 {
 				fmt.Printf("⚠️  Are you sure you want to delete [%s] job? Type 'yes' to confirm: ", filteredJobs[0].Label)
 				fmt.Scanln(&deleteSystemJobConfirmation)
 				if deleteSystemJobConfirmation != "yes" {
@@ -174,7 +175,7 @@ func init() {
 	flags.StringVarP(&jobsDeleteOutputFormat, "format", "f", "json", "Output format json|table")
 	flags.StringVarP(&filterDelRaw, "filter", "", "", "JSON encoded filter string")
 	flags.StringVarP(&jobsDeleteJobId, "job-id", "", "", "Job ID")
-	flags.BoolVarP(&forceDeleteSystemJob, "system-job", "", false, "Deleteing system jobs requires administrator privileges. Only deleting by id --job-id is supported")
+	flags.BoolVarP(&forceDeleteSystemJob, "force", "", false, "Deleteing system jobs requires administrator privileges. Only deleting by id --job-id is supported")
 	flags.BoolVarP(&dryRun, "dry-run", "", true, "dry-run default: true")
 
 	jobsCmd.AddCommand(jobsDelete)
