@@ -17,11 +17,11 @@ import (
 )
 
 var (
-	jobsDeleteOutputFormat string
-	filterDelRaw           string
-	jobsDeleteJobId        string
-	forceDeleteSystemJob   bool
-	dryRun                 bool
+	deleteJobOutputFormat string
+	deleteJobFilter       string
+	deleteJobJobId        string
+	deleteSystemJob       bool
+	deleteJobDryRun       bool
 )
 
 type Result struct {
@@ -40,41 +40,50 @@ var jobsDelete = &cobra.Command{
 	Long: `
 DESCRIPTION	
 
-	Delete jobs from Cells Scheduler/CellsFlows.
-	Deleting "pydio.system.user" job requires administrator privileges and user's confirmation.
-	Use 'filter' parameter to delete multiple jobs.
+  Delete jobs from Cells Flow (the embedded job scheduler).
+  Note that deleting a "pydio.system.user" job requires administrative privileges and the user's confirmation.
+  You can use the filter parameter to delete multiple jobs at once.
 
+SYNTAX
 
-FILTER format
-# Get jobs with filter:
+  To delete more than one job at a time, you might pass a filter defined as a simple JSON encoded string. 
+  The filter must be structured as follow (formatted as a reader friendly blob):
 
-Filter struct:
-{
-	"field": {
+  {
+	"field1": {
 		"op": "",
 		"value": "",
-	}
-}
+	}, 
+	"field2": {
+		"op": "",
+		"value": "",
+	},
+	...
+  }
 
-field: 
- - numtask: number of task of the job (numeric type)
- - owner: the owner of task (string type)
- - task_status: casesensitive, last task's status (valid values: Unknown|Idle|Running|Interrupted|Paused|Error|Queued|Finished)
- - 'AND' operator applies multiple fields.
-ops: 'eq' 'ne' 'gt' 'lt'
+  Where:
+    1. Known fields are:
+       - numtask: number of task of the job (numeric type)
+       - owner: the owner of task (string type)
+       - task_status: status of the last task of the job. Warning: it is case sensitive 
+	     and the valid values are: Unknown | Idle | Running | Interrupted | Paused | Error | Queued | Finished 
+    2. Known operators are: eq | ne | gt | lt
+	3. If you filter with more than one field, we apply the 'AND' operator between fields
 
-EXAMPLE:
-# Delete jobs owned by 'admin' user:
-$` + os.Args[0] + ` jobs delete --filter "{\"owner\": {\"op\": \"eq\", \"value\":\"admin\"}}" --format table
+EXAMPLES
 
-# Delete job by id:
-$` + os.Args[0] + ` jobs delete --job-id 18ab830f-439a-4123-ad7a-1fdeb6f705a3 --dry-run=false
+  # Delete jobs owned by 'admin' user:
+  $` + os.Args[0] + ` jobs delete --filter "{\"owner\": {\"op\": \"eq\", \"value\":\"admin\"}}" --format table
 
-# Delete users' jobs with Error status
-$` + os.Args[0] + ` jobs delete  --filter "{\"owner\": {\"op\":\"ne\", \"value\": \"pydio.system.user\"},\"task_status\": {\"op\":\"eq\", \"value\": \"Error\"}}" --format table
+  # Delete job by id:
+  $` + os.Args[0] + ` jobs delete --job-id 18ab830f-439a-4123-ad7a-1fdeb6f705a3 --dry-run=false
 
-# Delete systemd job
-$` + os.Args[0] + ` jobs delete --job-id d29be854-e369-4f7d-86e5-2292f3fee49b --dry-run=false --force=true
+  # Delete user jobs with Error status
+  $` + os.Args[0] + ` jobs delete  --filter "{\"owner\": {\"op\":\"ne\", \"value\": \"pydio.system.user\"},\"task_status\": {\"op\":\"eq\", \"value\": \"Error\"}}" --format table
+
+  # Delete system job
+  $` + os.Args[0] + ` jobs delete --job-id d29be854-e369-4f7d-86e5-2292f3fee49b --dry-run=false --force=true
+
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		deleteSystemJobConfirmation := "no"
@@ -88,10 +97,10 @@ $` + os.Args[0] + ` jobs delete --job-id d29be854-e369-4f7d-86e5-2292f3fee49b --
 		}
 
 		var filters FilterMap
-		filteredJobs := []*models.JobsJob{}
+		var filteredJobs []*models.JobsJob
 
-		if filterDelRaw != "" {
-			err := json.Unmarshal([]byte(filterDelRaw), &filters)
+		if deleteJobFilter != "" {
+			err := json.Unmarshal([]byte(deleteJobFilter), &filters)
 			if err != nil {
 				log.Fatalf("invalid filter JSON: %v", err)
 			}
@@ -118,65 +127,71 @@ $` + os.Args[0] + ` jobs delete --job-id d29be854-e369-4f7d-86e5-2292f3fee49b --
 			}
 		}
 
-		rets := []*Result{}
+		var results []*Result
 		retMessage := "done"
 
-		if jobsDeleteJobId != "" {
+		if deleteJobJobId != "" {
 			var err error
-			filteredJobs, err = getJobById(cmd.Context(), apiClient, jobsDeleteJobId)
+			filteredJobs, err = getJobById(cmd.Context(), apiClient, deleteJobJobId)
 			if err != nil {
 				cmd.PrintErr(err)
 				return
 			}
 
-			if forceDeleteSystemJob && len(filteredJobs) > 0 {
+			if deleteSystemJob && len(filteredJobs) > 0 {
 				fmt.Printf("⚠️  Are you sure you want to delete [%s] job? Type 'yes' to confirm: ", filteredJobs[0].Label)
-				fmt.Scanln(&deleteSystemJobConfirmation)
+				_, err := fmt.Scanln(&deleteSystemJobConfirmation)
+				if err != nil {
+					log.Fatalf("unexpected error while getting user'S confirmation: %s", err)
+					return
+				}
 				if deleteSystemJobConfirmation != "yes" {
-					fmt.Println("Aborted.")
+					fmt.Println("Aborting upon user's request.")
 					return
 				}
 			}
 		}
 
 		if len(filteredJobs) == 0 {
-			cmd.Printf("No job found!\n")
+			cmd.Printf("No job found with provided filter, nothing to delete!\n")
 			return
+		}
+
+		if deleteJobDryRun {
+			cmd.Printf("Note: you are running in dry run mode. Your server's jobs won't be touched\n")
 		}
 
 		for _, j := range filteredJobs {
 			var err error
-			if dryRun {
-				cmd.Printf("You are running in dryRun mode\n")
+			if deleteJobDryRun {
 				retMessage = "(dry-run)" + retMessage
 			} else {
 				// filter system jobs
 				if j.Owner == PydioSystemUser && deleteSystemJobConfirmation != "yes" {
 					retMessage = fmt.Sprintf("ignored: you are not authorized to delete %s jobs", PydioSystemUser)
 				} else {
-					err = deleteUserJobs(context.Background(), j.ID)
+					err = deleteUserJobs(cmd.Context(), j.ID)
 				}
 			}
 
 			if err != nil {
 				retMessage = err.Error()
 			}
-			rets = append(rets, &Result{JobID: j.ID, JobLabel: j.Label, Result: retMessage})
+			results = append(results, &Result{JobID: j.ID, JobLabel: j.Label, Result: retMessage})
 			retMessage = "done"
 		}
 
-		renderResult(jobsDeleteOutputFormat, rets)
+		renderResult(deleteJobOutputFormat, results)
 	},
 }
 
 func init() {
 	flags := jobsDelete.PersistentFlags()
-	flags.StringVarP(&jobsDeleteOutputFormat, "format", "f", "json", "Output format json|table")
-	flags.StringVarP(&filterDelRaw, "filter", "", "", "JSON encoded filter string")
-	flags.StringVarP(&jobsDeleteJobId, "job-id", "", "", "Job ID")
-	flags.BoolVarP(&forceDeleteSystemJob, "force", "", false, "Deleteing system jobs requires administrator privileges. Only deleting by id --job-id is supported")
-	flags.BoolVarP(&dryRun, "dry-run", "", true, "dry-run default: true")
-
+	flags.StringVar(&deleteJobOutputFormat, "format", "json", "Output format json|table")
+	flags.StringVar(&deleteJobFilter, "filter", "", "JSON encoded filter string")
+	flags.StringVar(&deleteJobJobId, "job-id", "", "Job ID")
+	flags.BoolVar(&deleteSystemJob, "force", false, "Deleting system jobs requires administrator privileges. Only deleting by job-id is supported")
+	flags.BoolVar(&deleteJobDryRun, "dry-run", true, "Only display the jobs to be deleted, without actually impacting anything on the server")
 	jobsCmd.AddCommand(jobsDelete)
 }
 
@@ -217,5 +232,5 @@ func deleteUserJobs(_ context.Context, jobID string) error {
 		return nil
 	}
 
-	return fmt.Errorf("%s",ret.Error())
+	return fmt.Errorf("%s", ret.Error())
 }

@@ -35,37 +35,46 @@ var jobsGet = &cobra.Command{
 	Long: `
 DESCRIPTION	
 
-	Get jobs of current user.
+  Retrieves the jobs that are associated with the current logged in user,
+  optionally using filter to reduce the number of results. 
 
-EXAMPLE
+SYNTAX
+  
+  To reduce the number of returned results, you might pass a filter defined as a simple JSON encoded string. 
+  The filter must be structured as follow (formatted as a reader friendly blob):
 
-# Get all jobs of current user:
-
-$` + os.Args[0] + ` jobs get
-
-# Get jobs with filter:
-
-Filter struct:
-{
-	"field": {
+  {
+	"field1": {
 		"op": "",
 		"value": "",
-	}
-}
+	}, 
+	"field2": {
+		"op": "",
+		"value": "",
+	},
+	...
+  }
 
-field: 
- - numtask: number of task of the job (numeric type)
- - owner: the owner of task (string type)
- - task_status: casesensitive, last task's status (valid values: Unknown|Idle|Running|Interrupted|Paused|Error|Queued|Finished)
- - 'AND' operator applies multiple fields.
-ops: 'eq' 'ne' 'gt' 'lt'
+  Where:
+    1. Known fields are:
+       - numtask: number of task of the job (numeric type)
+       - owner: the owner of task (string type)
+       - task_status: status of the last task of the job. Warning: it is case sensitive 
+	     and the valid values are: Unknown | Idle | Running | Interrupted | Paused | Error | Queued | Finished 
+    2. Known operators are: eq | ne | gt | lt
+	3. If you filter with more than one field, we apply the 'AND' operator between fields
 
-Example:
-# List all jobs owned by 'admin' user:
-$` + os.Args[0] + ` jobs get --filter "{\"owner\": {\"op\": \"eq\", \"value\":\"admin\"}}" --format table
+EXAMPLES
 
-$` + os.Args[0] + ` jobs get --filter "{\"task_status\": {\"op\": \"eq\", \"value\":\"Error\"}, \"owner\": {\"op\":\"eq\", \"value\": \"admin\"}}" 
---format table
+  # Get all jobs of current user:
+  $` + os.Args[0] + ` jobs get
+
+  # List all jobs owned by admin user, formatted as a table:
+  $` + os.Args[0] + ` jobs get --filter "{\"owner\": {\"op\": \"eq\", \"value\":\"admin\"}}" --format table
+
+  # List all jobs owned by admin user that are in error in JSON:
+  $` + os.Args[0] + ` jobs get --filter "{\"task_status\": {\"op\": \"eq\", \"value\":\"Error\"}, \"owner\": {\"op\":\"eq\", \"value\": \"admin\"}}" 
+
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 
@@ -98,10 +107,10 @@ $` + os.Args[0] + ` jobs get --filter "{\"task_status\": {\"op\": \"eq\", \"valu
 				}
 				if _, ok := filters["task_status"]; len(j.Tasks) > 0 && ok {
 					filterMap["task_status"] = j.Tasks[0].Status
-				}else{
+				} else {
 					filterMap["task_status"] = "undefined-value"
 				}
-				
+
 				// Apply filter
 				if matchesFilters(filterMap, filters) {
 					filteredJobs = append(filteredJobs, j)
@@ -129,7 +138,7 @@ $` + os.Args[0] + ` jobs get --filter "{\"task_status\": {\"op\": \"eq\", \"valu
 			table.Render()
 			return
 		default:
-			cmd.Printf("format must be either json or table\n")
+			cmd.Println("invalid output format, it must be either json or table")
 			return
 		}
 	},
@@ -137,7 +146,7 @@ $` + os.Args[0] + ` jobs get --filter "{\"task_status\": {\"op\": \"eq\", \"valu
 
 func init() {
 	flags := jobsGet.PersistentFlags()
-	flags.StringVarP(&jobsOutputFormat, "format", "f", "json", "Output format json|table")
+	flags.StringVar(&jobsOutputFormat, "format", "json", "Output format json|table")
 	flags.StringVar(&filterRaw, "filter", "", "Filter in JSON encoded string")
 
 	jobsCmd.AddCommand(jobsGet)
@@ -162,7 +171,7 @@ func getJobById(_ context.Context, api *client.PydioCellsRestAPI, jobId string) 
 	param := jobs_service.NewUserListJobsParams()
 	param.Body = &models.JobsListJobsRequest{
 		JobIDs: []string{jobId},
-		Owner:      "*",
+		Owner:  "*",
 	}
 
 	jobs, err := api.JobsService.UserListJobs(param)
@@ -207,7 +216,7 @@ func toFloat64(val interface{}) (float64, bool) {
 	}
 }
 
-func matchesFilters(item map[string]interface{}, filters FilterMap) bool {
+func matchesFilters(item map[string]any, filters FilterMap) bool {
 	for key, cond := range filters {
 		val, ok := item[key]
 		if !ok {
@@ -245,7 +254,7 @@ func matchesFilters(item map[string]interface{}, filters FilterMap) bool {
 	return true
 }
 
-func normalizeToString(v interface{}) (string, bool) {
+func normalizeToString(v any) (string, bool) {
 	switch val := v.(type) {
 	case string:
 		return val, true
