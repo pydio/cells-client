@@ -23,21 +23,28 @@ var (
 )
 
 type FilterCondition struct {
-	Operator string      `json:"op"`
-	Value    interface{} `json:"value"`
+	Operator string `json:"op"`
+	Value    any    `json:"value"`
 }
 
 type FilterMap map[string]FilterCondition
 
 var jobsGet = &cobra.Command{
 	Use:   "get",
-	Short: "Get jobs associated with current user",
+	Short: "Query and list existing jobs",
 	Long: `
 DESCRIPTION	
 
-  Retrieves the jobs that are associated with the current logged in user,
-  optionally using filter to reduce the number of results. 
-
+  Launch a query to retrieve jobs from the server. 
+  See the parent "jobs" subcommand to get more info about the jobs. 
+  
+  If you are connected with a standard user, you can only list the jobs that you own.
+  When you are connected with admin privileges, you can list:
+  	- the jobs that you own as a user (e.g.: a long running move that you have launched and that has not yet terminated)
+	- the jobs that are owned by other users 
+	- the system jobs that are triggered by the scheduler, some events or manually launched from the admin console.
+	  These jobs have a "pydio.system.user" owner.
+	  
 SYNTAX
   
   To reduce the number of returned results, you might pass a filter defined as a simple JSON encoded string. 
@@ -56,24 +63,25 @@ SYNTAX
   }
 
   Where:
+	
     1. Known fields are:
-       - numtask: number of task of the job (numeric type)
-       - owner: the owner of task (string type)
+       - owner: the owner of the job (string type). This filter can be only used by a user with admin privileges
+       - numtask: number of tasks of the job (numeric type)
        - task_status: status of the last task of the job. Warning: it is case sensitive 
 	     and the valid values are: Unknown | Idle | Running | Interrupted | Paused | Error | Queued | Finished 
     2. Known operators are: eq | ne | gt | lt
-	3. If you filter with more than one field, we apply the 'AND' operator between fields
+    3. If you filter with more than one field, we apply the 'AND' operator between fields
 
 EXAMPLES
 
   # Get all jobs of current user:
   $` + os.Args[0] + ` jobs get
 
-  # List all jobs owned by admin user, formatted as a table:
-  $` + os.Args[0] + ` jobs get --filter "{\"owner\": {\"op\": \"eq\", \"value\":\"admin\"}}" --format table
+  # [admin only] List all jobs owned by user alice, formatted as a table:
+  $` + os.Args[0] + ` jobs get --filter "{\"owner\": {\"op\": \"eq\", \"value\":\"alice\"}}" --format table
 
-  # List all jobs owned by admin user that are in error in JSON:
-  $` + os.Args[0] + ` jobs get --filter "{\"task_status\": {\"op\": \"eq\", \"value\":\"Error\"}, \"owner\": {\"op\":\"eq\", \"value\": \"admin\"}}" 
+  # [admin only] List all jobs owned by user bob and that are in error in JSON:
+  $` + os.Args[0] + ` jobs get --filter "{\"task_status\": {\"op\": \"eq\", \"value\":\"Error\"}, \"owner\": {\"op\":\"eq\", \"value\": \"bob\"}}" 
 
 `,
 	Run: func(cmd *cobra.Command, args []string) {

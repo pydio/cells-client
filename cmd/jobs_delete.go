@@ -12,7 +12,7 @@ import (
 
 	"github.com/pydio/cells-sdk-go/v4/models"
 
-	ent_client "github.com/pydio/cells-enterprise-sdk-go/client"
+	eeclient "github.com/pydio/cells-enterprise-sdk-go/client"
 	"github.com/pydio/cells-enterprise-sdk-go/client/scheduler_service"
 )
 
@@ -40,9 +40,13 @@ var jobsDelete = &cobra.Command{
 	Long: `
 DESCRIPTION	
 
-  Delete jobs from Cells Flow (the embedded job scheduler).
-  Note that deleting a "pydio.system.user" job requires administrative privileges and the user's confirmation.
-  You can use the filter parameter to delete multiple jobs at once.
+  Delete some jobs from your Cells server scheduler, optionally using
+  a filter to delete multiple jobs at once. You must confirm the deletion.
+  See the parent "jobs" subcommand to get more info about the jobs. 
+
+  If you are a standard user, you can only delete jobs that you own.
+  Deleting system jobs (that are owned by the "pydio.system.user" user) or 
+  jobs owned by other users requires administrative privileges.
 
 SYNTAX
 
@@ -63,22 +67,22 @@ SYNTAX
 
   Where:
     1. Known fields are:
+       - owner: the owner of the job (string type). This filter can be only used by a user with admin privileges
        - numtask: number of task of the job (numeric type)
-       - owner: the owner of task (string type)
        - task_status: status of the last task of the job. Warning: it is case sensitive 
 	     and the valid values are: Unknown | Idle | Running | Interrupted | Paused | Error | Queued | Finished 
     2. Known operators are: eq | ne | gt | lt
-	3. If you filter with more than one field, we apply the 'AND' operator between fields
+    3. If you filter with more than one field, we apply the 'AND' operator between fields
 
 EXAMPLES
 
-  # Delete jobs owned by 'admin' user:
-  $` + os.Args[0] + ` jobs delete --filter "{\"owner\": {\"op\": \"eq\", \"value\":\"admin\"}}" --format table
+  # Check all jobs owned by user alice that will get deleted (dry run):
+  $` + os.Args[0] + ` jobs delete --filter "{\"owner\": {\"op\": \"eq\", \"value\":\"alice\"}}" --format table
 
-  # Delete job by id:
+  # Really delete a job by id:
   $` + os.Args[0] + ` jobs delete --job-id 18ab830f-439a-4123-ad7a-1fdeb6f705a3 --dry-run=false
 
-  # Delete user jobs with Error status
+  # Delete all user jobs (a.k.a *not* system jobs) that are in error
   $` + os.Args[0] + ` jobs delete  --filter "{\"owner\": {\"op\":\"ne\", \"value\": \"pydio.system.user\"},\"task_status\": {\"op\":\"eq\", \"value\": \"Error\"}}" --format table
 
   # Delete system job
@@ -104,13 +108,11 @@ EXAMPLES
 			if err != nil {
 				log.Fatalf("invalid filter JSON: %v", err)
 			}
-			filterMap := make(map[string]interface{})
+			filterMap := make(map[string]any)
 			for _, j := range jobs {
-
 				if _, ok := filters["owner"]; ok {
 					filterMap["owner"] = j.Owner
 				}
-
 				if _, ok := filters["numtask"]; ok {
 					filterMap["numtask"] = len(j.Tasks)
 				}
@@ -220,7 +222,7 @@ func deleteUserJobs(_ context.Context, jobID string) error {
 	param.JobID = jobID
 
 	client := sdkClient.GetApiClient()
-	entClient := ent_client.Default
+	entClient := eeclient.Default
 	entClient.SetTransport(client.Transport)
 
 	ret, err := entClient.SchedulerService.DeleteJob(param)
