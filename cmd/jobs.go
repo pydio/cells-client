@@ -24,6 +24,8 @@ DESCRIPTION
     (like extracting a thumbnail after successful upload of an image or deleting a large folder) 
     and are then owned by the user who triggered the action.
 
+  When a job is launched, one (or more) instance is created and launched: we call them task. 
+
   Use the provided job sub-commands to search, list and delete existing jobs;
   see their respective help for further details.
 	`,

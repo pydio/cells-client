@@ -66,11 +66,11 @@ SYNTAX
 	
     1. Known fields are:
        - owner: the owner of the job (string type). This filter can be only used by a user with admin privileges
-       - numtask: number of tasks of the job (numeric type)
+       - numtasks: number of tasks of the job (numeric type)
        - task_status: status of the last task of the job. Warning: it is case sensitive 
 	     and the valid values are: Unknown | Idle | Running | Interrupted | Paused | Error | Queued | Finished 
     2. Known operators are: 
-	   - numberic values: eq | ne | gt | lt
+	   - numeric values: eq | ne | gt | lt
 	   - string values: eq | ne 
     3. If you filter with more than one field, we apply the 'AND' operator between fields
 
@@ -112,8 +112,8 @@ EXAMPLES
 					filterMap["owner"] = j.Owner
 				}
 
-				if _, ok := filters["numtask"]; ok {
-					filterMap["numtask"] = len(j.Tasks)
+				if _, ok := filters["numtasks"]; ok {
+					filterMap["numtasks"] = len(j.Tasks)
 				}
 				if _, ok := filters["task_status"]; len(j.Tasks) > 0 && ok {
 					filterMap["task_status"] = j.Tasks[0].Status
@@ -143,7 +143,11 @@ EXAMPLES
 				if len(job.Tasks) > 0 {
 					taskStatus = string(*job.Tasks[0].Status)
 				}
-				table.Append([]string{job.ID, job.Label, job.Owner, fmt.Sprintf("%d", len(job.Tasks)), taskStatus})
+				nbOfTasks := fmt.Sprintf("%d", len(job.Tasks))
+				if nbOfTasks == "100" {
+					nbOfTasks = "99+"
+				}
+				table.Append([]string{job.ID, job.Label, job.Owner, nbOfTasks, taskStatus})
 			}
 			table.Render()
 			return
@@ -156,7 +160,7 @@ EXAMPLES
 
 func init() {
 	flags := jobsGet.PersistentFlags()
-	flags.StringVar(&jobsOutputFormat, "format", "json", "Output format json|table")
+	flags.StringVar(&jobsOutputFormat, "format", "table", "Output format table|json")
 	flags.StringVar(&filterRaw, "filter", "", "Filter in JSON encoded string")
 
 	jobsCmd.AddCommand(jobsGet)
@@ -167,9 +171,9 @@ func listUserJobs(_ context.Context, api *client.PydioCellsRestAPI) ([]*models.J
 	param.Body = &models.JobsListJobsRequest{
 		LoadTasks:  models.JobsTaskStatusAny.Pointer(),
 		Owner:      "*",
-		TasksLimit: 10,
+		TasksLimit: 100,
 	}
-
+	// TODO Handle pagination until 1000
 	jobs, err := api.JobsService.UserListJobs(param)
 	if err != nil {
 		return nil, err
