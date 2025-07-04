@@ -27,9 +27,9 @@ DESCRIPTION
   Use the provided job sub-commands to search, list and delete existing jobs;
   see their respective help for further details.
 	`,
-	Args: cobra.MinimumNArgs(1),
-	Run: func(cm *cobra.Command, args []string) {
-		_ = cm.Usage()
+	// Args: cobra.MinimumNArgs(1),
+	RunE: func(cm *cobra.Command, args []string) error {
+		return cm.Help()
 	},
 }
 

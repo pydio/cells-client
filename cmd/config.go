@@ -117,7 +117,6 @@ var configRemoveCmd = &cobra.Command{
 			return err
 		}
 
-		// interactive mode with promptui
 		var items []string
 		for k := range cl.Configs {
 			items = append(items, k)
@@ -228,6 +227,7 @@ DESCRIPTION
 
 func init() {
 	configCmd.AddCommand(configUseCmd)
+	configCmd.AddCommand(configRelogCmd)
 	configCmd.AddCommand(configListCmd)
 	configCmd.AddCommand(configRemoveCmd)
 	configCmd.AddCommand(checkKeyringCmd)
