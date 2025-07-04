@@ -69,7 +69,9 @@ SYNTAX
        - numtask: number of tasks of the job (numeric type)
        - task_status: status of the last task of the job. Warning: it is case sensitive 
 	     and the valid values are: Unknown | Idle | Running | Interrupted | Paused | Error | Queued | Finished 
-    2. Known operators are: eq | ne | gt | lt
+    2. Known operators are: 
+	   - numberic values: eq | ne | gt | lt
+	   - string values: eq | ne 
     3. If you filter with more than one field, we apply the 'AND' operator between fields
 
 EXAMPLES
@@ -197,9 +199,9 @@ func compareNumbers(a, b interface{}, op string) bool {
 	}
 
 	switch op {
-	case ">":
+	case "gt", ">":
 		return af > bf
-	case "<":
+	case "lt", "<":
 		return af < bf
 	case "eq", "==":
 		return af == bf
@@ -235,11 +237,11 @@ func matchesFilters(item map[string]any, filters FilterMap) bool {
 		if vs, ok := normalizeToString(val); ok {
 			if cs, ok := normalizeToString(cond.Value); ok {
 				switch cond.Operator {
-				case "eq":
+				case "eq", "==":
 					if vs != cs {
 						return false
 					}
-				case "ne":
+				case "ne", "!=":
 					if vs == cs {
 						return false
 					}
