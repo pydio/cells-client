@@ -41,45 +41,8 @@ DESCRIPTION
 			newConf.Url = serverURL
 
 		} else {
-			// interactive
-
-			p := promptui.Prompt{Label: "Server URL", Validate: rest.ValidURL}
-			newConf.Url, err = p.Run()
+			err = interractiveTokenAuth(newConf)
 			if err != nil {
-				if errors.Is(err, promptui.ErrInterrupt) {
-					log.Fatalf("operation aborted by user")
-				}
-				log.Fatalf("%s URL is not valid %s", promptui.IconBad, err.Error())
-			}
-			newConf.Url, err = rest.CleanURL(newConf.Url)
-			if err != nil {
-				log.Fatalf("%s %s", promptui.IconBad, err.Error())
-			}
-
-			u, e := url.Parse(newConf.Url)
-			if e != nil {
-				log.Fatal("", err)
-			}
-			if u.Scheme == "https" {
-				// PROMPT SKIP VERIFY
-				p2 := promptui.Select{Label: "Skip SSL Verification? (not recommended)", Items: []string{"No", "Yes"}}
-				if _, y, e := p2.Run(); y == "Yes" && e == nil {
-					newConf.SkipVerify = true
-				}
-			}
-
-			p = promptui.Prompt{Label: "Token", Validate: func(s string) error {
-				s = strings.TrimSpace(s)
-				if len(s) == 0 {
-					return fmt.Errorf("field cannot be empty")
-				}
-				return nil
-			}}
-			newConf.IdToken, err = p.Run()
-			if err != nil {
-				if errors.Is(err, promptui.ErrInterrupt) {
-					log.Fatalf("operation aborted by user")
-				}
 				log.Fatalf(err.Error())
 			}
 		}
@@ -89,6 +52,50 @@ DESCRIPTION
 			log.Fatalf(err.Error())
 		}
 	},
+}
+
+func interractiveTokenAuth(newConf *rest.CecConfig) error {
+	p := promptui.Prompt{Label: "Server URL", Validate: rest.ValidURL, Default: newConf.Url}
+	var err error
+	newConf.Url, err = p.Run()
+	if err != nil {
+		if errors.Is(err, promptui.ErrInterrupt) {
+			log.Fatalf("operation aborted by user")
+		}
+		log.Fatalf("%s URL is not valid %s", promptui.IconBad, err.Error())
+	}
+	newConf.Url, err = rest.CleanURL(newConf.Url)
+	if err != nil {
+		log.Fatalf("%s %s", promptui.IconBad, err.Error())
+	}
+
+	u, e := url.Parse(newConf.Url)
+	if e != nil {
+		log.Fatal("", err)
+	}
+	if u.Scheme == "https" {
+		// PROMPT SKIP VERIFY
+		p2 := promptui.Select{Label: "Skip SSL Verification? (not recommended)", Items: []string{"No", "Yes"}}
+		if _, y, e := p2.Run(); y == "Yes" && e == nil {
+			newConf.SkipVerify = true
+		}
+	}
+
+	p = promptui.Prompt{Label: "Token", Validate: func(s string) error {
+		s = strings.TrimSpace(s)
+		if len(s) == 0 {
+			return fmt.Errorf("field cannot be empty")
+		}
+		return nil
+	}}
+	newConf.IdToken, err = p.Run()
+	if err != nil {
+		if errors.Is(err, promptui.ErrInterrupt) {
+			log.Fatalf("operation aborted by user")
+		}
+		log.Fatalf(err.Error())
+	}
+	return nil
 }
 
 func init() {

@@ -42,7 +42,7 @@ USAGE
 		if notEmpty(serverURL) == nil && notEmpty(login) == nil && notEmpty(password) == nil {
 			err = nonInteractive(cm.Context(), newConf)
 		} else {
-			err = interactive(newConf)
+			err = interactiveClientAuth(newConf)
 		}
 		if err != nil {
 			if errors.Is(err, promptui.ErrInterrupt) {
@@ -57,12 +57,12 @@ USAGE
 	},
 }
 
-func interactive(newConf *rest.CecConfig) error {
+func interactiveClientAuth(newConf *rest.CecConfig) error {
 
 	var e error
 
 	// PROMPT URL
-	p := promptui.Prompt{Label: "Server Address (provide a valid URL)", Validate: rest.ValidURL}
+	p := promptui.Prompt{Label: "Server Address (provide a valid URL)", Validate: rest.ValidURL, Default: newConf.Url}
 	if newConf.Url, e = p.Run(); e != nil {
 		return e
 	}
@@ -89,6 +89,7 @@ func interactive(newConf *rest.CecConfig) error {
 	p = promptui.Prompt{
 		Label:    "User Login",
 		Validate: notEmpty,
+		Default:  newConf.User,
 	}
 	if newConf.User, e = p.Run(); e != nil {
 		return e

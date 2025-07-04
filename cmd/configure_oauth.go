@@ -123,7 +123,7 @@ func oAuthInteractive(newConf *rest.CecConfig) error {
 	p := promptui.Prompt{
 		Label:    "Server Address (provide a valid URL)",
 		Validate: rest.ValidURL,
-		Default:  "",
+		Default:  newConf.Url,
 	}
 
 	newConf.Url, e = p.Run()

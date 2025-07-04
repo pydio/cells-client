@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
 
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 
 	"github.com/pydio/cells-client/v4/rest"
+	cellsSdk "github.com/pydio/cells-sdk-go/v4"
 )
 
 func init() {
@@ -25,7 +27,7 @@ var configAddCmd = &cobra.Command{
 	Long: `
 DESCRIPTION
 
-  Launch an interactive process to configure a connection to a running Cells server.
+  Launch an interactiveClientAuth process to configure a connection to a running Cells server.
   By default, we use a secure OAuth2 process based on 'Authorization Code' Grant.
 
   If necessary, you might use an alternative authorization process and/or execute this process non-interactively calling one of the defined sub-commands.
@@ -43,7 +45,7 @@ If no keyring is defined in the client machine, all information is stored in *cl
 		s := promptui.Select{Label: "Select authentication method", Size: 3, Items: items}
 		n, _, err := s.Run()
 		if err != nil {
-			if err == promptui.ErrInterrupt {
+			if errors.Is(err, promptui.ErrInterrupt) {
 				log.Fatal("operation aborted by user")
 			}
 			log.Fatal(err)
@@ -69,7 +71,7 @@ var configureCmd = &cobra.Command{
 	Long: `
 DESCRIPTION
 
-  Launch an interactive process to configure a connection to a running Cells server.
+  Launch an interactiveClientAuth process to configure a connection to a running Cells server.
   By default, we use a secure OAuth2 process based on 'Authorization Code' Grant.
 
   If necessary, you might use an alternative authorization process and/or execute this process non-interactively calling one of the defined sub-commands.
@@ -142,4 +144,79 @@ func persistConfig(newConf *rest.CecConfig) error {
 	}
 	fmt.Printf("%s Configuration saved. You can now use the Cells Client to interact as %s with %s\n", promptui.IconGood, newConf.User, newConf.Url)
 	return nil
+}
+
+var configRelogCmd = &cobra.Command{
+	Use:   "relog",
+	Short: "Re-run the authentication process for an existing connection",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cl, err := rest.GetConfigList()
+		if err != nil {
+			return err
+		}
+
+		var items []string
+		for k := range cl.Configs {
+			items = append(items, k)
+		}
+
+		sort.Strings(items)
+
+		var initialCursor int
+		for i, v := range items {
+			if cl.ActiveConfigID == v {
+				initialCursor = i
+			}
+		}
+
+		if len(items) > 0 {
+			pSelect := promptui.Select{Label: "Select the account you want to auth against anew", Items: items, Size: len(items), CursorPos: initialCursor}
+			_, accountId, err := pSelect.Run()
+			if err != nil {
+				return err
+			}
+			conf, err := cl.GetStoredConfig(cmd.Context(), accountId)
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf("Re-run the authentication process for account %s\n", accountId)
+
+			err = relog(conf)
+			if err != nil {
+				return err
+			}
+
+			// TODO  Do we also want to set the newly re-authenticated connection as the current
+			//  and to save thus the configs file
+			// if err := cl.SetActiveConfig(accountId); err != nil {
+			// 				return err
+			// 		}
+			// fmt.Printf("The active configuration is: %s\n", cl.ActiveConfigID)
+			// if err := cl.SaveConfigFile(); err != nil {
+			// 	return err
+			// }
+		}
+		return nil
+	},
+}
+
+func relog(oldConf *rest.CecConfig) error {
+
+	var err error
+	switch oldConf.AuthType {
+	case cellsSdk.AuthTypeOAuth:
+		err = oAuthInteractive(oldConf)
+	case cellsSdk.AuthTypePat:
+		err = interractiveTokenAuth(oldConf)
+	case cellsSdk.AuthTypeClientAuth:
+		err = interactiveClientAuth(oldConf)
+	default:
+		log.Fatalf("Cannot relog for authentication type: %s", oldConf.AuthType)
+	}
+	err = persistConfig(oldConf)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	return err
 }
