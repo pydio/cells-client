@@ -40,13 +40,20 @@ var jobsDelete = &cobra.Command{
 	Long: `
 DESCRIPTION	
 
-  Delete some jobs from your Cells server scheduler, optionally using
-  a filter to delete multiple jobs at once. You must confirm the deletion.
+  Delete some jobs from your Cells server scheduler.
   See the parent "jobs" subcommand to get more info about the jobs. 
 
-  If you are a standard user, you can only delete jobs that you own.
-  Deleting system jobs (that are owned by the "pydio.system.user" user) or 
-  jobs owned by other users requires administrative privileges.
+  If you are a standard user, you can only delete jobs that you own. 
+  You can optionally use a filter to delete multiple jobs at once.
+  An administrator can delete jobs owned by other users.
+  
+  To delete system jobs (that are owned by the "pydio.system.user" user):
+   - you must have administrative privileges 
+   - You must confirm the deletion
+   - you can only delete **1** job at a time, using the job-id param: 
+     trying to delete system jobs returned by a filter will always fail.
+
+   If you are unsure, use the --dry-run flag to only list the action that would be done.
 
 SYNTAX
 
@@ -68,27 +75,27 @@ SYNTAX
   Where:
     1. Known fields are:
        - owner: the owner of the job (string type). This filter can be only used by a user with admin privileges
-       - numtask: number of task of the job (numeric type)
+       - numtasks: number of tasks (a.k.a instance) of the job (numeric type)
        - task_status: status of the last task of the job. Warning: it is case sensitive 
 	     and the valid values are: Unknown | Idle | Running | Interrupted | Paused | Error | Queued | Finished 
     2. Known operators are:
-	   - numberic values: eq | ne | gt | lt
+	   - numeric values: eq | ne | gt | lt
 	   - string values: eq | ne 	
     3. If you filter with more than one field, we apply the 'AND' operator between fields
 
 EXAMPLES
 
   # Check all jobs owned by user alice that will get deleted (dry run):
-  $` + os.Args[0] + ` jobs delete --filter "{\"owner\": {\"op\": \"eq\", \"value\":\"alice\"}}" --format table
+  $` + os.Args[0] + ` jobs delete --filter "{\"owner\": {\"op\": \"eq\", \"value\":\"alice\"}}" --format table --dry-run
 
   # Really delete a job by id:
-  $` + os.Args[0] + ` jobs delete --job-id 18ab830f-439a-4123-ad7a-1fdeb6f705a3 --dry-run=false
+  $` + os.Args[0] + ` jobs delete --job-id 18ab830f-439a-4123-ad7a-1fdeb6f705a3
 
   # Delete all user jobs (a.k.a *not* system jobs) that are in error
-  $` + os.Args[0] + ` jobs delete  --filter "{\"owner\": {\"op\":\"ne\", \"value\": \"pydio.system.user\"},\"task_status\": {\"op\":\"eq\", \"value\": \"Error\"}}" --format table
+  $` + os.Args[0] + ` jobs delete  --filter "{\"owner\": {\"op\":\"ne\", \"value\": \"pydio.system.user\"},\"task_status\": {\"op\":\"eq\", \"value\": \"Error\"}}"
 
-  # Delete system job
-  $` + os.Args[0] + ` jobs delete --job-id d29be854-e369-4f7d-86e5-2292f3fee49b --dry-run=false --force=true
+  # Delete system job without confirmation (at you own risk)
+  $` + os.Args[0] + ` jobs delete --job-id d29be854-e369-4f7d-86e5-2292f3fee49b --force
 
 `,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -115,8 +122,8 @@ EXAMPLES
 				if _, ok := filters["owner"]; ok {
 					filterMap["owner"] = j.Owner
 				}
-				if _, ok := filters["numtask"]; ok {
-					filterMap["numtask"] = len(j.Tasks)
+				if _, ok := filters["numtasks"]; ok {
+					filterMap["numtasks"] = len(j.Tasks)
 				}
 				if _, ok := filters["task_status"]; len(j.Tasks) > 0 && ok {
 					filterMap["task_status"] = j.Tasks[0].Status
@@ -132,7 +139,7 @@ EXAMPLES
 		}
 
 		var results []*Result
-		retMessage := "done"
+		delResultMsg := "done"
 
 		if deleteJobJobId != "" {
 			var err error
@@ -142,11 +149,11 @@ EXAMPLES
 				return
 			}
 
-			if deleteSystemJob && len(filteredJobs) > 0 {
+			if deleteSystemJob && len(filteredJobs) == 1 {
 				fmt.Printf("⚠️  Are you sure you want to delete [%s] job? Type 'yes' to confirm: ", filteredJobs[0].Label)
 				_, err := fmt.Scanln(&deleteSystemJobConfirmation)
 				if err != nil {
-					log.Fatalf("unexpected error while getting user'S confirmation: %s", err)
+					log.Fatalf("unexpected error while getting user's confirmation: %s", err)
 					return
 				}
 				if deleteSystemJobConfirmation != "yes" {
@@ -166,36 +173,33 @@ EXAMPLES
 		}
 
 		for _, j := range filteredJobs {
-			var err error
-			if deleteJobDryRun {
-				retMessage = "(dry-run)" + retMessage
+			// filter system jobs
+			if j.Owner == PydioSystemUser && deleteSystemJobConfirmation != "yes" {
+				delResultMsg = fmt.Sprintf("skipped: you cannot delete system jobs using batches")
 			} else {
-				// filter system jobs
-				if j.Owner == PydioSystemUser && deleteSystemJobConfirmation != "yes" {
-					retMessage = fmt.Sprintf("ignored: you are not authorized to delete %s jobs", PydioSystemUser)
+				if deleteJobDryRun {
+					delResultMsg = "done (dry-run)"
 				} else {
-					err = deleteUserJobs(cmd.Context(), j.ID)
+					if err2 := deleteUserJobs(cmd.Context(), j.ID); err2 != nil {
+						delResultMsg = "cannot delete: ," + err.Error()
+					} else {
+						delResultMsg = "done"
+					}
 				}
 			}
-
-			if err != nil {
-				retMessage = err.Error()
-			}
-			results = append(results, &Result{JobID: j.ID, JobLabel: j.Label, Result: retMessage})
-			retMessage = "done"
+			results = append(results, &Result{JobID: j.ID, JobLabel: j.Label, Result: delResultMsg})
 		}
-
 		renderResult(deleteJobOutputFormat, results)
 	},
 }
 
 func init() {
 	flags := jobsDelete.PersistentFlags()
-	flags.StringVar(&deleteJobOutputFormat, "format", "json", "Output format json|table")
+	flags.StringVar(&deleteJobOutputFormat, "format", "table", "Output format table|json")
 	flags.StringVar(&deleteJobFilter, "filter", "", "JSON encoded filter string")
 	flags.StringVar(&deleteJobJobId, "job-id", "", "Job ID")
-	flags.BoolVar(&deleteSystemJob, "force", false, "Deleting system jobs requires administrator privileges. Only deleting by job-id is supported")
-	flags.BoolVar(&deleteJobDryRun, "dry-run", true, "Only display the jobs to be deleted, without actually impacting anything on the server")
+	flags.BoolVar(&deleteSystemJob, "force", false, "Deleting a system job requires confirmation: you might skip the validation witrh this flag. WARNING: this is dangerous and you might break your server, handle with care")
+	flags.BoolVar(&deleteJobDryRun, "dry-run", false, "Only display the jobs to be deleted, without actually impacting anything on the server")
 	jobsCmd.AddCommand(jobsDelete)
 }
 
