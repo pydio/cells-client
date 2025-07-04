@@ -71,7 +71,9 @@ SYNTAX
        - numtask: number of task of the job (numeric type)
        - task_status: status of the last task of the job. Warning: it is case sensitive 
 	     and the valid values are: Unknown | Idle | Running | Interrupted | Paused | Error | Queued | Finished 
-    2. Known operators are: eq | ne | gt | lt
+    2. Known operators are:
+	   - numberic values: eq | ne | gt | lt
+	   - string values: eq | ne 	
     3. If you filter with more than one field, we apply the 'AND' operator between fields
 
 EXAMPLES
