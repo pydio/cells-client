@@ -150,7 +150,8 @@ EXAMPLES
 				return
 			}
 
-			if len(filteredJobs) == 1 {
+			// Require confirmation if system job
+			if len(filteredJobs) == 1 && (filteredJobs[0].Owner == PydioSystemUser) {
 				// without --force parameter, ask user for confirmation
 				if !deleteSystemJob {
 					fmt.Printf("⚠️  Are you sure you want to delete [%s] job? Type 'yes' to confirm: ", filteredJobs[0].Label)
