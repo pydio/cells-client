@@ -20,13 +20,13 @@ DESCRIPTION
     by events, the scheduler or manually launched. The server comes with a bunch of 
     jobs that are useful to maintain your system and e.g perform house keeping tasks.
     You can create new job templates using Cells Flow to fine-tune your business processes.
-  - User Jobs: they start upon events received when a user performs certain action 
+  - User Jobs: they start upon events received when a user performs certain actions 
     (like extracting a thumbnail after successful upload of an image or deleting a large folder) 
-    and are then owned by the user who triggered the action.
+    and are then owned by the user who triggered the corresponding action.
 
-  When a job is launched, one (or more) instance is created and launched: we call them task. 
+  When a job is launched, one (or more) instance is created and put in the scheduler queue: we call them tasks. 
 
-  Use the provided job sub-commands to search, list and delete existing jobs;
+  Use the provided job sub-commands to search, list and delete existing jobs,
   see their respective help for further details.
 	`,
 	// Args: cobra.MinimumNArgs(1),

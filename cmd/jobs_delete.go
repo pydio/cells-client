@@ -52,7 +52,8 @@ DESCRIPTION
    - you must have administrative privileges 
    - You must confirm the deletion
    - you can only delete **1** job at a time, using the job-id param: 
-     trying to delete system jobs returned by a filter will always fail.
+     trying to delete system jobs returned by a filter will always fail 
+     if the returned job list has more than one element. 
 
    If you are unsure, use the --dry-run flag to only list the action that would be done.
 
@@ -87,7 +88,7 @@ SYNTAX
 EXAMPLES
 
   # Check all jobs owned by user alice that will get deleted (dry run):
-  $` + os.Args[0] + ` jobs delete --filter "{\"owner\": {\"op\": \"eq\", \"value\":\"alice\"}}" --format table --dry-run
+  $` + os.Args[0] + ` jobs delete --filter "{\"owner\": {\"op\": \"eq\", \"value\":\"alice\"}}" --dry-run
 
   # Really delete a job by id:
   $` + os.Args[0] + ` jobs delete --job-id 18ab830f-439a-4123-ad7a-1fdeb6f705a3
@@ -95,7 +96,7 @@ EXAMPLES
   # Delete all user jobs (a.k.a *not* system jobs) that are in error
   $` + os.Args[0] + ` jobs delete  --filter "{\"owner\": {\"op\":\"ne\", \"value\": \"pydio.system.user\"},\"task_status\": {\"op\":\"eq\", \"value\": \"Error\"}}"
 
-  # Delete system job without confirmation (at you own risk)
+  # Delete system job without confirmation (at you own risks)
   $` + os.Args[0] + ` jobs delete --job-id d29be854-e369-4f7d-86e5-2292f3fee49b --force
 
 `,
