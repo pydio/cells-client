@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
@@ -20,7 +21,7 @@ var (
 	deleteJobOutputFormat string
 	deleteJobFilter       string
 	deleteJobJobId        string
-	deleteSystemJob       bool
+	deleteJobForce        bool
 	deleteJobDryRun       bool
 )
 
@@ -99,7 +100,8 @@ EXAMPLES
 
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		deleteSystemJobConfirmation := "no"
+
+		doDelete := "no"
 		// Connect to the Cells API
 		ctx := cmd.Context()
 		apiClient := sdkClient.GetApiClient()
@@ -153,24 +155,23 @@ EXAMPLES
 			// Require confirmation if system job
 			if len(filteredJobs) == 1 && (filteredJobs[0].Owner == PydioSystemUser) {
 				// without --force parameter, ask user for confirmation
-				if !deleteSystemJob {
+				if !deleteJobForce {
 					fmt.Printf("⚠️  Are you sure you want to delete [%s] job? Type 'yes' to confirm: ", filteredJobs[0].Label)
-					_, err := fmt.Scanln(&deleteSystemJobConfirmation)
+					_, err := fmt.Scanln(&doDelete)
 					if err != nil {
 						log.Fatalf("unexpected error while getting user's confirmation: %s", err)
 						return
 					}
 
-					if deleteSystemJobConfirmation != "yes" {
+					if !strings.EqualFold(doDelete, "yes") {
 						fmt.Println("Aborting upon user's request.")
 						return
 					}
 				}
-
 			}
 		}
 
-		hasDeleteConfirmation = deleteSystemJob || (deleteSystemJobConfirmation == "yes")
+		hasDeleteConfirmation = deleteJobForce || strings.EqualFold(doDelete, "yes")
 
 		if len(filteredJobs) == 0 {
 			cmd.Printf("No job found with provided filter, nothing to delete!\n")
@@ -183,8 +184,10 @@ EXAMPLES
 
 		for _, j := range filteredJobs {
 			// filter system jobs
-			if j.Owner == PydioSystemUser && !hasDeleteConfirmation {
+			if j.Owner == PydioSystemUser && len(filteredJobs) > 1 {
 				delResultMsg = "skipped: you cannot delete system jobs using batches"
+			} else if j.Owner == PydioSystemUser && !hasDeleteConfirmation {
+				delResultMsg = "skipped: you must confirm deletion to remove system jobs"
 			} else {
 				if deleteJobDryRun {
 					delResultMsg = "done (dry-run)"
@@ -207,7 +210,7 @@ func init() {
 	flags.StringVar(&deleteJobOutputFormat, "format", "table", "Output format table|json")
 	flags.StringVar(&deleteJobFilter, "filter", "", "JSON encoded filter string")
 	flags.StringVar(&deleteJobJobId, "job-id", "", "Job ID")
-	flags.BoolVar(&deleteSystemJob, "force", false, "Deleting a system job requires confirmation: you might skip the validation witrh this flag. WARNING: this is dangerous and you might break your server, handle with care")
+	flags.BoolVar(&deleteJobForce, "force", false, "Deleting a system job requires confirmation: you might skip the validation with this flag. WARNING: this is dangerous and you might break your server, handle with care")
 	flags.BoolVar(&deleteJobDryRun, "dry-run", false, "Only display the jobs to be deleted, without actually impacting anything on the server")
 	jobsCmd.AddCommand(jobsDelete)
 }
