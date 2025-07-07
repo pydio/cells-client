@@ -141,6 +141,7 @@ EXAMPLES
 		var results []*Result
 		delResultMsg := "done"
 
+		hasDeleteConfirmation := false
 		if deleteJobJobId != "" {
 			var err error
 			filteredJobs, err = getJobById(cmd.Context(), apiClient, deleteJobJobId)
@@ -149,19 +150,26 @@ EXAMPLES
 				return
 			}
 
-			if deleteSystemJob && len(filteredJobs) == 1 {
-				fmt.Printf("⚠️  Are you sure you want to delete [%s] job? Type 'yes' to confirm: ", filteredJobs[0].Label)
-				_, err := fmt.Scanln(&deleteSystemJobConfirmation)
-				if err != nil {
-					log.Fatalf("unexpected error while getting user's confirmation: %s", err)
-					return
+			if len(filteredJobs) == 1 {
+				// without --force parameter, ask user for confirmation
+				if !deleteSystemJob {
+					fmt.Printf("⚠️  Are you sure you want to delete [%s] job? Type 'yes' to confirm: ", filteredJobs[0].Label)
+					_, err := fmt.Scanln(&deleteSystemJobConfirmation)
+					if err != nil {
+						log.Fatalf("unexpected error while getting user's confirmation: %s", err)
+						return
+					}
+
+					if deleteSystemJobConfirmation != "yes" {
+						fmt.Println("Aborting upon user's request.")
+						return
+					}
 				}
-				if deleteSystemJobConfirmation != "yes" {
-					fmt.Println("Aborting upon user's request.")
-					return
-				}
+
 			}
 		}
+
+		hasDeleteConfirmation = deleteSystemJob || (deleteSystemJobConfirmation == "yes")
 
 		if len(filteredJobs) == 0 {
 			cmd.Printf("No job found with provided filter, nothing to delete!\n")
@@ -174,8 +182,8 @@ EXAMPLES
 
 		for _, j := range filteredJobs {
 			// filter system jobs
-			if j.Owner == PydioSystemUser && deleteSystemJobConfirmation != "yes" {
-				delResultMsg = fmt.Sprintf("skipped: you cannot delete system jobs using batches")
+			if j.Owner == PydioSystemUser && !hasDeleteConfirmation {
+				delResultMsg = "skipped: you cannot delete system jobs using batches"
 			} else {
 				if deleteJobDryRun {
 					delResultMsg = "done (dry-run)"
