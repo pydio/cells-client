@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/tw"
 	"github.com/spf13/cobra"
 
 	"github.com/pydio/cells-sdk-go/v4/client"
@@ -136,8 +137,15 @@ EXAMPLES
 			fmt.Printf("%s\n", data)
 			return
 		case "table":
-			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"ID", "Label", "Owner", "Num Tasks", "Last task status"})
+			table := tablewriter.NewTable(os.Stdout,
+				tablewriter.WithConfig(tablewriter.Config{
+					Row: tw.CellConfig{
+						Formatting: tw.CellFormatting{AutoWrap: tw.WrapNone},
+						Alignment:  tw.CellAlignment{Global: tw.AlignLeft},
+					},
+				}),
+			)
+			table.Header([]string{"ID", "Label", "Owner", "Num Tasks", "Last task status"})
 			for _, job := range filteredJobs {
 				taskStatus := ""
 				if len(job.Tasks) > 0 {

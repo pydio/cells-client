@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/tw"
 	"github.com/spf13/cobra"
 
 	"github.com/pydio/cells-sdk-go/v4/models"
@@ -223,8 +224,15 @@ func renderResult(outputFormat string, rets []*Result) {
 		fmt.Printf("%s\n", data)
 		return
 	case "table":
-		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"ID", "Label", "Result"})
+		table := tablewriter.NewTable(os.Stdout,
+			tablewriter.WithConfig(tablewriter.Config{
+				Row: tw.CellConfig{
+					Formatting: tw.CellFormatting{AutoWrap: tw.WrapNone},
+					Alignment:  tw.CellAlignment{Global: tw.AlignLeft},
+				},
+			}),
+		)
+		table.Header([]string{"ID", "Label", "Result"})
 		for _, job := range rets {
 			table.Append([]string{job.JobID, job.JobLabel, job.Result})
 		}
