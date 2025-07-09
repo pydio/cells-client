@@ -1,7 +1,8 @@
-# Changes between v4.3.0 and v4.3.1-alpha02
+# Changes between v4.3.0 and v4.3.1
 
-[See Full Changelog](https://github.com/pydio/cells-client/compare/v4.3.0...v4.3.1-alpha02)
+[See Full Changelog](https://github.com/pydio/cells-client/compare/v4.3.0...v4.3.1)
 
+- [#72da3db](https://github.com/pydio/cells-client/commit/72da3dbf11a24786cf3ba896f8d3940c11ed20e1): Release v4.3.1-alpha02
 - [#15](https://github.com/pydio/cells-client/pull/15): feat(jobs): add commands for jobs management
 - [#8dd4f73](https://github.com/pydio/cells-client/commit/8dd4f732ac8ae743e343d5daf39f1d6000a12309): chore(jobs): fix a few typos in the in-line doc.
 - [#25fd5b3](https://github.com/pydio/cells-client/commit/25fd5b38389762505e67638e84dd97cb7d65b42a): fix(jobs): make confirmation case insensitive, fix failsafe when trying to force remove more than one system job at a time.
