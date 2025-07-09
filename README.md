@@ -33,44 +33,45 @@ A few examples (assuming that your client is connected to a server - see the [Se
 
 ```sh
 $ cec ls personal-files
-+--------+--------------------------+
-|  TYPE  |           NAME           |
-+--------+--------------------------+
-| Folder | personal-files           |
-....
-| Folder | recycle_bin              |
-| File   | test_crud-1545206846.txt |
-| File   | test_file2.txt           |
-+--------+--------------------------+
+Found 5 nodes at personal-files:
+┌────────┬──────────────────┐
+│  TYPE  │       NAME       │
+├────────┼──────────────────┤
+│ Folder │ .                │
+│ File   │ Budget (en).xlsx │
+│ File   │ Budget.xlsx      │
+│ Folder │ Music            │
+│ Folder │ Pictures         │
+└────────┴──────────────────┘
 ```
 
 ### 2/ Showing details about a file
 
 ```sh
-$ cec ls personal-files/P5021040.jpg -d
-Listing: 1 results for personal-files/P5021040.jpg
-+------+--------------------------------------+-----------------------------+--------+------------+
-| TYPE |                 UUID                 |            NAME             |  SIZE  |  MODIFIED  |
-+------+--------------------------------------+-----------------------------+--------+------------+
-| File | 98bbd86c-acb9-4b56-a6f3-837609155ba6 | personal-files/P5021040.jpg | 3.1 MB | 5 days ago |
-+------+--------------------------------------+-----------------------------+--------+------------+
+$ cec ls personal-files/Budget.xlsx -d
+Found 1 nodes at personal-files/Budget.xlsx:
+┌──────┬──────────────────────────────────────┬─────────────┬────────┬─────────────┬──────────────────────────────────┐
+│ TYPE │                 UUID                 │    NAME     │  SIZE  │  MODIFIED   │          INTERNAL HASH           │
+├──────┼──────────────────────────────────────┼─────────────┼────────┼─────────────┼──────────────────────────────────┤
+│ File │ 11d906a2-00b0-4d5b-9ee4-8c9694c6af96 │ Budget.xlsx │ 29 KiB │ 3 weeks ago │ 7878e1744d9c77c2980a878b1d5ee284 │
+└──────┴──────────────────────────────────────┴─────────────┴────────┴─────────────┴──────────────────────────────────┘
 ```
 
 ### 3/ Uploading a file to server
 
 ```sh
-$ cec scp ./README.md cells://common-files/
-Copying ./README.md to cells://common-files/
- ## Waiting for file to be indexed...
- ## File correctly indexed
+$ cec scp README.md cells://common-files/
+Uploading /Users/my-user/git/github.com/pydio/cells-client/README.md to cells://common-files
+100% [====================================================================] README.md
 ```
 
 ### 4/ Download a file from server
 
 ```sh
-$ cec scp cells://personal-files/IMG_9723.JPG ./
-Copying cells://personal-files/IMG_9723.JPG to ./
-Written 822601 bytes to file
+$ cec scp cells://common-files/README.md .
+Downloading cells://common-files/README.md to /Users/my-user/tmp
+  0% [--------------------------------------------------------------------] README.md
+100% [====================================================================] README.md
 ```
 
 ## Installation
@@ -105,11 +106,11 @@ To verify that `cec` is correctly installed, simply run for instance:
 $ cec version
 # Should output something like below
 Cells Client
- Version: 	    4.0.0
- Git commit: 	f8ad2c9b23977e344da6fa241a297926b697d71c
- Timestamp: 	2023-10-11T17:09:07Z
- OS/Arch: 	    linux/amd64
- Go version: 	go1.21.3
+ Version: 	4.3.1
+ Git commit: 	0873494d78bf8ac51d44c88e2efffc48411a457c
+ Timestamp: 	2025-07-09T08:34:52Z
+ OS/Arch: 	darwin/amd64
+ Go version: 	go1.23.9
 ```
 
 ## Connecting To Cells
