@@ -30,13 +30,13 @@ EXAMPLES
   Public link created at https://pydio.example.com/public/479cc5dbdf8b
 
   2/ Share a file with a specific user
-  $ ` + os.Args[0] + ` share personal-files/SecretDoc.pdf --user john
+  $ ` + os.Args[0] + ` share personal-files/SecretDoc.pdf --username john
   (no output, but user 'john' now has write access to the file)
 
   Note: you can use the 'idm list-users' command to get a list of usernames to share with.
 
   3/ Share a folder with a specific user
-  $ ` + os.Args[0] + ` share personal-files/Projects --user alice
+  $ ` + os.Args[0] + ` share personal-files/Projects --username alice
   (no output, but user 'alice' now has write access to the folder)
 `,
 	Args: cobra.MinimumNArgs(1),
@@ -99,7 +99,7 @@ var username string
 var modify bool
 
 func init() {
-	shareNode.Flags().StringVarP(&username, "user", "", "", "Username to grant access to")
+	shareNode.Flags().StringVarP(&username, "username", "", "", "Username to grant access to")
 	shareNode.Flags().BoolVarP(&modify, "modify", "m", false, "Grant modify permission (only with --user)")
     RootCmd.AddCommand(shareNode)
 }
