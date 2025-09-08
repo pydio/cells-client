@@ -3,7 +3,9 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"os"
 
+	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 
 	"github.com/pydio/cells-sdk-go/v4/client/user_service"
@@ -36,14 +38,30 @@ DESCRIPTION
 		}
 
 		if len(result.Payload.Users) > 0 {
-			msg := fmt.Sprintf("Found %d users:", len(result.Payload.Users))
-			if len(result.Payload.Users) == 1 {
-				msg = "Found 1 user:"
-			}
-			fmt.Println(msg)
+			fmt.Println("Listing users")
+
+			table := tablewriter.NewWriter(os.Stdout)
+			table.SetHeader([]string{"Login", "Type"})
+
 			for _, u := range result.Payload.Users {
-				fmt.Println("  - " + u.Login)
+				profile := ""
+				if u.Attributes != nil {
+					if p, ok := u.Attributes["hidden"]; ok {
+						if p == "true" {
+							continue
+						}
+					}
+
+					if p, ok := u.Attributes["profile"]; ok {
+						if p == "anon" {
+							continue
+						}
+						profile = p
+					}
+				}
+				table.Append([]string{u.Login, profile})
 			}
+			table.Render()
 		} else {
 			fmt.Println("No user found.")
 		}
