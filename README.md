@@ -15,7 +15,7 @@ The v4 version of this tool is meant to be used with a remote Cells server that 
 ## Usage
 
 **Use the `cec --help` command** to learn about all available commands: the in-line doc is pretty complete.   
-You can also find the [complete documentation for each command on our website](https://pydio.com/en/docs/developer-guide/cells-client-cec).
+You can also find the [complete documentation for each command on our website](https://docs.pydio.com/latest/developer-guide/command-line-reference/cells-client-cec/cec/).
 
 Some useful commands for manipulating files:
 
@@ -121,7 +121,7 @@ Once a valid user is available, there are 2 options:
 
 ### Persistent Mode
 
-Connections can be configured and persisted locally on the client machine. As from version **v2.2.0**, you can [configure multiple _accounts_ on the client side and switch between them as necessary](https://github.com/pydio/build-cells/blob/407c3127961b3334a5223c85e3f5411df7105372/release/changelogs/cells-client-v2.2.0.md).  
+Connections can be configured and persisted locally on the client machine. As from version **v2.2.0**, you can [configure multiple _accounts_ on the client side and switch between them as necessary](https://github.com/pydio/cells-client/releases/tag/v2.2.0).  
 Last used connection is persisted locally in the main configuration file and will be re-used the next time you call the `cec` command.
 
 To switch between accounts, simply call `cec config use`. 
