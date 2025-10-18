@@ -3,7 +3,7 @@ package cmd
 import (
 	"log"
 
-	"github.com/pydio/go/docs"
+	"github.com/pydio/go/v2/docs"
 	"github.com/spf13/cobra"
 
 	"github.com/pydio/cells-client/v5/common"
