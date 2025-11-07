@@ -10,8 +10,8 @@ import (
 	"github.com/olekukonko/tablewriter/tw"
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-client/v4/common"
-	"github.com/pydio/cells-client/v4/rest"
+	"github.com/pydio/cells-client/v5/common"
+	"github.com/pydio/cells-client/v5/rest"
 )
 
 var configCmd = &cobra.Command{

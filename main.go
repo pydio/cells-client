@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/pydio/cells-client/v4/cmd"
-	"github.com/pydio/cells-client/v4/common"
+	"github.com/pydio/cells-client/v5/cmd"
+	"github.com/pydio/cells-client/v5/common"
 )
 
 func main() {

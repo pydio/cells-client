@@ -10,8 +10,8 @@ import (
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-client/v4/rest"
-	cellsSdk "github.com/pydio/cells-sdk-go/v4"
+	"github.com/pydio/cells-client/v5/rest"
+	cellsSdk "github.com/pydio/cells-sdk-go/v5/apiv1"
 )
 
 var configureClientAuthCmd = &cobra.Command{

@@ -10,9 +10,9 @@ import (
 	"github.com/olekukonko/tablewriter/tw"
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-sdk-go/v4/client/meta_service"
-	"github.com/pydio/cells-sdk-go/v4/client/user_meta_service"
-	"github.com/pydio/cells-sdk-go/v4/models"
+	"github.com/pydio/cells-sdk-go/v5/apiv1/client/meta_service"
+	"github.com/pydio/cells-sdk-go/v5/apiv1/client/user_meta_service"
+	"github.com/pydio/cells-sdk-go/v5/apiv1/models"
 )
 
 var (

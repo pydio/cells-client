@@ -10,10 +10,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-sdk-go/v4/client"
-	"github.com/pydio/cells-sdk-go/v4/client/meta_service"
-	"github.com/pydio/cells-sdk-go/v4/client/user_meta_service"
-	"github.com/pydio/cells-sdk-go/v4/models"
+	"github.com/pydio/cells-sdk-go/v5/apiv1/client"
+	"github.com/pydio/cells-sdk-go/v5/apiv1/client/meta_service"
+	"github.com/pydio/cells-sdk-go/v5/apiv1/client/user_meta_service"
+	"github.com/pydio/cells-sdk-go/v5/apiv1/models"
 )
 
 var (
@@ -84,7 +84,7 @@ $` + os.Args[0] + ` meta set --path=personal/admin/test.txt --operation=update -
 		}
 
 		v := getFinalJsonValue(nsDef.Type, uv)
-	
+
 		do(ctx, client, node, v)
 	},
 }
@@ -115,7 +115,7 @@ func validateMetaNamespace() error {
 	return nil
 }
 
-func getMetaNameSpace(ctx context.Context) (*models.IdmUserMetaNamespace, error) {	
+func getMetaNameSpace(ctx context.Context) (*models.IdmUserMetaNamespace, error) {
 	client := sdkClient.GetApiClient()
 
 	params := &user_meta_service.ListUserMetaNamespaceParams{
@@ -218,10 +218,10 @@ func isBoolean(t string) bool {
 // Make sure user use correctly parameter to update current meta namespace
 func validateMetaFlagTypeMatch(cmd *cobra.Command, t string) error {
 	o, _ := validateOperation()
-	if o == models.UpdateUserMetaRequestUserMetaOpDELETE {		
+	if o == models.UpdateUserMetaRequestUserMetaOpDELETE {
 		return nil
 	}
-	if isString(t) && !cmd.Flags().Changed("string-value") || 
+	if isString(t) && !cmd.Flags().Changed("string-value") ||
 		cmd.Flags().Changed("string-value") && metaSetStringValue == "" {
 		return fmt.Errorf("--string-value is required")
 	}
@@ -255,7 +255,7 @@ func formatInputData(cmd *cobra.Command, metaType string) (*userValues, error) {
 	if err := validateMetaFlagTypeMatch(cmd, metaType); err != nil {
 		return &uValues, err
 	}
-	
+
 	metaNamespace, err := getMetaNameSpace(cmd.Context())
 	if err != nil {
 		return &uValues, err
@@ -290,7 +290,7 @@ func formatInputData(cmd *cobra.Command, metaType string) (*userValues, error) {
 			if err != nil {
 				return &uValues, err
 			}
-		
+
 			switch op {
 			case models.UpdateUserMetaRequestUserMetaOpPUT:
 				newTags := appendUnique(existValues, metaSetStringValue)
@@ -349,8 +349,8 @@ func getFinalJsonValue(t string, uv *userValues) string {
 		if isString(t) {
 			return fmt.Sprintf("\"%s\"", uv.StrValue)
 		}
-		
-		if isBoolean(t){		
+
+		if isBoolean(t) {
 			return fmt.Sprintf("\"%t\"", uv.BooleanValue)
 		}
 
@@ -365,7 +365,7 @@ func getFinalJsonValue(t string, uv *userValues) string {
 
 	// Delete
 	if t == "tags" {
-		return fmt.Sprintf("\"%s\"", uv.StrValue) 
+		return fmt.Sprintf("\"%s\"", uv.StrValue)
 	}
 
 	return emptyJson

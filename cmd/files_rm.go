@@ -9,7 +9,7 @@ import (
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-client/v4/rest"
+	"github.com/pydio/cells-client/v5/rest"
 )
 
 var (

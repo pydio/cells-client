@@ -7,7 +7,7 @@ import (
 	"github.com/olekukonko/tablewriter/tw"
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-client/v4/common"
+	"github.com/pydio/cells-client/v5/common"
 )
 
 var infoCmd = &cobra.Command{

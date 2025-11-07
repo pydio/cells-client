@@ -11,7 +11,7 @@ import (
 	humanize "github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-client/v4/common/hasher"
+	"github.com/pydio/cells-client/v5/common/hasher"
 )
 
 var (

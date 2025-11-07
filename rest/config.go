@@ -17,12 +17,12 @@ import (
 	"github.com/manifoldco/promptui"
 	"github.com/shibukawa/configdir"
 
-	cellsSdk "github.com/pydio/cells-sdk-go/v4"
-	"github.com/pydio/cells-sdk-go/v4/transport"
-	sdkHttp "github.com/pydio/cells-sdk-go/v4/transport/http"
-	sdkRest "github.com/pydio/cells-sdk-go/v4/transport/rest"
+	cellsSdk "github.com/pydio/cells-sdk-go/v5/apiv1"
+	"github.com/pydio/cells-sdk-go/v5/apiv1/transport"
+	sdkHttp "github.com/pydio/cells-sdk-go/v5/apiv1/transport/http"
+	sdkRest "github.com/pydio/cells-sdk-go/v5/apiv1/transport/rest"
 
-	"github.com/pydio/cells-client/v4/common"
+	"github.com/pydio/cells-client/v5/common"
 )
 
 var (

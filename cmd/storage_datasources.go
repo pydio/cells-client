@@ -5,12 +5,13 @@ import (
 	"log"
 	"os"
 
+	"github.com/pydio/cells-sdk-go/v5/apiv1/models"
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-sdk-go/v4/client/config_service"
-	"github.com/pydio/cells-sdk-go/v4/client/jobs_service"
+	"github.com/pydio/cells-sdk-go/v5/apiv1/client/config_service"
+	"github.com/pydio/cells-sdk-go/v5/apiv1/client/jobs_service"
 
-	"github.com/pydio/cells-client/v4/rest"
+	"github.com/pydio/cells-client/v5/rest"
 )
 
 var (
@@ -76,7 +77,7 @@ var resyncDs = &cobra.Command{
 		dsName := args[0]
 
 		jsonParams := fmt.Sprintf("{\"dsName\":\"%s\"}", dsName)
-		body := jobs_service.UserCreateJobBody{JSONParameters: jsonParams}
+		body := &models.RestUserJobRequest{JSONParameters: jsonParams}
 		params := &jobs_service.UserCreateJobParams{JobName: "datasource-resync", Body: body, Context: cmd.Context()}
 
 		_, err := sdkClient.GetApiClient().JobsService.UserCreateJob(params)

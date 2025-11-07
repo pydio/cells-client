@@ -13,9 +13,9 @@ import (
 	"github.com/olekukonko/tablewriter/tw"
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-sdk-go/v4/client"
-	"github.com/pydio/cells-sdk-go/v4/client/jobs_service"
-	"github.com/pydio/cells-sdk-go/v4/models"
+	"github.com/pydio/cells-sdk-go/v5/apiv1/client"
+	"github.com/pydio/cells-sdk-go/v5/apiv1/client/jobs_service"
+	"github.com/pydio/cells-sdk-go/v5/apiv1/models"
 )
 
 var (

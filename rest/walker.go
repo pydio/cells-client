@@ -15,8 +15,8 @@ import (
 	"github.com/gosuri/uiprogress"
 	"github.com/pkg/errors"
 
-	"github.com/pydio/cells-sdk-go/v4/client/tree_service"
-	"github.com/pydio/cells-sdk-go/v4/models"
+	"github.com/pydio/cells-sdk-go/v5/apiv1/client/tree_service"
+	"github.com/pydio/cells-sdk-go/v5/apiv1/models"
 )
 
 var (

@@ -12,7 +12,7 @@ import (
 	"github.com/olekukonko/tablewriter/tw"
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-sdk-go/v4/models"
+	"github.com/pydio/cells-sdk-go/v5/apiv1/models"
 
 	eeclient "github.com/pydio/cells-enterprise-sdk-go/client"
 	"github.com/pydio/cells-enterprise-sdk-go/client/scheduler_service"

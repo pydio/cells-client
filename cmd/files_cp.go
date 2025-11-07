@@ -9,9 +9,9 @@ import (
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-sdk-go/v4/models"
+	"github.com/pydio/cells-sdk-go/v5/apiv1/models"
 
-	"github.com/pydio/cells-client/v4/rest"
+	"github.com/pydio/cells-client/v5/rest"
 )
 
 var cpCmd = &cobra.Command{

@@ -14,9 +14,9 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/pydio/cells-sdk-go/v4/models"
+	"github.com/pydio/cells-sdk-go/v5/apiv1/models"
 
-	"github.com/pydio/cells-client/v4/rest"
+	"github.com/pydio/cells-client/v5/rest"
 )
 
 const (

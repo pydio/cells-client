@@ -6,7 +6,7 @@ import (
 	"github.com/pydio/go/docs"
 	"github.com/spf13/cobra"
 
-	"github.com/pydio/cells-client/v4/common"
+	"github.com/pydio/cells-client/v5/common"
 )
 
 var docPath string

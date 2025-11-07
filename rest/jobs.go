@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pydio/cells-sdk-go/v4/client/jobs_service"
-	"github.com/pydio/cells-sdk-go/v4/models"
+	"github.com/pydio/cells-sdk-go/v5/apiv1/client/jobs_service"
+	"github.com/pydio/cells-sdk-go/v5/apiv1/models"
 )
 
 const (
@@ -27,7 +27,7 @@ func (client *SdkClient) MoveJob(ctx context.Context, jsonParams string) (string
 func (client *SdkClient) RunJob(ctx context.Context, jobName string, jsonParams string) (string, error) {
 	params := jobs_service.NewUserCreateJobParamsWithContext(ctx)
 	params.JobName = jobName
-	params.Body = jobs_service.UserCreateJobBody{JSONParameters: jsonParams}
+	params.Body = &models.RestUserJobRequest{JSONParameters: jsonParams}
 
 	job, err := client.GetApiClient().JobsService.UserCreateJob(params)
 	if err != nil {

@@ -16,11 +16,11 @@ import (
 	"github.com/skratchdot/open-golang/open"
 	"github.com/spf13/cobra"
 
-	cellsSdk "github.com/pydio/cells-sdk-go/v4"
-	sdkRest "github.com/pydio/cells-sdk-go/v4/transport/rest"
+	cellsSdk "github.com/pydio/cells-sdk-go/v5/apiv1"
+	sdkRest "github.com/pydio/cells-sdk-go/v5/apiv1/transport/rest"
 
-	"github.com/pydio/cells-client/v4/common"
-	"github.com/pydio/cells-client/v4/rest"
+	"github.com/pydio/cells-client/v5/common"
+	"github.com/pydio/cells-client/v5/rest"
 )
 
 var (
