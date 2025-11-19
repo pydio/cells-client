@@ -100,7 +100,10 @@ func (client *SdkClient) MonitorJob(ctx context.Context, jobID string) (err erro
 			return
 		}
 
-		Log.Debugf(" #%d - %s ", i, status)
+		if i%10 == 1 {
+			Log.Debugf(" #%d - %s ", i, status)
+		}
+		i++
 		switch status {
 		case models.JobsTaskStatusRunning, models.JobsTaskStatusPaused, models.JobsTaskStatusQueued:
 			//fmt.Println("running, progress: ", pg)
