@@ -6,33 +6,49 @@ MOD_UPDATE?=v5-dev
 
 .PHONY: all clean main linux arm arm64 win darwin xgo
 
-main:
-	env CGO_ENABLED=0 go build -a -trimpath\
-	 -ldflags "-X github.com/pydio/cells-client/v5/common.Version=${CELLS_CLIENT_VERSION}" \
-	 -o cec .
+linux: linux-amd64
 
-linux:
+arm64: linux-arm64
+
+arm: linux-arm
+
+win: windows-amd64
+
+darwin: darwin-arm64
+
+linux-amd64:
 	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -trimpath \
 	 -ldflags "-X github.com/pydio/cells-client/v5/common.Version=${CELLS_CLIENT_VERSION}" \
 	 -o cec .
 
-arm:
+linux-arm:
 	env CGO_ENABLED=0 GOOS=linux GOARM=7 GOARCH=arm go build -a -trimpath \
 	 -ldflags "-X github.com/pydio/cells-client/v5/common.Version=${CELLS_CLIENT_VERSION}" \
 	 -o cec .
 
-arm64:
+linux-arm64:
 	env CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -a -trimpath \
 	 -ldflags "-X github.com/pydio/cells-client/v5/common.Version=${CELLS_CLIENT_VERSION}" \
 	 -o cec .
 
-win:
+windows-amd64:
 	env CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -a -trimpath \
 	 -ldflags "-X github.com/pydio/cells-client/v5/common.Version=${CELLS_CLIENT_VERSION}" \
 	 -o cec.exe .
 
-darwin:
+darwin-arm64:
+	env CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -a -trimpath \
+	 -ldflags "-X github.com/pydio/cells-client/v5/common.Version=${CELLS_CLIENT_VERSION}" \
+	 -o cec .
+
+darwin-amd64:
 	env CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -a -trimpath \
+	 -ldflags "-X github.com/pydio/cells-client/v5/common.Version=${CELLS_CLIENT_VERSION}" \
+	 -o cec .
+
+# The 2 below targets build a binary that is adapted to the OS / Arch that runs the build.
+main:
+	env CGO_ENABLED=0 go build -a -trimpath\
 	 -ldflags "-X github.com/pydio/cells-client/v5/common.Version=${CELLS_CLIENT_VERSION}" \
 	 -o cec .
 
@@ -42,7 +58,7 @@ dev:
 	 -o cec\
 	 .
 
-## We assume the sdk and cells client projects are in the same folder...
+## NOTE: we expect that the SDK and Cells client projects are in the same folder.
 mod-local:
 	go mod edit -replace github.com/pydio/cells-sdk-go/v5=../cells-sdk-go
 
