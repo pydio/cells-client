@@ -22,7 +22,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/pydio/cells-enterprise-sdk-go v1.4.4
 	github.com/pydio/cells-sdk-go/v4 v4.1.2
-	github.com/pydio/go v0.0.0-20191211170306-d00ac19450ef
+	github.com/pydio/go/v2 v2.0.1
 	github.com/shibukawa/configdir v0.0.0-20170330084843-e180dbdc8da0
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/smartystreets/goconvey v1.8.1
@@ -76,6 +76,8 @@ require (
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
+	github.com/gosimple/slug v1.15.0 // indirect
+	github.com/gosimple/unidecode v1.0.1 // indirect
 	github.com/gosuri/uilive v0.0.4 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
