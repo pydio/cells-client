@@ -128,7 +128,7 @@ ENVIRONMENT
 			// Also sanitize the passed URL
 			serverURL, err = rest.CleanURL(tmpURLStr)
 			if err != nil {
-				rest.Log.Fatalf("server URL %s seems to be unvalid, please double check and adapt. Cause: %s", tmpURLStr, err.Error())
+				rest.Log.Fatalf("server URL %s seems to be un-valid, please double check and adapt. Cause: %s", tmpURLStr, err.Error())
 			}
 		}
 
