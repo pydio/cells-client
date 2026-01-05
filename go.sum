@@ -192,8 +192,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/pydio/cells-enterprise-sdk-go v1.4.6 h1:Va3g66tQPk2SUiT9LnCuDaL269NyFC3VAMINo3QNzhY=
 github.com/pydio/cells-enterprise-sdk-go v1.4.6/go.mod h1:YKUMmaY4I+xMAYz8t9BeJykAIQj60HaO58PQgMas2dM=
-github.com/pydio/cells-sdk-go/v5 v5.0.0-alpha15 h1:Sq5hTnr5r4+m//bE+tyLYY299q5OgTq5RHWnY/XPnXc=
-github.com/pydio/cells-sdk-go/v5 v5.0.0-alpha15/go.mod h1:llaUz0glYFGwWSyPOrsMmuCX/78u0tz/vmCFq4G+szQ=
+github.com/pydio/cells-sdk-go/v5 v5.0.0-alpha16 h1:5bA2XVqO2ftUMK/7w3Jtsz7LBx8PM35UccatTiu/usM=
+github.com/pydio/cells-sdk-go/v5 v5.0.0-alpha16/go.mod h1:KCfUUY73+pclJdDn6Fa5aoF6srq9r5KDnt7gKpzvaGc=
 github.com/pydio/go/v2 v2.0.1 h1:vSSost0idijmIi/k2adkByO0NaepiDFCDCYf3wNfqP4=
 github.com/pydio/go/v2 v2.0.1/go.mod h1:ybM/nQh8ZmBgrtGLCEkl5FR1tv2o9iaxRJYwLJ7VH88=
 github.com/rogpeppe/go-internal v1.14.1 h1:UQB4HGPB6osV0SQTLymcB4TgvyWu6ZyliaW0tI/otEQ=

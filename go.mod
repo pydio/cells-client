@@ -21,7 +21,7 @@ require (
 	github.com/olekukonko/tablewriter v1.1.2
 	github.com/pkg/errors v0.9.1
 	github.com/pydio/cells-enterprise-sdk-go v1.4.6
-	github.com/pydio/cells-sdk-go/v5 v5.0.0-alpha15
+	github.com/pydio/cells-sdk-go/v5 v5.0.0-alpha16
 	github.com/pydio/go/v2 v2.0.1
 	github.com/shibukawa/configdir v0.0.0-20170330084843-e180dbdc8da0
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
