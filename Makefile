@@ -1,7 +1,7 @@
 DEV_VERSION=4.3.2-dev
 ENV=env GOOS=linux
 TIMESTAMP:=$(shell date -u +%Y%m%d%H%M%S)
-CELLS_CLIENT_VERSION?=${DEV_VERSION}.${TIMESTAMP}
+CELLS_VERSION?=${DEV_VERSION}.${TIMESTAMP}
 MOD_UPDATE?=v4.1-dev
 
 .PHONY: all clean main linux arm arm64 win darwin xgo
@@ -16,39 +16,39 @@ darwin: darwin-arm64
 
 linux-amd64:
 	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -trimpath \
-	 -ldflags "-X github.com/pydio/cells-client/v4/common.Version=${CELLS_CLIENT_VERSION}" \
+	 -ldflags "-X github.com/pydio/cells-client/v4/common.Version=${CELLS_VERSION}" \
 	 -o cec .
 
 linux-arm64:
 	env CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -a -trimpath \
-	 -ldflags "-X github.com/pydio/cells-client/v4/common.Version=${CELLS_CLIENT_VERSION}" \
+	 -ldflags "-X github.com/pydio/cells-client/v4/common.Version=${CELLS_VERSION}" \
 	 -o cec .
 
 darwin-arm64:
 	env CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -a -trimpath \
-	 -ldflags "-X github.com/pydio/cells-client/v4/common.Version=${CELLS_CLIENT_VERSION}" \
+	 -ldflags "-X github.com/pydio/cells-client/v4/common.Version=${CELLS_VERSION}" \
 	 -o cec .
 
 darwin-amd64:
 	env CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -a -trimpath \
-	 -ldflags "-X github.com/pydio/cells-client/v4/common.Version=${CELLS_CLIENT_VERSION}" \
+	 -ldflags "-X github.com/pydio/cells-client/v4/common.Version=${CELLS_VERSION}" \
 	 -o cec .
 
 # Legacy targets 
 
 main:
 	env CGO_ENABLED=0 go build -a -trimpath\
-	 -ldflags "-X github.com/pydio/cells-client/v4/common.Version=${CELLS_CLIENT_VERSION}" \
+	 -ldflags "-X github.com/pydio/cells-client/v4/common.Version=${CELLS_VERSION}" \
 	 -o cec .
 
 arm:
 	env CGO_ENABLED=0 GOOS=linux GOARM=7 GOARCH=arm go build -a -trimpath \
-	 -ldflags "-X github.com/pydio/cells-client/v4/common.Version=${CELLS_CLIENT_VERSION}" \
+	 -ldflags "-X github.com/pydio/cells-client/v4/common.Version=${CELLS_VERSION}" \
 	 -o cec .
 
 win:
 	env CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -a -trimpath \
-	 -ldflags "-X github.com/pydio/cells-client/v4/common.Version=${CELLS_CLIENT_VERSION}" \
+	 -ldflags "-X github.com/pydio/cells-client/v4/common.Version=${CELLS_VERSION}" \
 	 -o cec.exe .
 
 dev:
