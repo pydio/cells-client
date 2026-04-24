@@ -1,8 +1,6 @@
 module github.com/pydio/cells-client/v4
 
-go 1.23.0
-
-toolchain go1.23.9
+go 1.24.0
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.32.7
@@ -53,6 +51,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sso v1.24.8 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.28.7 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.33.3 // indirect
+	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/chzyer/readline v1.5.1 // indirect
 	github.com/danieljoos/wincred v1.2.2 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
@@ -92,10 +91,10 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	go.mongodb.org/mongo-driver v1.17.4 // indirect
-	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
-	go.opentelemetry.io/otel v1.37.0 // indirect
-	go.opentelemetry.io/otel/metric v1.37.0 // indirect
-	go.opentelemetry.io/otel/trace v1.37.0 // indirect
+	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
+	go.opentelemetry.io/otel v1.41.0 // indirect
+	go.opentelemetry.io/otel/metric v1.41.0 // indirect
+	go.opentelemetry.io/otel/trace v1.41.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b // indirect
 	golang.org/x/sync v0.15.0 // indirect
