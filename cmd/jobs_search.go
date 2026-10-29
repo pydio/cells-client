@@ -94,7 +94,7 @@ EXAMPLES
 
 		jobs, err := listUserJobs(ctx, apiClient)
 		if err != nil {
-			cmd.Printf(err.Error())
+			cmd.Print(err.Error())
 		}
 
 		var filters FilterMap

@@ -140,7 +140,7 @@ func persistConfig(newConf *rest.CecConfig) error {
 
 	err := rest.UpdateConfig(newConf)
 	if err != nil {
-		return fmt.Errorf(promptui.IconBad + " could not save configuration: " + err.Error())
+		return fmt.Errorf("%s could not save configuration: %w", promptui.IconBad, err)
 	}
 	fmt.Printf("%s Configuration saved. You can now use the Cells Client to interact as %s with %s\n", promptui.IconGood, newConf.User, newConf.Url)
 	return nil

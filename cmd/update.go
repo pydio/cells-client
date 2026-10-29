@@ -116,7 +116,7 @@ DESCRIPTION
 					case pg := <-pgChan:
 						fmt.Printf("\rDownloading binary: %v%%", math.Floor(pg*100))
 					case e := <-errorChan:
-						fmt.Printf("\rError while updating binary: " + e.Error())
+						fmt.Printf("\rError while updating binary: %s", e.Error())
 						return
 					case <-doneChan:
 						// TODO use another color or let the default color
