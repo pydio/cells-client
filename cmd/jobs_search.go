@@ -137,7 +137,7 @@ EXAMPLES
 			return
 		case "table":
 			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"ID", "Label", "Owner", "Num Tasks", "Last task status"})
+			table.Header([]string{"ID", "Label", "Owner", "Num Tasks", "Last task status"})
 			for _, job := range filteredJobs {
 				taskStatus := ""
 				if len(job.Tasks) > 0 {

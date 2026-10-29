@@ -7,6 +7,7 @@ import (
 
 	pui "github.com/manifoldco/promptui"
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/tw"
 	"github.com/spf13/cobra"
 
 	"github.com/pydio/cells-client/v4/common"
@@ -31,10 +32,11 @@ var configListCmd = &cobra.Command{
 			return err
 		}
 
-		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"Active", "Label", "User", "URL", "Type"})
-		table.SetAlignment(tablewriter.ALIGN_LEFT)
-		table.SetAutoWrapText(false)
+		table := tablewriter.NewTable(os.Stdout,
+			tablewriter.WithRowAlignment(tw.AlignLeft),
+			tablewriter.WithRowAutoWrap(tw.WrapNone),
+		)
+		table.Header([]string{"Active", "Label", "User", "URL", "Type"})
 
 		// Sorts the keys of the map
 		var keys []string
