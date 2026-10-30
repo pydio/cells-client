@@ -109,7 +109,7 @@ EXAMPLES
 
 		jobs, err := listUserJobs(ctx, apiClient)
 		if err != nil {
-			cmd.Printf(err.Error())
+			cmd.Print(err.Error())
 		}
 
 		var filters FilterMap
@@ -224,7 +224,7 @@ func renderResult(outputFormat string, rets []*Result) {
 		return
 	case "table":
 		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"ID", "Label", "Result"})
+		table.Header([]string{"ID", "Label", "Result"})
 		for _, job := range rets {
 			table.Append([]string{job.JobID, job.JobLabel, job.Result})
 		}

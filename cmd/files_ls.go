@@ -307,16 +307,16 @@ EXAMPLES
 		case details:
 			fmt.Println(legend)
 			if wsLevel {
-				table.SetHeader([]string{"Type", "Uuid", "Name", "Label", "Description", "Permissions"})
+				table.Header([]string{"Type", "Uuid", "Name", "Label", "Description", "Permissions"})
 			} else {
-				table.SetHeader([]string{"Type", "Uuid", "Name", "Size", "Modified", "Internal Hash"})
+				table.Header([]string{"Type", "Uuid", "Name", "Size", "Modified", "Internal Hash"})
 			}
 			table.Render()
 		case raw, goTemplate: // Nothing to add: we just want the raw values that we already displayed while looping
 			return
 		default:
 			fmt.Println(legend)
-			table.SetHeader([]string{"Type", "Name"})
+			table.Header([]string{"Type", "Name"})
 			table.Render()
 			fmt.Println("Get more info by adding the -d (details) flag")
 		}

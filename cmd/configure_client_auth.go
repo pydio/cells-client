@@ -48,7 +48,7 @@ USAGE
 			if errors.Is(err, promptui.ErrInterrupt) {
 				log.Fatalf("operation aborted by user")
 			}
-			log.Fatalf(err.Error())
+			log.Fatal(err)
 		}
 		err = persistConfig(newConf)
 		if err != nil {

@@ -121,7 +121,7 @@ $` + os.Args[0] + ` meta get -all=true
 			return
 		case "table":
 			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"Meta name", "Value"})
+			table.Header([]string{"Meta name", "Value"})
 			if metaGetNameSpace != "" {
 			if mv, ok := node.MetaStore[metaGetNameSpace]; ok {
 				table.Append([]string{metaGetNameSpace, mv})
@@ -152,7 +152,7 @@ func init() {
 
 func printMetaNamespaces(namespaces []*models.IdmUserMetaNamespace) {
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Namespace", "Label", "JSONDefinition"})
+	table.Header([]string{"Namespace", "Label", "JSONDefinition"})
 	for _, n := range namespaces {
 		table.Append([]string{n.Namespace, n.Label, n.JSONDefinition})
 	}

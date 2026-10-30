@@ -10,6 +10,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/tw"
 	"github.com/spf13/cobra"
 
 	"github.com/pydio/cells-client/v4/common"
@@ -60,14 +61,13 @@ DESCRIPTION
 			c := color.New(color.FgBlack)
 			c.Printf("\nNew packages are available in the %s channel:\n\n", defaultChannel)
 
-			table := tablewriter.NewWriter(cmd.OutOrStdout())
-			table.SetHeader([]string{"Version", "UpdatePackage Name", "Description"})
+			table := tablewriter.NewTable(cmd.OutOrStdout(), tablewriter.WithRowAlignment(tw.AlignLeft))
+			table.Header([]string{"Version", "UpdatePackage Name", "Description"})
 
 			for _, bin := range binaries {
 				table.Append([]string{bin.Version, bin.Label, bin.Description})
 			}
 
-			table.SetAlignment(tablewriter.ALIGN_LEFT)
 			table.Render()
 
 			c.Println("")
@@ -116,7 +116,7 @@ DESCRIPTION
 					case pg := <-pgChan:
 						fmt.Printf("\rDownloading binary: %v%%", math.Floor(pg*100))
 					case e := <-errorChan:
-						fmt.Printf("\rError while updating binary: " + e.Error())
+						fmt.Printf("\rError while updating binary: %s", e.Error())
 						return
 					case <-doneChan:
 						// TODO use another color or let the default color
