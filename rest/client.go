@@ -200,18 +200,27 @@ func buildS3Options(configStore cellsSdk.ConfigRefresher) []interface{} {
 		options = append(options, sdkHttp.WithTimout(to))
 	}
 
-	if TransferRetryMaxBackoff != TransferRetryMaxBackoffDefault ||
-		TransferRetryMaxAttempts != TransferRetryMaxAttemptsDefault {
-		// TODO finalize addition of extra error codes that must be seen as "retry-able"
-		options = append(
-			options,
-			sdkS3.WithCustomRetry(
-				TransferRetryMaxAttempts,
-				TransferRetryMaxBackoff,
-				"ClientDisconnected",
-			),
-		)
-	}
+	// Always install our custom retryer, even when the user did not override the
+	// default attempts/backoff, so that the extra "retry-able" error codes below are
+	// taken into account on every transfer.
+	//
+	// "UnauthorizedAccess" is added on top of the AWS SDK defaults (500/502/503/504,
+	// RequestTimeout(Exception), throttling codes) to cover the case where an S3 part
+	// request is signed with a JWT that gets invalidated by an OAuth token rotation
+	// while the part is in flight (large/slow parts can outlive a short
+	// accessTokenLifespan). Since the AWS SDK retry middleware re-resolves credentials
+	// and re-signs the request on every attempt (it sits "before" the Signing step),
+	// retrying here lets the retry pick up the freshly rotated token instead of
+	// aborting the whole multipart transfer on the first stale-token 401.
+	options = append(
+		options,
+		sdkS3.WithCustomRetry(
+			TransferRetryMaxAttempts,
+			TransferRetryMaxBackoff,
+			"ClientDisconnected",
+			"UnauthorizedAccess",
+		),
+	)
 	return options
 }
 
