@@ -4,7 +4,7 @@ TIMESTAMP:=$(shell date -u +%Y%m%d%H%M%S)
 CELLS_VERSION?=${DEV_VERSION}.${TIMESTAMP}
 MOD_UPDATE?=v4.1-dev
 
-.PHONY: all clean main linux arm linux-arm arm64 win darwin xgo
+.PHONY: all clean main linux linux-amd64 linux-arm64 linux-arm arm arm64 windows-amd64 win darwin darwin-arm64 darwin-amd64 dev mod-local mod-update xgo
 
 linux: linux-amd64
 
@@ -47,6 +47,8 @@ arm:
 	env CGO_ENABLED=0 GOOS=linux GOARM=7 GOARCH=arm go build -a -trimpath \
 	 -ldflags "-X github.com/pydio/cells-client/v4/common.Version=${CELLS_VERSION}" \
 	 -o cec .
+
+windows-amd64: win
 
 win:
 	env CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -a -trimpath \
